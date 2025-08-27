@@ -11,7 +11,7 @@ type BrandDraft = {
   slug: string
   tagline?: string
   description?: string
-  category?: 'Fashion'|'Beauty'|'Homeware'|'Food & Drinks'|'Wellness'|'Innovation'|'Cannabis'
+  category?: 'Fashion'|'Beauty'|'Homeware'|'Food & Drinks'|'Wellness'|'Innovation'|'Cannabis'|''
   website?: string
 }
 
@@ -19,10 +19,11 @@ export default function BrandOnboarding() {
   const { ready, user } = useAuthGuard()
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
-  const [brand, setBrand] = useState<BrandDraft>({ name: '', slug: '' })
+  const [brand, setBrand] = useState<BrandDraft>({ name: '', slug: '', category: '' })
   const [notes, setNotes] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [message, setMessage] = useState<{kind:'info'|'success'|'error', text:string}|null>(null)
+  const [status, setStatus] = useState<'approved'|'submitted'|'needs_changes'|'none'>('none')
 
   useEffect(() => {
     if (!ready || !user) return
@@ -40,9 +41,20 @@ export default function BrandOnboarding() {
           slug: data.slug || '',
           tagline: data.tagline || '',
           description: data.description || '',
-          category: data.category,
+          category: (data.category as any) || '',
           website: data.website || ''
         })
+        if (data.approved) setStatus('approved')
+      }
+      const { data: sub } = await supabase
+        .from('submissions')
+        .select('status')
+        .eq('user_id', user.id)
+        .order('submitted_at', { ascending:false })
+        .limit(1)
+      if (sub && sub.length) {
+        setStatus((sub[0].status as any) || 'none')
+        if (sub[0].status === 'submitted') setSubmitted(true)
       }
     }
     load()
@@ -61,7 +73,7 @@ export default function BrandOnboarding() {
         slug: brand.slug || slugify(brand.name),
         tagline: brand.tagline,
         description: brand.description,
-        category: brand.category || 'Fashion',
+        category: brand.category || null,
         website: brand.website,
         owner_id: user.id,
         approved: false,
@@ -95,6 +107,15 @@ export default function BrandOnboarding() {
     }
   }
 
+  const nextFromStep2 = async () => {
+    try {
+      await ensureDraft()
+      setStep(3)
+    } catch (e:any) {
+      setMessage({ kind:'error', text: e?.message || 'Please complete required fields.' })
+    }
+  }
+
   const submitForReview = async () => {
     if (!user) { setMessage({kind:'error', text:'Please sign in first.'}); return }
     setSaving(true)
@@ -109,6 +130,7 @@ export default function BrandOnboarding() {
       if (exErr) throw exErr
       if (existing && existing.length) {
         setSubmitted(true)
+        setStatus('submitted')
         setMessage({ kind:'success', text:'Already submitted. We’ll review shortly.' })
         return
       }
@@ -121,6 +143,7 @@ export default function BrandOnboarding() {
       })
       if (subErr) throw subErr
       setSubmitted(true)
+      setStatus('submitted')
       setMessage({ kind:'success', text:'Submitted for review. You will be notified after moderation.' })
     } catch (e:any) {
       setMessage({ kind:'error', text: e?.message || 'Submit failed.' })
@@ -140,15 +163,23 @@ export default function BrandOnboarding() {
   return (
     <main className="container space-y-6">
       <h1 className="text-2xl font-bold">My Brand</h1>
+
+      {status === 'approved' && <Alert kind="success">Your brand is <b>approved</b>. You’ll be able to add products in the next sprint.</Alert>}
+      {status === 'submitted' && <Alert kind="info">Submission <b>pending</b>. We’ll notify you after moderation.</Alert>}
+      {status === 'needs_changes' && <Alert kind="error">Submission requires changes. Please update your brand info and resubmit.</Alert>}
+
       <Stepper steps={steps} />
       {message && <Alert kind={message.kind}>{message.text}</Alert>}
 
       {step === 1 && (
         <section className="card space-y-3 max-w-2xl">
           <label className="block text-sm">Brand name *</label>
-          <input className="w-full p-2 rounded bg-black/30 border border-white/10" value={brand.name} onChange={e=>setBrand({...brand, name:e.target.value})} placeholder="Global Hemp Service"/>
+          <input className="w-full p-2 rounded bg-black/30 border border-white/10"
+            value={brand.name}
+            onChange={e=>setBrand({...brand, name:e.target.value})}
+            placeholder="Brand name" />
           <label className="block text-sm">Tagline</label>
-          <input className="w-full p-2 rounded bg-black/30 border border-white/10" value={brand.tagline||''} onChange={e=>setBrand({...brand, tagline:e.target.value})} placeholder="Hemp-forward apparel"/>
+          <input className="w-full p-2 rounded bg-black/30 border border-white/10" value={brand.tagline||''} onChange={e=>setBrand({...brand, tagline:e.target.value})} placeholder="Short brand tagline"/>
           <label className="block text-sm">Short Description</label>
           <textarea className="w-full p-2 rounded bg-black/30 border border-white/10" rows={4} value={brand.description||''} onChange={e=>setBrand({...brand, description:e.target.value})} />
           <div className="flex items-center gap-2">
@@ -161,7 +192,8 @@ export default function BrandOnboarding() {
       {step === 2 && (
         <section className="card space-y-3 max-w-2xl">
           <label className="block text-sm">Category</label>
-          <select className="w-full p-2 rounded bg-black/30 border border-white/10" value={brand.category||'Fashion'} onChange={e=>setBrand({...brand, category: e.target.value as any})}>
+          <select className="w-full p-2 rounded bg-black/30 border border-white/10" value={brand.category||''} onChange={e=>setBrand({...brand, category: e.target.value as any})}>
+            <option value="">Select a category…</option>
             <option>Fashion</option>
             <option>Beauty</option>
             <option>Homeware</option>
@@ -174,7 +206,7 @@ export default function BrandOnboarding() {
           <input className="w-full p-2 rounded bg-black/30 border border-white/10" value={brand.website||''} onChange={e=>setBrand({...brand, website:e.target.value})} placeholder="https://example.com" />
           <div className="flex items-center gap-2">
             <button className="btn btn-outline" onClick={saveDraft} disabled={saving}>Save draft</button>
-            <button className="btn btn-primary" onClick={()=>setStep(3)} disabled={saving}>Next</button>
+            <button className="btn btn-primary" onClick={nextFromStep2} disabled={saving || !brand.category}>Next</button>
           </div>
         </section>
       )}
