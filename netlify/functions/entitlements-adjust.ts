@@ -1,4 +1,3 @@
-// netlify/functions/entitlements-adjust.ts
 import type { Handler } from '@netlify/functions'
 import jwt from 'jsonwebtoken'
 import { supabaseAdmin } from '../../lib/supabaseAdmin'
