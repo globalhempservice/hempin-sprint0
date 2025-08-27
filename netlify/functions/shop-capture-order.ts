@@ -1,26 +1,24 @@
 // netlify/functions/shop-capture-order.ts
 import type { Handler } from '@netlify/functions'
-import { paypalCaptureOrder } from '../../lib/paypal'
 import { supabaseAdmin } from '../../lib/supabaseAdmin'
+import { paypalCaptureOrder } from '../../lib/paypal'
 
 async function applyEntitlements(user_id: string, items: any[]) {
-  // Compute deltas
   let brandPage = false
   let productSlots = 0
   let popupBkk = false
   let popupExtras = 0
 
   for (const it of items) {
-    const pid = it.product_id
+    const code = it.product_id
     const qty = Number(it.qty || 1)
-    if (pid === 'brand_page') brandPage = true
-    if (pid === 'product') productSlots += 1 * qty
-    if (pid === 'bundle_1b5p') { brandPage = true; productSlots += 5 * qty }
-    if (pid === 'popup_bkk_2025') { brandPage = true; productSlots += 5 * qty; popupBkk = true }
-    if (pid === 'popup_extra') { productSlots += 1 * qty; popupExtras += 1 * qty }
+    if (code === 'brand_page') brandPage = true
+    if (code === 'product') productSlots += 1 * qty
+    if (code === 'bundle_1b5p') { brandPage = true; productSlots += 5 * qty }
+    if (code === 'popup_bkk_2025') { brandPage = true; productSlots += 5 * qty; popupBkk = true }
+    if (code === 'popup_extra') { productSlots += 1 * qty; popupExtras += 1 * qty }
   }
 
-  // Upsert entitlements
   const { data } = await supabaseAdmin.from('entitlements').select('*').eq('user_id', user_id).maybeSingle()
   if (!data) {
     await supabaseAdmin.from('entitlements').insert({
@@ -46,8 +44,8 @@ export const handler: Handler = async (event) => {
     const { orderID } = JSON.parse(event.body || '{}')
     if (!orderID) return { statusCode: 400, body: 'Missing orderID' }
 
-    const cap = await paypalCaptureOrder(orderID)
-    // Extract buyer and items from our local order
+    await paypalCaptureOrder(orderID)
+
     const { data: orderRow } = await supabaseAdmin.from('orders').select('*').eq('paypal_order_id', orderID).maybeSingle()
     if (!orderRow) return { statusCode: 404, body: 'Order not found' }
 
@@ -56,16 +54,10 @@ export const handler: Handler = async (event) => {
       captured_at: new Date().toISOString()
     }).eq('paypal_order_id', orderID)
 
-    if (orderRow.user_id) {
-      await applyEntitlements(orderRow.user_id, orderRow.items || [])
-    }
+    if (orderRow.user_id) await applyEntitlements(orderRow.user_id, orderRow.items || [])
 
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ success: true })
-    }
-  } catch (e: any) {
+    return { statusCode: 200, body: JSON.stringify({ success: true }) }
+  } catch (e:any) {
     return { statusCode: 500, body: e.message || 'Server error' }
   }
 }
