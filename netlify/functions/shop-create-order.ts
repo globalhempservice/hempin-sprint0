@@ -1,40 +1,47 @@
 // netlify/functions/shop-create-order.ts
 import type { Handler } from '@netlify/functions'
-import { priceFor, staticPriceUSD } from '../../lib/pricing'
-import { paypalCreateOrder } from '../../lib/paypal'
 import { supabaseAdmin } from '../../lib/supabaseAdmin'
+import { paypalCreateOrder } from '../../lib/paypal'
+import { todayParis, priceFromRules } from '../../lib/pricing'
 
-function todayParis(): string {
-  const now = new Date()
-  // naive: format YYYY-MM-DD in Europe/Paris; for scaffold it's okay
-  const y = now.getFullYear()
-  const m = String(now.getMonth()+1).padStart(2,'0')
-  const d = String(now.getDate()).padStart(2,'0')
-  return `${y}-${m}-${d}`
+type Body = {
+  user_id: string
+  items: { code: string, qty?: number }[]
 }
 
 export const handler: Handler = async (event) => {
   try {
     if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' }
-    const { user_id, items, returnUrl } = JSON.parse(event.body || '{}')
-    if (!Array.isArray(items) || items.length === 0) return { statusCode: 400, body: 'No items' }
+    const body = JSON.parse(event.body || '{}') as Body
+    if (!body.user_id) return { statusCode: 400, body: 'Missing user_id' }
+    if (!Array.isArray(body.items) || body.items.length === 0) return { statusCode: 400, body: 'No items' }
+
+    const codes = body.items.map(i => i.code)
+    const { data: pkgs, error } = await supabaseAdmin
+      .from('packages')
+      .select('code,title,base_price_cents,meta')
+      .in('code', codes)
+    if (error) throw error
 
     const today = todayParis()
     let total = 0
-    const normalized = items.map((it: any) => {
-      const pid = it.product_id as string
-      const qty = Number(it.qty || 1)
-      const unit = pid === 'popup_bkk_2025' ? priceFor('popup_bkk_2025', today) : staticPriceUSD(pid as any)
-      total += unit * qty
-      return { product_id: pid, qty, unit_price_usd: unit }
-    })
+    const normalized:any[] = []
 
-    const order = await paypalCreateOrder(total, 'USD', returnUrl)
+    for (const it of body.items) {
+      const pkg = pkgs?.find(p => p.code === it.code)
+      if (!pkg) throw new Error(`Package not found: ${it.code}`)
+      const qty = Number(it.qty || 1)
+      const rules = (pkg.meta && pkg.meta.date_rules) ? pkg.meta.date_rules : null
+      const priced = priceFromRules(pkg.base_price_cents, rules, today)
+      total += priced.price_cents * qty
+      normalized.push({ product_id: pkg.code, qty, unit_price_usd: priced.price_cents })
+    }
+
+    const order = await paypalCreateOrder(total, 'USD')
     const paypal_order_id = order.id
 
-    // Persist local order
     await supabaseAdmin.from('orders').insert({
-      user_id,
+      user_id: body.user_id,
       paypal_order_id,
       status: 'created',
       amount_usd: total,
@@ -45,9 +52,9 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderID: paypal_order_id, links: order.links })
+      body: JSON.stringify({ orderID: paypal_order_id })
     }
-  } catch (e: any) {
+  } catch (e:any) {
     return { statusCode: 500, body: e.message || 'Server error' }
   }
 }
