@@ -1,108 +1,54 @@
 // pages/shop.tsx
-import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import Head from 'next/head'
+import Countdown from '../components/Countdown'
+import BuyButton from '../components/BuyButton'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
-declare global {
-  interface Window { paypal: any }
-}
-
-function loadPayPalSdk(clientId: string) {
-  return new Promise<void>((resolve, reject) => {
-    if (window.paypal) return resolve()
-    const s = document.createElement('script')
-    s.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&intent=capture`
-    s.onload = () => resolve()
-    s.onerror = () => reject(new Error('Failed to load PayPal SDK'))
-    document.body.appendChild(s)
-  })
-}
-
-export default function Shop() {
-  const [busy, setBusy] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [orderID, setOrderID] = useState<string | null>(null)
-  const [selectedCode, setSelectedCode] = useState<string | null>(null)
-
-  const buy = async (code: string) => {
-    setError(null); setBusy(code); setSelectedCode(code)
-    // ensure user is signed in to associate the order
-    const { data } = await supabase.auth.getSession()
-    const userId = data.session?.user?.id
-    if (!userId) { setBusy(null); setError('Please sign in first'); return }
-
-    // create order on server
-    const resp = await fetch('/.netlify/functions/shop-create-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, items: [{ code, qty: 1 }] })
-    })
-    if (!resp.ok) { setBusy(null); setError('Create order failed'); return }
-    const { orderID } = await resp.json()
-    setOrderID(orderID)
-
-    // load PayPal SDK and render button
-    try {
-      await loadPayPalSdk(process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!)
-      const containerId = 'paypal-buttons'
-      const el = document.getElementById(containerId)
-      if (el) el.innerHTML = ''
-      window.paypal.Buttons({
-        createOrder: () => orderID,
-        onApprove: async (data: any) => {
-          await fetch('/.netlify/functions/shop-capture-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderID: data.orderID })
-          })
-          window.location.href = '/account/billing?success=1&order=' + data.orderID
-        },
-        onError: (err: any) => setError('PayPal error: ' + (err?.message || 'unknown'))
-      }).render('#' + containerId)
-    } catch (e:any) {
-      setError(e.message || 'PayPal SDK failed')
-    } finally {
-      setBusy(null)
-    }
-  }
+export default function ShopPage() {
+  const target = '2025-11-01T10:00:00+07:00'
 
   return (
-    <main className="container space-y-6">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold">Shop</h1>
-        <p className="opacity-80 text-sm">Bangkok kit closes after <b>2025-10-15</b>. Shipping deadline: <b>2025-10-25</b>.</p>
-      </header>
+    <>
+      <Head>
+        <title>Hemp’in Shop — Kits & Pages</title>
+        <meta name="description" content="Join the Bangkok 2025 pop-up, claim your brand page, and add product slots." />
+      </Head>
 
-      {error && <div className="card border border-red-500/40 text-red-300">{error}</div>}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {[
-          { code:'brand_page', title:'Brand page', price:'$50' },
-          { code:'product', title:'Single product page', price:'$20' },
-          { code:'bundle_1b5p', title:'Special Offer: 1 brand + 5 products', price:'$100' },
-          { code:'popup_bkk_2025', title:'Pop-up kit (Bangkok 2025) — auto-priced by date', price:'$300/$400/$500' },
-          { code:'popup_extra', title:'Pop-up extra', price:'$100' }
-        ].map(it => (
-          <div key={it.code} className="card space-y-2">
-            <h2 className="text-lg font-semibold">{it.title}</h2>
-            <p className="opacity-80 text-sm">Price: {it.price}</p>
-            <button className="btn btn-primary" disabled={busy===it.code} onClick={() => buy(it.code)}>
-              {busy===it.code ? 'Preparing…' : 'Buy'}
-            </button>
+      <section className="relative overflow-hidden">
+        <div className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">
+          <h1 className="text-4xl font-semibold sm:text-5xl">Join <span className="text-emerald-400">Bangkok 2025</span></h1>
+          <p className="mx-auto mt-4 max-w-2xl text-zinc-400">
+            Reserve your spot, build your brand page, and add product slots. Limited cohort. Clear deadlines.
+          </p>
+          <div className="mt-6 inline-block">
+            <Countdown target={target} label="Opens in" />
           </div>
-        ))}
-      </div>
+        </div>
+      </section>
 
-      {orderID && selectedCode && (
-        <section className="card space-y-2">
-          <h3 className="font-semibold">Complete your payment</h3>
-          <div id="paypal-buttons" />
-        </section>
-      )}
-    </main>
+      <section className="mx-auto max-w-6xl px-6 pb-12">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <Offer emoji="🏷️" title="Brand Page" price="$50" body="A polished page for your brand." cta={<BuyButton productId="brand" />} features={['Custom profile','Images & story']} />
+          <Offer emoji="🧪" title="Single Product Page" price="$20" body="One product slot linked to your brand." cta={<BuyButton productId="product" />} features={['1 product slot','QR code']} />
+          <Offer emoji="🎁" title="Special Offer" price="$100" body="Bundle: brand page + 5 product pages." cta={<BuyButton productId="bundle_1brand_5products" />} features={['Brand page','5 products']} />
+          <Offer emoji="🎪" title="Bangkok Pop-up Kit" price="$300–$500" body="Join the showcase in Bangkok with 5 products." cta={<BuyButton productId="popup_kit" label="Reserve a Kit" />} features={['5 exhibited products','Venue placement']} />
+          <Offer emoji="➕" title="Pop-up Extra" price="$100" body="Add one more exhibited product + page." cta={<BuyButton productId="popup_extra" />} features={['+1 product','+1 page']} />
+        </div>
+      </section>
+    </>
+  )
+}
+
+function Offer({emoji,title,price,body,cta,features}:{emoji:string,title:string,price:string,body:string,cta:React.ReactNode,features:string[]}){
+  return(
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5 flex flex-col">
+      <div className="text-3xl">{emoji}</div>
+      <h3 className="mt-2 text-lg font-semibold">{title}</h3>
+      <div className="text-emerald-400 font-medium">{price}</div>
+      <p className="mt-2 text-sm text-zinc-400">{body}</p>
+      <ul className="mt-3 space-y-1 text-sm text-zinc-300">
+        {features.map((f) => <li key={f}>• {f}</li>)}
+      </ul>
+      <div className="mt-4">{cta}</div>
+    </div>
   )
 }
