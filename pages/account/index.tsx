@@ -1,77 +1,83 @@
-
+// pages/account/index.tsx
+import Head from 'next/head'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabaseClient'
+import AppShell from '../../components/AppShell'
+import AccountProgress from '../../components/AccountProgress'
+import BrandPreviewCard from '../../components/BrandPreviewCard'
 
-export default function Account() {
-  const [email, setEmail] = useState('')
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+export default function AccountHome() {
+  const [email, setEmail] = useState<string | null>(null)
+  const [brand, setBrand] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const init = async () => {
-      const { data } = await supabase.auth.getSession()
-      const u = data.session?.user ?? null
-      setUser(u)
-      if (!u) return
-      // Fetch role and redirect admins straight to /admin
-      const { data: prof } = await supabase.from('profiles').select('role').eq('id', u.id).maybeSingle()
-      if (prof?.role === 'admin') router.replace('/admin')
-    }
-    init()
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const u = session?.user ?? null
-      setUser(u)
-      if (u) {
-        const { data: prof } = await supabase.from('profiles').select('role').eq('id', u.id).maybeSingle()
-        if (prof?.role === 'admin') router.replace('/admin')
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setEmail(user?.email ?? null)
+      if (user) {
+        // Try to fetch a brand owned by this user (adjust column name if different in your schema)
+        const { data } = await supabase
+          .from('brands')
+          .select('name,description,category,website_url,hero_image_url,logo_url,slug')
+          .eq('owner_id', user.id)
+          .maybeSingle()
+        setBrand(data || null)
       }
-    })
-    return () => { authListener.subscription.unsubscribe() }
-  }, [router])
+      setLoading(false)
+    })()
+  }, [])
 
-  const signIn = async (e: any) => {
-    e.preventDefault()
-    setLoading(true)
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/account` : undefined }
-    })
-    setLoading(false)
-    if (error) alert(error.message)
-    else alert('Check your email for the magic link.')
-  }
-
-  const signOut = async () => { await supabase.auth.signOut() }
+  const tasks = [
+    { label: 'Create your brand basics', done: !!brand?.name, href: '/account/brand' },
+    { label: 'Upload a hero image & logo', done: !!brand?.hero_image_url && !!brand?.logo_url, href: '/account/brand' },
+    { label: 'Write your brand story', done: !!brand?.description, href: '/account/brand' },
+    { label: 'Add at least 1 product page', done: false, href: '/account/products' },
+    { label: 'Choose your kit or slots', done: false, href: '/shop' },
+  ]
 
   return (
-    <main className="container space-y-6">
-      <h1 className="text-2xl font-bold">Account</h1>
-      {!user ? (
-        <form onSubmit={signIn} className="card space-y-3 max-w-md">
-          <label className="block text-sm">Email</label>
-          <input
-            className="w-full p-2 rounded bg-black/30 border border-white/10"
-            type="email"
-            value={email}
-            onChange={(e)=>setEmail(e.target.value)}
-            required
-          />
-          <button className="btn btn-primary" disabled={loading}>
-            {loading ? 'Sending...' : 'Send magic link'}
-          </button>
-        </form>
-      ) : (
-        <div className="space-y-3">
-          <div className="card">
-            <p className="text-sm opacity-80">Signed in as</p>
-            <p className="font-semibold">{user.email}</p>
+    <AppShell>
+      <Head>
+        <title>Account — Hemp’in</title>
+      </Head>
+
+      <div className="max-w-6xl mx-auto">
+        {/* Welcome hero inside account */}
+        <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent p-6 md:p-8 mb-8">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <div className="text-sm text-zinc-400">Welcome{email ? `, ${email}` : ''}</div>
+              <h1 className="text-2xl md:text-3xl font-semibold mt-1">Let’s build your brand presence 🌿</h1>
+              <p className="text-zinc-400 mt-2">Complete the steps below and you’ll be ready for our Bangkok launch.</p>
+            </div>
+            <a href="/shop" className="rounded-xl bg-emerald-500 px-4 py-2 font-medium text-emerald-950 hover:bg-emerald-400">
+              Get a kit / slots
+            </a>
           </div>
-          <a className="btn btn-outline" href="/account/brand">Go to My Brand</a>
-          <button className="btn btn-outline" onClick={signOut}>Sign out</button>
         </div>
-      )}
-    </main>
+
+        {/* Two-column layout */}
+        <div className="grid gap-6 md:grid-cols-5">
+          <div className="md:col-span-3 space-y-6">
+            <AccountProgress items={tasks} />
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+              <h3 className="text-lg font-semibold">Quick links</h3>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <a href="/account/brand" className="rounded-lg border border-zinc-800 hover:border-zinc-600 px-3 py-2 text-sm">Edit brand</a>
+                <a href="/account/billing" className="rounded-lg border border-zinc-800 hover:border-zinc-600 px-3 py-2 text-sm">Billing & entitlements</a>
+                <a href="/account/products" className="rounded-lg border border-zinc-800 hover:border-zinc-600 px-3 py-2 text-sm">Products (test)</a>
+                <a href="/shop" className="rounded-lg border border-zinc-800 hover:border-zinc-600 px-3 py-2 text-sm">Shop</a>
+              </div>
+            </div>
+          </div>
+
+          <div className="md:col-span-2">
+            <h3 className="mb-3 text-lg font-semibold">Live preview</h3>
+            <BrandPreviewCard brand={brand} />
+          </div>
+        </div>
+      </div>
+    </AppShell>
   )
 }
