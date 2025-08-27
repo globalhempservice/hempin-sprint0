@@ -1,0 +1,63 @@
+
+import { useEffect, useState } from 'react'
+import { supabase } from '../../lib/supabaseClient'
+import { useRouter } from 'next/router'
+
+export default function Admin() {
+  const [user, setUser] = useState<any>(null)
+  const [items, setItems] = useState<any[]>([])
+  const router = useRouter()
+
+  useEffect(() => {
+    const init = async () => {
+      const { data } = await supabase.auth.getSession()
+      const u = data.session?.user ?? null
+      setUser(u)
+      if (!u) { router.replace('/account'); return }
+      const { data: prof } = await supabase.from('profiles').select('role').eq('id', u.id).maybeSingle()
+      if (prof?.role !== 'admin') { router.replace('/'); return }
+      const { data: subs } = await supabase
+        .from('submissions')
+        .select('id,status,submitted_at,notes_user,brand:brands(name,slug,category,approved,owner_id)')
+        .order('submitted_at', { ascending:false })
+      setItems(subs || [])
+    }
+    init()
+  }, [router])
+
+  const approveBrand = async (slug:string) => {
+    const { error } = await supabase.from('brands').update({ approved: true }).eq('slug', slug)
+    if (error) alert(error.message)
+    else alert('Brand approved')
+  }
+
+  const markNeedsChanges = async (id:string) => {
+    const { error } = await supabase.from('submissions').update({ status: 'needs_changes' }).eq('id', id)
+    if (error) alert(error.message)
+    else alert('Submission marked as needs changes')
+  }
+
+  return (
+    <main className="container space-y-6">
+      <h1 className="text-2xl font-bold">Admin – Pending Submissions</h1>
+      <div className="grid gap-3">
+        {items.map((it) => (
+          <div key={it.id} className="card">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="font-semibold">{it.brand?.name || '(no name)'}</div>
+                <div className="text-xs opacity-70">/{it.brand?.slug} • {it.brand?.category} • Approved: {String(it.brand?.approved)}</div>
+                <div className="text-xs opacity-80 mt-1">Notes: {it.notes_user || '—'}</div>
+              </div>
+              <div className="space-x-2">
+                <button className="btn btn-outline" onClick={()=>markNeedsChanges(it.id)}>Needs changes</button>
+                <button className="btn btn-primary" onClick={()=>approveBrand(it.brand?.slug)}>Approve</button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {items.length===0 && <p className="opacity-70">No submissions yet.</p>}
+      </div>
+    </main>
+  )
+}
