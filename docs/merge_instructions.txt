@@ -1,0 +1,32 @@
+HEMPIN patch: sidebar + entitlements adjust + products harness
+
+What changed
+------------
+• components/AppShell.tsx:
+  - Left sidebar with strong defaults for Account and Admin.
+  - "Log out" button calls supabase.auth.signOut() and returns to '/'.
+
+• netlify/functions/entitlements-adjust.ts:
+  - Verifies Supabase access JWT from `Authorization: Bearer <token>` (no secret needed).
+  - Upserts/adjusts entitlements.product_slots for the current user (never below 0).
+
+• pages/account/products/index.tsx:
+  - Simple test harness to decrement/increment product_slots through the Netlify function.
+  - Shows live slot count and any error text.
+
+Required pre‑reqs
+-----------------
+• Your project already has lib/supabaseClient.ts and lib/supabaseAdmin.ts.
+  NOTE: The Netlify function imports supabaseAdmin via '../../lib/supabaseAdmin' (correct relative path).
+
+Local test
+----------
+npm run dev
+- Visit /account/products
+- Click "Use 1 slot" / "Release 1 slot" while signed in.
+- Check Supabase -> entitlements table to see product_slots change.
+
+Deploy flow
+-----------
+- Push a feature branch and PR into `staging` as usual.
+- Netlify will build and deploy; test on staging.

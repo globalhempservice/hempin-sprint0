@@ -1,58 +1,88 @@
-import { useState } from 'react'
-import { useRouter } from 'next/router'
-import { useAuthGuard } from '../../../lib/authGuard'
-import { useEntitlements } from '../../../lib/useEntitlements'
+// pages/account/products/index.tsx
+import { useEffect, useState } from 'react'
+import AppShell from '../../../components/AppShell'
+import { supabase } from '../../../lib/supabaseClient'
 
 export default function ProductsHarness() {
-  const ready = useAuthGuard()
-  const router = useRouter()
-  const { data, loading } = useEntitlements()
-  const [msg, setMsg] = useState<string | null>(null)
+  const [slots, setSlots] = useState<number | null>(null)
+  const [msg, setMsg] = useState<string>('')
+  const [loading, setLoading] = useState<boolean>(false)
 
-  if (!ready) return null
+  useEffect(() => {
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setMsg('Please sign in.')
+        return
+      }
+      const { data, error } = await supabase
+        .from('entitlements')
+        .select('product_slots')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      if (error) setMsg(error.message)
+      setSlots((data as any)?.product_slots ?? 0)
+    })()
+  }, [])
 
-  async function callAdjust(action: 'decrement' | 'increment') {
-    setMsg(null)
-    const res = await fetch('/.netlify/functions/entitlements-adjust', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action }),
-    })
-    if (!res.ok) {
-      const t = await res.text()
-      setMsg(t || 'Failed')
-      return
+  async function adjust(action: 'decrement' | 'increment') {
+    setMsg('')
+    setLoading(true)
+    try {
+      const { data: session } = await supabase.auth.getSession()
+      const access = session.session?.access_token
+      const res = await fetch('/.netlify/functions/entitlements-adjust', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          ...(access ? { Authorization: `Bearer ${access}` } : {}),
+        } as any,
+        body: JSON.stringify({ action }),
+      })
+      if (!res.ok) {
+        const text = await res.text()
+        setMsg(text || 'Request failed')
+        return
+      }
+      const json = await res.json()
+      setSlots(json?.entitlements?.product_slots ?? 0)
+    } catch (e: any) {
+      setMsg(e?.message || 'Error')
+    } finally {
+      setLoading(false)
     }
-    setMsg('OK')
-    router.replace(router.asPath) // refresh page
   }
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-semibold mb-4">Products (test harness)</h1>
+    <AppShell>
+      <div className="max-w-xl mx-auto px-4 py-8">
+        <h1 className="text-2xl font-semibold mb-4">Products (test harness)</h1>
+        <div className="border border-neutral-800 rounded p-4">
+          <p className="mb-3">
+            Available product slots:{' '}
+            <span className="font-semibold">{slots ?? '—'}</span>
+          </p>
 
-      {loading && <div>Loading…</div>}
-      {data && (
-        <div className="rounded-xl border border-white/10 p-4">
-          <div className="mb-3">Available product slots: <b>{data.product_slots}</b></div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <button
-              onClick={() => callAdjust('decrement')}
-              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm disabled:opacity-50"
-              disabled={data.product_slots <= 0}
+              onClick={() => adjust('decrement')}
+              disabled={loading}
+              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 rounded px-3 py-1"
             >
               Use 1 slot (simulate publish)
             </button>
             <button
-              onClick={() => callAdjust('increment')}
-              className="px-3 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-500 text-white text-sm"
+              onClick={() => adjust('increment')}
+              disabled={loading}
+              className="bg-neutral-700 hover:bg-neutral-600 disabled:opacity-60 rounded px-3 py-1"
             >
               Release 1 slot (simulate delete)
             </button>
           </div>
-          {msg && <div className="mt-3 text-sm opacity-80">{msg}</div>}
+
+          {msg && <p className="mt-3 text-sm text-red-400">{msg}</p>}
         </div>
-      )}
-    </div>
+      </div>
+    </AppShell>
   )
 }
