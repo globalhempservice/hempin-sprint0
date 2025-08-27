@@ -40,14 +40,15 @@ export const handler: Handler = async (event) => {
     const order = await paypalCreateOrder(total, 'USD')
     const paypal_order_id = order.id
 
-    await supabaseAdmin.from('orders').insert({
-      user_id: body.user_id,
-      paypal_order_id,
-      status: 'created',
-      amount_usd: total,
-      currency: 'USD',
-      items: normalized
-    })
+   const { error: insertErr } = await supabaseAdmin.from('orders').insert({
+  user_id: body.user_id,
+  paypal_order_id,
+  status: 'created',
+  total_cents: total,
+  currency: 'USD',
+  items: normalized
+});
+if (insertErr) throw insertErr;
 
     return {
       statusCode: 200,
