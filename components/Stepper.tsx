@@ -1,6 +1,4 @@
 
-import { ReactNode } from 'react'
-
 type Step = {
   id: number
   title: string
