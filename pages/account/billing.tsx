@@ -1,102 +1,96 @@
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
-import { supabase } from '../../lib/supabaseClient'
 import { useAuthGuard } from '../../lib/authGuard'
+import { useEntitlements } from '../../lib/useEntitlements'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { supabase } from '../../lib/supabaseClient'
 
-type Order = {
+type OrderRow = {
   id: string
   status: string
-  total_cents: number | null
-  currency: string | null
+  total_cents: number
+  currency: string
+  paypal_order_id: string
   created_at: string
-  paypal_order_id: string | null
 }
 
-type Ent = {
-  brand_page: boolean
-  product_slots: number
-  popup_bkk_2025: boolean
-  popup_extras: number
-}
-
-export default function Billing() {
-  const ready = useAuthGuard() // redirects to /account login if not authenticated
-  const router = useRouter()
-  const [orders, setOrders] = useState<Order[] | null>(null)
-  const [ent, setEnt] = useState<Ent | null>(null)
-  const [err, setErr] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+export default function BillingPage() {
+  const ready = useAuthGuard()
+  const entHook = useEntitlements()
+  const [orders, setOrders] = useState<OrderRow[]>([])
 
   useEffect(() => {
-    if (!ready) return
     ;(async () => {
-      try {
-        const { data: { user }, error: uErr } = await supabase.auth.getUser()
-        if (uErr || !user) {
-          router.replace('/account')
-          return
-        }
-
-        const [{ data: oData, error: oErr }, { data: eData, error: eErr }] = await Promise.all([
-          supabase.from('orders')
-            .select('id,status,total_cents,currency,created_at,paypal_order_id')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false }),
-          supabase.from('entitlements')
-            .select('brand_page,product_slots,popup_bkk_2025,popup_extras')
-            .eq('user_id', user.id)
-            .maybeSingle(),
-        ])
-
-        if (oErr) throw oErr
-        if (eErr) throw eErr
-
-        setOrders(oData || [])
-        setEnt((eData as any) || { brand_page: false, product_slots: 0, popup_bkk_2025: false, popup_extras: 0 })
-      } catch (e: any) {
-        setErr(e?.message || 'Failed to load billing info.')
-      } finally {
-        setLoading(false)
-      }
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id,status,total_cents,currency,paypal_order_id,created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      if (!error && data) setOrders(data as any)
     })()
-  }, [ready, router])
+  }, [])
+
+  if (!ready) return null
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-semibold mb-4">Billing & Entitlements</h1>
+    <div className="max-w-3xl mx-auto px-4 py-10">
+      <h1 className="text-2xl font-semibold mb-6">Billing &amp; Entitlements</h1>
 
-      {err && <div className="mb-4 rounded-md bg-red-500/15 border border-red-500/30 px-3 py-2 text-red-300">{err}</div>}
-      {loading && <div className="opacity-70">Loading…</div>}
-
-      {ent && (
+      {/* === Entitlements CTA Section === */}
+      {entHook.data && (
         <div className="mb-8 rounded-xl border border-white/10 p-4">
-          <h2 className="font-medium mb-2">Current entitlements</h2>
-          <ul className="space-y-1 text-sm opacity-90">
-            <li>Brand page: {ent.brand_page ? '✅ enabled' : '—'}</li>
-            <li>Product slots: {ent.product_slots}</li>
-            <li>Bangkok Pop-up 2025: {ent.popup_bkk_2025 ? '✅ included' : '—'}</li>
-            <li>Pop-up extras: {ent.popup_extras}</li>
+          <div className="flex items-center justify-between">
+            <h2 className="font-medium">Current entitlements</h2>
+            {entHook.data.product_slots > 0 ? (
+              <Link
+                href="/account/products"
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm"
+              >
+                Create product
+              </Link>
+            ) : (
+              <Link
+                href="/shop"
+                className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm"
+              >
+                Get more product slots
+              </Link>
+            )}
+          </div>
+          <ul className="mt-3 space-y-1 text-sm opacity-90">
+            <li>Brand page: {entHook.data.brand_page ? '✅ enabled' : '—'}</li>
+            <li>Product slots: {entHook.data.product_slots}</li>
+            <li>Bangkok Pop-up 2025: {entHook.data.popup_bkk_2025 ? '✅ included' : '—'}</li>
+            <li>Pop-up extras: {entHook.data.popup_extras}</li>
           </ul>
         </div>
       )}
 
+      {/* === Purchase history === */}
       <div className="rounded-xl border border-white/10 p-4">
-        <h2 className="font-medium mb-2">Purchase history</h2>
-        {!orders?.length && <div className="text-sm opacity-70">No orders yet.</div>}
-        <div className="divide-y divide-white/10">
-          {orders?.map((o) => (
-            <div key={o.id} className="py-3 flex items-center justify-between text-sm">
-              <div className="space-y-0.5">
-                <div className="font-medium">{o.status.toUpperCase()}</div>
-                <div className="opacity-70">{new Date(o.created_at).toLocaleString()}</div>
-                {o.paypal_order_id && <div className="opacity-60">PP ID: {o.paypal_order_id}</div>}
+        <h2 className="font-medium mb-3">Purchase history</h2>
+        {orders.length === 0 && (
+          <div className="text-sm opacity-80">No purchases yet.</div>
+        )}
+        <ul className="space-y-3">
+          {orders.map((o) => (
+            <li key={o.id} className="flex justify-between items-center text-sm">
+              <div>
+                <div className="uppercase text-xs font-semibold">{o.status}</div>
+                <div className="opacity-80">
+                  {new Date(o.created_at).toLocaleString()}
+                </div>
+                <div className="opacity-50 text-xs">
+                  PP ID: {o.paypal_order_id}
+                </div>
               </div>
               <div className="font-medium">
-                {o.total_cents != null ? `$${(o.total_cents / 100).toFixed(2)}` : '—'} {o.currency || ''}
+                ${(o.total_cents / 100).toFixed(2)} {o.currency}
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </div>
   )
