@@ -15,10 +15,10 @@ export default function Home() {
           <p>Get a brand page and product pages, join the Bangkok pop‑up, and be discovered.</p>
           <div className="space-x-2">
             <Link href="/account">
-              <span className="btn btn-primary">Get started</span>
+              <span className="btn btn-primary">Sign in</span>
             </Link>
-            <Link href="/shop">
-              <span className="btn btn-outline">View packages</span>
+            <Link href="/account/brand">
+              <span className="btn btn-outline">My Brand setup</span>
             </Link>
           </div>
         </div>
@@ -27,6 +27,7 @@ export default function Home() {
           <p>Categories: Fashion, Beauty, Homeware, Food & Drinks, Wellness, Innovation.</p>
           <div className="space-x-2">
             <Link href="/directory"><span className="btn btn-outline">Directory</span></Link>
+            <Link href="/admin"><span className="btn btn-outline">Admin</span></Link>
           </div>
         </div>
       </div>
