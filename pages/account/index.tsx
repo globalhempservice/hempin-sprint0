@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
@@ -48,7 +47,6 @@ export default function Account() {
             <p className="text-sm opacity-80">Signed in as</p>
             <p className="font-semibold">{user.email}</p>
           </div>
-          <a className="btn btn-outline" href="/account/brand">Go to My Brand</a>
           <button className="btn btn-outline" onClick={signOut}>Sign out</button>
         </div>
       )}
