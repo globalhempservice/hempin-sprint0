@@ -1,6 +1,6 @@
 // netlify/functions/entitlements-adjust.ts
 import type { Handler } from '@netlify/functions'
-import { supabaseAdmin } from '../lib/supabaseAdmin'
+import { supabaseAdmin } from '../../lib/supabaseAdmin'
 
 // Body: { action: 'decrement' | 'increment' }
 export const handler: Handler = async (event) => {
