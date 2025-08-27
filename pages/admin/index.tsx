@@ -25,20 +25,21 @@ export default function Admin() {
     init()
   }, [router])
 
-  const approveBrand = async (slug:string, id:string) => {
-    const { error } = await supabase.from('brands').update({ approved: true }).eq('slug', slug)
-    if (error) alert(error.message)
+  const approveBrand = async (slug:string, submissionId:string) => {
+    const { error: e1 } = await supabase.from('brands').update({ approved: true }).eq('slug', slug)
+    const { error: e2 } = await supabase.from('submissions').update({ status: 'approved' }).eq('id', submissionId)
+    if (e1 || e2) alert((e1||e2)?.message)
     else {
-      setItems(list => list.filter(i => i.id !== id)) // remove card
+      setItems(list => list.filter(i => i.id !== submissionId)) // remove card
       alert('Brand approved')
     }
   }
 
-  const markNeedsChanges = async (id:string) => {
-    const { error } = await supabase.from('submissions').update({ status: 'needs_changes' }).eq('id', id)
+  const markNeedsChanges = async (submissionId:string) => {
+    const { error } = await supabase.from('submissions').update({ status: 'needs_changes' }).eq('id', submissionId)
     if (error) alert(error.message)
     else {
-      setItems(list => list.filter(i => i.id !== id)) // remove card
+      setItems(list => list.filter(i => i.id !== submissionId)) // remove card
       alert('Marked as needs changes')
     }
   }

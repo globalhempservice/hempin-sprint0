@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../../lib/supabaseClient'
 import { useAuthGuard } from '../../../lib/authGuard'
 import { Stepper } from '../../../components/Stepper'
@@ -13,7 +13,10 @@ type BrandDraft = {
   description?: string
   category?: 'Fashion'|'Beauty'|'Homeware'|'Food & Drinks'|'Wellness'|'Innovation'|'Cannabis'|''
   website?: string
+  approved?: boolean
 }
+
+type Status = 'approved'|'submitted'|'needs_changes'|'none'
 
 export default function BrandOnboarding() {
   const { ready, user } = useAuthGuard()
@@ -21,30 +24,35 @@ export default function BrandOnboarding() {
   const [saving, setSaving] = useState(false)
   const [brand, setBrand] = useState<BrandDraft>({ name: '', slug: '', category: '' })
   const [notes, setNotes] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const [latestSubmissionStatus, setLatestSubmissionStatus] = useState<Status>('none')
   const [message, setMessage] = useState<{kind:'info'|'success'|'error', text:string}|null>(null)
-  const [status, setStatus] = useState<'approved'|'submitted'|'needs_changes'|'none'>('none')
+
+  // Derived status: brand.approved wins, else latest submission status
+  const status: Status = useMemo(() => {
+    if (brand.approved) return 'approved'
+    return latestSubmissionStatus
+  }, [brand.approved, latestSubmissionStatus])
 
   useEffect(() => {
     if (!ready || !user) return
     const load = async () => {
-      const { data, error } = await supabase
+      const { data: b } = await supabase
         .from('brands')
         .select('*')
         .eq('owner_id', user.id)
         .limit(1)
         .maybeSingle()
-      if (!error && data) {
+      if (b) {
         setBrand({
-          id: data.id,
-          name: data.name || '',
-          slug: data.slug || '',
-          tagline: data.tagline || '',
-          description: data.description || '',
-          category: (data.category as any) || '',
-          website: data.website || ''
+          id: b.id,
+          name: b.name || '',
+          slug: b.slug || '',
+          tagline: b.tagline || '',
+          description: b.description || '',
+          category: (b.category as any) || '',
+          website: b.website || '',
+          approved: !!b.approved,
         })
-        if (data.approved) setStatus('approved')
       }
       const { data: sub } = await supabase
         .from('submissions')
@@ -53,8 +61,9 @@ export default function BrandOnboarding() {
         .order('submitted_at', { ascending:false })
         .limit(1)
       if (sub && sub.length) {
-        setStatus((sub[0].status as any) || 'none')
-        if (sub[0].status === 'submitted') setSubmitted(true)
+        setLatestSubmissionStatus((sub[0].status as Status) || 'none')
+      } else {
+        setLatestSubmissionStatus('none')
       }
     }
     load()
@@ -76,12 +85,12 @@ export default function BrandOnboarding() {
         category: brand.category || null,
         website: brand.website,
         owner_id: user.id,
-        approved: false,
+        approved: brand.approved ?? false,
         embargo_date: '2025-11-01'
       }
       const { data, error } = await supabase.from('brands').upsert(payload).select().single()
       if (error) throw error
-      setBrand(b => ({...b, id: data.id, slug: data.slug}))
+      setBrand(b => ({...b, id: data.id, slug: data.slug, approved: data.approved}))
       return data.id as string
     } finally {
       setSaving(false)
@@ -121,17 +130,16 @@ export default function BrandOnboarding() {
     setSaving(true)
     try {
       const brandId = await ensureDraft()
-      const { data: existing, error: exErr } = await supabase
+      // prevent duplicate active submission
+      const { data: existing } = await supabase
         .from('submissions')
         .select('id,status')
         .eq('brand_id', brandId)
         .in('status',['submitted','approved'])
         .limit(1)
-      if (exErr) throw exErr
       if (existing && existing.length) {
-        setSubmitted(true)
-        setStatus('submitted')
-        setMessage({ kind:'success', text:'Already submitted. We’ll review shortly.' })
+        setLatestSubmissionStatus(existing[0].status as Status)
+        setMessage({ kind:'info', text:'Already submitted. We’ll review shortly.' })
         return
       }
       const { error: subErr } = await supabase.from('submissions').insert({
@@ -142,8 +150,7 @@ export default function BrandOnboarding() {
         submitted_at: new Date().toISOString()
       })
       if (subErr) throw subErr
-      setSubmitted(true)
-      setStatus('submitted')
+      setLatestSubmissionStatus('submitted')
       setMessage({ kind:'success', text:'Submitted for review. You will be notified after moderation.' })
     } catch (e:any) {
       setMessage({ kind:'error', text: e?.message || 'Submit failed.' })
@@ -154,19 +161,27 @@ export default function BrandOnboarding() {
 
   if (!ready) return null
 
+  // Lock editing when submitted or approved; allow when needs_changes or none
+  const locked = status === 'submitted' || status === 'approved'
+
+  // Derive step completion from data
+  const step1Done = !!(brand.id && brand.name?.trim())
+  const step2Done = !!brand.category
+  const step3Done = status === 'submitted' || status === 'approved'
+
   const steps = [
-    { id:1, title:'Basics', current: step===1, completed: step>1 },
-    { id:2, title:'Category & Links', current: step===2, completed: step>2 },
-    { id:3, title:'Review & Submit', current: step===3, completed: submitted },
+    { id:1, title:'Basics', current: step===1, completed: step1Done },
+    { id:2, title:'Category & Links', current: step===2, completed: step2Done },
+    { id:3, title:'Review & Submit', current: step===3, completed: step3Done },
   ]
 
   return (
     <main className="container space-y-6">
       <h1 className="text-2xl font-bold">My Brand</h1>
 
-      {status === 'approved' && <Alert kind="success">Your brand is <b>approved</b>. You’ll be able to add products in the next sprint.</Alert>}
-      {status === 'submitted' && <Alert kind="info">Submission <b>pending</b>. We’ll notify you after moderation.</Alert>}
-      {status === 'needs_changes' && <Alert kind="error">Submission requires changes. Please update your brand info and resubmit.</Alert>}
+      {status === 'approved' && <Alert kind="success">Your brand is <b>approved</b>. Editing is locked. Product setup arrives next sprint.</Alert>}
+      {status === 'submitted' && <Alert kind="info">Submission <b>pending</b>. Editing is locked until moderation.</Alert>}
+      {status === 'needs_changes' && <Alert kind="error">Submission requires changes. Update your brand and resubmit.</Alert>}
 
       <Stepper steps={steps} />
       {message && <Alert kind={message.kind}>{message.text}</Alert>}
@@ -175,16 +190,22 @@ export default function BrandOnboarding() {
         <section className="card space-y-3 max-w-2xl">
           <label className="block text-sm">Brand name *</label>
           <input className="w-full p-2 rounded bg-black/30 border border-white/10"
+            disabled={locked}
             value={brand.name}
             onChange={e=>setBrand({...brand, name:e.target.value})}
             placeholder="Brand name" />
           <label className="block text-sm">Tagline</label>
-          <input className="w-full p-2 rounded bg-black/30 border border-white/10" value={brand.tagline||''} onChange={e=>setBrand({...brand, tagline:e.target.value})} placeholder="Short brand tagline"/>
+          <input className="w-full p-2 rounded bg-black/30 border border-white/10"
+            disabled={locked}
+            value={brand.tagline||''} onChange={e=>setBrand({...brand, tagline:e.target.value})}
+            placeholder="Short brand tagline"/>
           <label className="block text-sm">Short Description</label>
-          <textarea className="w-full p-2 rounded bg-black/30 border border-white/10" rows={4} value={brand.description||''} onChange={e=>setBrand({...brand, description:e.target.value})} />
+          <textarea className="w-full p-2 rounded bg-black/30 border border-white/10"
+            disabled={locked}
+            rows={4} value={brand.description||''} onChange={e=>setBrand({...brand, description:e.target.value})} />
           <div className="flex items-center gap-2">
-            <button className="btn btn-outline" onClick={saveDraft} disabled={saving}>Save draft</button>
-            <button className="btn btn-primary" onClick={nextStep} disabled={saving || !brand.name?.trim()}>Next</button>
+            <button className="btn btn-outline" onClick={saveDraft} disabled={saving || locked}>Save draft</button>
+            <button className="btn btn-primary" onClick={nextStep} disabled={saving || !brand.name?.trim() || locked}>Next</button>
           </div>
         </section>
       )}
@@ -192,7 +213,9 @@ export default function BrandOnboarding() {
       {step === 2 && (
         <section className="card space-y-3 max-w-2xl">
           <label className="block text-sm">Category</label>
-          <select className="w-full p-2 rounded bg-black/30 border border-white/10" value={brand.category||''} onChange={e=>setBrand({...brand, category: e.target.value as any})}>
+          <select className="w-full p-2 rounded bg-black/30 border border-white/10"
+            disabled={locked}
+            value={brand.category||''} onChange={e=>setBrand({...brand, category: e.target.value as any})}>
             <option value="">Select a category…</option>
             <option>Fashion</option>
             <option>Beauty</option>
@@ -203,10 +226,12 @@ export default function BrandOnboarding() {
             <option>Cannabis</option>
           </select>
           <label className="block text-sm">Website</label>
-          <input className="w-full p-2 rounded bg-black/30 border border-white/10" value={brand.website||''} onChange={e=>setBrand({...brand, website:e.target.value})} placeholder="https://example.com" />
+          <input className="w-full p-2 rounded bg-black/30 border border-white/10"
+            disabled={locked}
+            value={brand.website||''} onChange={e=>setBrand({...brand, website:e.target.value})} placeholder="https://example.com" />
           <div className="flex items-center gap-2">
-            <button className="btn btn-outline" onClick={saveDraft} disabled={saving}>Save draft</button>
-            <button className="btn btn-primary" onClick={nextFromStep2} disabled={saving || !brand.category}>Next</button>
+            <button className="btn btn-outline" onClick={saveDraft} disabled={saving || locked}>Save draft</button>
+            <button className="btn btn-primary" onClick={nextFromStep2} disabled={saving || !brand.category || locked}>Next</button>
           </div>
         </section>
       )}
@@ -220,11 +245,13 @@ export default function BrandOnboarding() {
             <li><b>Website:</b> {brand.website || '—'}</li>
           </ul>
           <label className="block text-sm mt-2">Notes to admin (optional)</label>
-          <textarea className="w-full p-2 rounded bg-black/30 border border-white/10" rows={3} value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Anything we should know?" />
+          <textarea className="w-full p-2 rounded bg-black/30 border border-white/10"
+            disabled={locked}
+            rows={3} value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Anything we should know?" />
           <div className="flex items-center gap-2">
-            <button className="btn btn-outline" onClick={saveDraft} disabled={saving}>Save draft</button>
-            <button className="btn btn-primary" onClick={submitForReview} disabled={saving || !brand.name?.trim()}>
-              {submitted ? 'Submitted ✓' : 'Submit for review'}
+            <button className="btn btn-outline" onClick={saveDraft} disabled={saving || locked}>Save draft</button>
+            <button className="btn btn-primary" onClick={submitForReview} disabled={saving || !brand.name?.trim() || locked}>
+              {status === 'submitted' ? 'Submitted ✓' : status === 'approved' ? 'Approved ✓' : 'Submit for review'}
             </button>
           </div>
         </section>
