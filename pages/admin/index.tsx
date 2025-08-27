@@ -25,16 +25,22 @@ export default function Admin() {
     init()
   }, [router])
 
-  const approveBrand = async (slug:string) => {
+  const approveBrand = async (slug:string, id:string) => {
     const { error } = await supabase.from('brands').update({ approved: true }).eq('slug', slug)
     if (error) alert(error.message)
-    else alert('Brand approved')
+    else {
+      setItems(list => list.filter(i => i.id !== id)) // remove card
+      alert('Brand approved')
+    }
   }
 
   const markNeedsChanges = async (id:string) => {
     const { error } = await supabase.from('submissions').update({ status: 'needs_changes' }).eq('id', id)
     if (error) alert(error.message)
-    else alert('Submission marked as needs changes')
+    else {
+      setItems(list => list.filter(i => i.id !== id)) // remove card
+      alert('Marked as needs changes')
+    }
   }
 
   return (
@@ -43,20 +49,20 @@ export default function Admin() {
       <div className="grid gap-3">
         {items.map((it) => (
           <div key={it.id} className="card">
-            <div className="flex justify-between items-center">
-              <div>
+            <div className="flex flex-wrap gap-3 justify-between items-start">
+              <div className="min-w-[200px]">
                 <div className="font-semibold">{it.brand?.name || '(no name)'}</div>
                 <div className="text-xs opacity-70">/{it.brand?.slug} • {it.brand?.category} • Approved: {String(it.brand?.approved)}</div>
                 <div className="text-xs opacity-80 mt-1">Notes: {it.notes_user || '—'}</div>
               </div>
-              <div className="space-x-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button className="btn btn-outline" onClick={()=>markNeedsChanges(it.id)}>Needs changes</button>
-                <button className="btn btn-primary" onClick={()=>approveBrand(it.brand?.slug)}>Approve</button>
+                <button className="btn btn-primary" onClick={()=>approveBrand(it.brand?.slug, it.id)}>Approve</button>
               </div>
             </div>
           </div>
         ))}
-        {items.length===0 && <p className="opacity-70">No submissions yet.</p>}
+        {items.length===0 && <p className="opacity-70">No submissions pending.</p>}
       </div>
     </main>
   )
