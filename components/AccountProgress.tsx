@@ -11,7 +11,7 @@ export default function AccountProgress({ items }: { items: { label: string; don
         <div className="text-sm text-zinc-400">{completed}/{total} complete</div>
       </div>
       <div className="mt-3 h-2 w-full overflow-hidden rounded bg-zinc-800">
-        <div className="h-full bg-emerald-500" style={{ width: pct + '%' }} />
+        <div className="h-full bg-emerald-500 transition-all" style={{ width: pct + '%' }} />
       </div>
       <ul className="mt-4 space-y-2 text-sm">
         {items.map((i) => (
