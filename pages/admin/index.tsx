@@ -1,48 +1,47 @@
-
-import { useEffect, useState } from 'react'
+// pages/admin/index.tsx
+import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { useRouter } from 'next/router'
+import { useAuthGuard } from '../../lib/authGuard'
 
 export default function Admin() {
-  const [user, setUser] = useState<any>(null)
+  // enforce auth + role
+  const { ready, isAllowed } = useAuthGuard({ requiredRole: 'admin' })
+
   const [items, setItems] = useState<any[]>([])
-  const router = useRouter()
 
   useEffect(() => {
-    const init = async () => {
-      const { data } = await supabase.auth.getSession()
-      const u = data.session?.user ?? null
-      setUser(u)
-      if (!u) { router.replace('/account'); return }
-      const { data: prof } = await supabase.from('profiles').select('role').eq('id', u.id).maybeSingle()
-      if (prof?.role !== 'admin') { router.replace('/'); return }
+    if (!isAllowed) return
+    const load = async () => {
       const { data: subs } = await supabase
         .from('submissions')
         .select('id,status,submitted_at,notes_user,brand:brands(name,slug,category,approved,owner_id)')
-        .order('submitted_at', { ascending:false })
+        .order('submitted_at', { ascending: false })
       setItems(subs || [])
     }
-    init()
-  }, [router])
+    load()
+  }, [isAllowed])
 
-  const approveBrand = async (slug:string, submissionId:string) => {
+  const approveBrand = async (slug: string, submissionId: string) => {
     const { error: e1 } = await supabase.from('brands').update({ approved: true }).eq('slug', slug)
     const { error: e2 } = await supabase.from('submissions').update({ status: 'approved' }).eq('id', submissionId)
-    if (e1 || e2) alert((e1||e2)?.message)
+    if (e1 || e2) alert((e1 || e2)?.message)
     else {
-      setItems(list => list.filter(i => i.id !== submissionId)) // remove card
+      setItems(list => list.filter(i => i.id !== submissionId))
       alert('Brand approved')
     }
   }
 
-  const markNeedsChanges = async (submissionId:string) => {
+  const markNeedsChanges = async (submissionId: string) => {
     const { error } = await supabase.from('submissions').update({ status: 'needs_changes' }).eq('id', submissionId)
     if (error) alert(error.message)
     else {
-      setItems(list => list.filter(i => i.id !== submissionId)) // remove card
+      setItems(list => list.filter(i => i.id !== submissionId))
       alert('Marked as needs changes')
     }
   }
+
+  if (!ready) return null      // waiting for guard
+  if (!isAllowed) return null  // guard will redirect
 
   return (
     <main className="container space-y-6">
@@ -57,13 +56,13 @@ export default function Admin() {
                 <div className="text-xs opacity-80 mt-1">Notes: {it.notes_user || '—'}</div>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
-                <button className="btn btn-outline" onClick={()=>markNeedsChanges(it.id)}>Needs changes</button>
-                <button className="btn btn-primary" onClick={()=>approveBrand(it.brand?.slug, it.id)}>Approve</button>
+                <button className="btn btn-outline" onClick={() => markNeedsChanges(it.id)}>Needs changes</button>
+                <button className="btn btn-primary" onClick={() => approveBrand(it.brand?.slug, it.id)}>Approve</button>
               </div>
             </div>
           </div>
         ))}
-        {items.length===0 && <p className="opacity-70">No submissions pending.</p>}
+        {items.length === 0 && <p className="opacity-70">No submissions pending.</p>}
       </div>
     </main>
   )
