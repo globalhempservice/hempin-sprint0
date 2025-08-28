@@ -1,109 +1,187 @@
 // pages/account/index.tsx
-import Head from 'next/head'
-import AppShell from '../../components/AppShell'
-import AccountProgress from '../../components/AccountProgress'
-import BrandPreviewCard from '../../components/BrandPreviewCard'
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { useBrand } from '../../lib/useBrand'
+import { loadGuestDraft, saveGuestDraft, clearGuestDraft } from '../../lib/guestDraft'
+import BrandPreviewCard from '../../components/BrandPreviewCard'
+import { LaunchChecklist } from '../../components/LaunchChecklist'
+import Link from 'next/link'
 
-type Entitlements = {
-  brand_page: boolean
-  product_slots: number
-  popup_bkk_2025: boolean
-  popup_extras: number
+type BrandRow = {
+  id: string
+  name: string | null
+  tagline: string | null
+  description: string | null
+  category: string | null
+  hero_url?: string | null
 }
 
-export default function AccountHome() {
-  const [email, setEmail] = useState<string | null>(null)
-  const { brand } = useBrand()
-  const [ent, setEnt] = useState<Entitlements | null>(null)
-  const [loading, setLoading] = useState(true)
+export default function AccountDashboard() {
+  const [userId, setUserId] = useState<string | null>(null)
+  const [brand, setBrand] = useState<BrandRow | null>(null)
+  const [guest, setGuest] = useState(loadGuestDraft())
+  const [email, setEmail] = useState('')
 
+  // Load session + brand (if signed in)
   useEffect(() => {
-    let sub: any
-    ;(async () => {
+    (async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      setEmail(user?.email ?? null)
-      if (user) {
-        // entitlements initial
-        const { data } = await supabase
-          .from('entitlements')
-          .select('brand_page,product_slots,popup_bkk_2025,popup_extras')
-          .eq('user_id', user.id)
-          .maybeSingle()
-        setEnt((data as any) ?? { brand_page:false, product_slots:0, popup_bkk_2025:false, popup_extras:0 })
+      setUserId(user?.id ?? null)
 
-        // realtime on entitlements for this user
-        sub = supabase
-          .channel('entitlements-changes')
-          .on('postgres_changes', {
-            event: '*',
-            schema: 'public',
-            table: 'entitlements',
-            filter: `user_id=eq.${user.id}`,
-          }, (payload) => {
-            if (payload.eventType === 'DELETE') setEnt({ brand_page:false, product_slots:0, popup_bkk_2025:false, popup_extras:0 })
-            else setEnt(payload.new as any)
+      if (user?.id) {
+        const { data } = await supabase.from('brands')
+          .select('id,name,tagline,description,category,hero_url')
+          .eq('owner_id', user.id).maybeSingle()
+        setBrand(data as any || null)
+
+        // If there’s a guest draft, merge it once
+        const draft = loadGuestDraft()
+        if (draft && (draft.name || draft.description || draft.category || draft.heroUrl)) {
+          await fetch('/api/merge-guest-draft', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: user.id, draft })
           })
-          .subscribe()
+          clearGuestDraft()
+          setGuest({})
+          const { data: fresh } = await supabase.from('brands')
+            .select('id,name,tagline,description,category,hero_url')
+            .eq('owner_id', user.id).maybeSingle()
+          setBrand(fresh as any || null)
+        }
       }
-      setLoading(false)
     })()
-
-    return () => { if (sub) supabase.removeChannel(sub) }
   }, [])
 
-  const tasks = useMemo(() => {
+  // Compose the “source of truth” for preview + checklist
+  const model = useMemo(() => {
+    if (brand) {
+      return {
+        name: brand.name ?? '',
+        tagline: brand.tagline ?? '',
+        description: brand.description ?? '',
+        category: brand.category ?? '',
+        heroUrl: brand.hero_url ?? undefined,
+        hasProduct: false, // TODO: compute from your real products
+      }
+    }
+    return guest
+  }, [brand, guest])
+
+  // Checklist
+  const items = useMemo(() => {
     return [
-      { label: 'Create your brand basics', done: !!brand?.name, href: '/account/brand' },
-      { label: 'Upload a hero image & logo', done: !!brand?.hero_image_url && !!brand?.logo_url, href: '/account/brand' },
-      { label: 'Write your brand story', done: !!brand?.description, href: '/account/brand' },
-      { label: 'Add at least 1 product page', done: (ent?.product_slots ?? 0) > 0, href: '/account/products' },
-      { label: 'Choose your kit or slots', done: !!ent?.brand_page || !!ent?.popup_bkk_2025 || (ent?.product_slots ?? 0) > 0, href: '/shop' },
+      { label: 'Create your brand basics', done: !!model.name, href: '/account/brand' },
+      { label: 'Upload a hero image & logo', done: !!model.heroUrl, href: '/account/brand' },
+      { label: 'Write your brand story', done: !!model.description && model.description.length > 30, href: '/account/brand' },
+      { label: 'Add at least 1 product page', done: !!model.hasProduct, href: '/account/products' },
+      { label: 'Choose your kit or slots', done: false, href: '/shop' },
     ]
-  }, [brand, ent])
+  }, [model])
+
+  // Guest form handlers
+  function handleGuestChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    const { name, value } = e.target
+    const patch: any = { [name]: value }
+    setGuest(prev => ({ ...prev, ...patch }))
+    saveGuestDraft(patch)
+  }
+
+  async function sendMagicLink() {
+    if (!email) return
+    await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || ''}/account` }})
+    alert('Check your email for a magic link.')
+  }
 
   return (
-    <AppShell>
-      <Head><title>Account — Hemp’in</title></Head>
+    <div className="max-w-6xl mx-auto px-4 py-10">
+      {/* Header row */}
+      <div className="rounded-2xl border p-6 mb-8 flex items-center justify-between">
+        <div>
+          <div className="text-sm text-neutral-400 mb-1">Welcome</div>
+          <h1 className="text-3xl font-bold">Let’s build your brand presence <span className="ml-1">🌿</span></h1>
+          <p className="text-neutral-400 mt-2">Your dashboard updates live as you edit your brand or make purchases.</p>
+        </div>
+        <Link href="/shop" className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500">
+          Get a kit / slots
+        </Link>
+      </div>
 
-      <div className="max-w-6xl mx-auto">
-        <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent p-6 md:p-8 mb-8">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <div className="text-sm text-zinc-400">Welcome{email ? `, ${email}` : ''}</div>
-              <h1 className="text-2xl md:text-3xl font-semibold mt-1">Let’s build your brand presence 🌿</h1>
-              <p className="text-zinc-400 mt-2">Your dashboard updates live as you edit your brand or make purchases.</p>
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Checklist */}
+        <LaunchChecklist items={items as any} />
+
+        {/* Live preview */}
+        <div className="rounded-2xl border p-5">
+          <h2 className="text-lg font-semibold mb-4">Live preview</h2>
+          <BrandPreviewCard
+            name={model.name}
+            category={model.category}
+            description={model.description}
+            heroUrl={model.heroUrl}
+          />
+          <div className="mt-4 flex gap-3">
+            <Link href="/account/brand" className="px-4 py-2 rounded-lg border hover:bg-white/5">Edit brand</Link>
+            <button className="px-4 py-2 rounded-lg border hover:bg-white/5">Preview public page</button>
+          </div>
+          <p className="text-xs text-neutral-500 mt-3">This preview updates automatically when you edit your brand.</p>
+        </div>
+      </div>
+
+      {/* If not signed in: show guest editor + magic link */}
+      {!userId && (
+        <div className="mt-8 grid md:grid-cols-2 gap-6">
+          <div className="rounded-2xl border p-5">
+            <h3 className="font-semibold mb-3">Draft your brand (no account yet)</h3>
+            <div className="space-y-3">
+              <input
+                className="w-full rounded-md bg-neutral-900 border px-3 py-2"
+                name="name" placeholder="Brand name" value={guest.name || ''} onChange={handleGuestChange}
+              />
+              <input
+                className="w-full rounded-md bg-neutral-900 border px-3 py-2"
+                name="category" placeholder="Category (e.g., Fashion, Beauty…)" value={guest.category || ''} onChange={handleGuestChange}
+              />
+              <textarea
+                className="w-full rounded-md bg-neutral-900 border px-3 py-2"
+                name="description" placeholder="Short description" rows={4} value={guest.description || ''} onChange={handleGuestChange}
+              />
+              <input
+                className="w-full rounded-md bg-neutral-900 border px-3 py-2"
+                name="heroUrl" placeholder="Hero image URL (optional)" value={guest.heroUrl || ''} onChange={handleGuestChange}
+              />
             </div>
-            <a href="/shop" className="rounded-xl bg-emerald-500 px-4 py-2 font-medium text-emerald-950 hover:bg-emerald-400">
-              Get a kit / slots
-            </a>
+          </div>
+          <div className="rounded-2xl border p-5">
+            <h3 className="font-semibold mb-3">Save & continue</h3>
+            <p className="text-sm text-neutral-400 mb-3">
+              Enter your email to receive a magic link. We’ll attach your draft to your account automatically.
+            </p>
+            <div className="flex gap-3">
+              <input
+                className="flex-1 rounded-md bg-neutral-900 border px-3 py-2"
+                placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)}
+              />
+              <button onClick={sendMagicLink} className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500">
+                Send magic link
+              </button>
+            </div>
+            <p className="text-xs text-neutral-500 mt-2">We never share your email. You can finish later—your draft stays on this device.</p>
           </div>
         </div>
+      )}
 
-        <div className="grid gap-6 md:grid-cols-5">
-          <div className="md:col-span-3 space-y-6">
-            <AccountProgress items={tasks} />
-
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-              <h3 className="text-lg font-semibold">Quick links</h3>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <a href="/account/brand" className="rounded-lg border border-zinc-800 hover:border-zinc-600 px-3 py-2 text-sm">Edit brand</a>
-                <a href="/account/billing" className="rounded-lg border border-zinc-800 hover:border-zinc-600 px-3 py-2 text-sm">Billing & entitlements</a>
-                <a href="/account/products" className="rounded-lg border border-zinc-800 hover:border-zinc-600 px-3 py-2 text-sm">Products (test)</a>
-                <a href="/shop" className="rounded-lg border border-zinc-800 hover:border-zinc-600 px-3 py-2 text-sm">Shop</a>
-              </div>
-            </div>
-          </div>
-
-          <div className="md:col-span-2">
-            <h3 className="mb-3 text-lg font-semibold">Live preview</h3>
-            <BrandPreviewCard brand={brand} />
-            <div className="mt-3 text-xs text-zinc-500">This preview updates automatically when you edit your brand.</div>
+      {/* Quick links */}
+      <div className="mt-8 grid md:grid-cols-2 gap-6">
+        <div className="rounded-2xl border p-5">
+          <h3 className="font-semibold mb-3">Quick links</h3>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <Link href="/account/brand" className="rounded-lg border px-4 py-3 hover:bg-white/5">Edit brand</Link>
+            <Link href="/account/billing" className="rounded-lg border px-4 py-3 hover:bg-white/5">Billing & entitlements</Link>
+            <Link href="/account/products" className="rounded-lg border px-4 py-3 hover:bg-white/5">Products (test)</Link>
+            <Link href="/shop" className="rounded-lg border px-4 py-3 hover:bg-white/5">Shop</Link>
           </div>
         </div>
       </div>
-    </AppShell>
+    </div>
   )
 }
