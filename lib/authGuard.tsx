@@ -3,80 +3,43 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from './supabaseClient'
 
-type Role = 'admin' | 'user' | null
-
-type Options = {
-  requiredRole?: Role // pass 'admin' to restrict a page to admins
-  redirectTo?: string // default '/account'
-}
-
-export function useAuthGuard(opts: Options = {}) {
-  const { requiredRole, redirectTo = '/account' } = opts
-  const router = useRouter()
-
+/**
+ * Hook to enforce authentication + optional role requirement
+ * Redirects automatically if user is not allowed
+ */
+export function useAuthGuard({ requiredRole }: { requiredRole?: string } = {}) {
   const [ready, setReady] = useState(false)
   const [isAllowed, setIsAllowed] = useState(false)
-  const [role, setRole] = useState<Role>(null)
-  const [userId, setUserId] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
-    let cancelled = false
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession()
+      const user = data.session?.user ?? null
 
-    ;(async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.replace('/account') // not signed in
+        return
+      }
 
-        if (!user) {
-          // Not signed in — send them to the account page (signin happens there)
-          if (!cancelled) {
-            setIsAllowed(false)
-            setReady(true)
-            router.replace(redirectTo)
-          }
-          return
-        }
-
-        setUserId(user.id)
-
-        // Load the profile role
-        const { data: prof, error } = await supabase
+      if (requiredRole) {
+        const { data: prof } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user.id)
           .maybeSingle()
 
-        if (error) throw error
-
-        const r = (prof?.role as Role) ?? 'user'
-        if (!cancelled) setRole(r)
-
-        // Check role if required
-        if (requiredRole && r !== requiredRole) {
-          if (!cancelled) {
-            setIsAllowed(false)
-            setReady(true)
-            router.replace(redirectTo) // non-admins get bounced to /account
-          }
+        if (prof?.role !== requiredRole) {
+          router.replace('/account') // wrong role
           return
         }
-
-        if (!cancelled) {
-          setIsAllowed(true)
-          setReady(true)
-        }
-      } catch {
-        if (!cancelled) {
-          setIsAllowed(false)
-          setReady(true)
-          router.replace(redirectTo)
-        }
       }
-    })()
 
-    return () => {
-      cancelled = true
+      setIsAllowed(true)
     }
-  }, [requiredRole, redirectTo, router])
 
-  return { ready, isAllowed, role, userId }
+    checkAuth().finally(() => setReady(true))
+  }, [requiredRole, router])
+
+  return { ready, isAllowed }
 }
