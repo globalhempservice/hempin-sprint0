@@ -2,17 +2,14 @@
 import { ReactNode } from 'react'
 import AccountSidebar from './AccountSidebar'
 
-export default function AccountShell({
-  children,
-  admin = false,
-  title,
-  actions,
-}: {
+export type AccountShellProps = {
   children: ReactNode
   admin?: boolean
   title?: string
   actions?: ReactNode
-}) {
+}
+
+export default function AccountShell({ children, admin = false, title, actions }: AccountShellProps) {
   return (
     <div className="flex">
       <AccountSidebar admin={admin} />
