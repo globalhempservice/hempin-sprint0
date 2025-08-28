@@ -1,0 +1,1 @@
+[PASTE THE useUser.ts CONTENT HERE]
