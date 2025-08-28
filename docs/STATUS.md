@@ -30,3 +30,7 @@ npm --prefix apps/directory run build
 ```
 (Build not executed in offline container.)
 
+## Sprint 3 — S3-01
+- Global Header with burger nav (auth-aware).
+- Stub routes: /start, /event/bangkok2025, /contact, /mybrand, /myproducts.
+- Minimal drawer utilities appended to styles/globals.css.

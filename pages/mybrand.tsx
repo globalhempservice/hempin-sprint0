@@ -1,0 +1,1 @@
+export default function MyBrand(){return <main className="container"><h1>/mybrand</h1></main>}

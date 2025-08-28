@@ -1,0 +1,1 @@
+export default function MyProducts(){return <main className="container"><h1>/myproducts</h1></main>}

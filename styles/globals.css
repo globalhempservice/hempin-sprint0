@@ -18,3 +18,7 @@ a { color: var(--brand-2); }
 .btn { display:inline-block; padding: .75rem 1rem; border-radius: .75rem; font-weight:600; }
 .btn-primary { background: var(--brand-1); color: white; }
 .btn-outline { border: 1px solid var(--brand-2); color: var(--brand-2); }
+
+/* S3-01 drawer utilities */
+.overlay{position:fixed;inset:0;background:var(--bg);opacity:.6;}
+.drawer-open body{overflow:hidden;}
