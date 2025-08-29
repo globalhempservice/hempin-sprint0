@@ -1,50 +1,47 @@
 // pages/admin/index.tsx
 import Head from 'next/head'
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import AdminShell from '../../components/AdminShell'
 import { supabase } from '../../lib/supabaseClient'
+import AdminShell from '../../components/AdminShell'
+import Link from 'next/link'
 
-export default function AdminDashboard() {
-  const [pendingCount, setPendingCount] = useState<number | null>(null)
+export default function AdminHome() {
+  const [pending, setPending] = useState<number | null>(null)
 
   useEffect(() => {
-    const load = async () => {
-      const { data, error } = await supabase
+    let mounted = true
+    ;(async () => {
+      const { count } = await supabase
         .from('submissions')
         .select('id', { count: 'exact', head: true })
-        .eq('status', 'pending')
-      if (!error) setPendingCount(data ? (data as any).length ?? 0 : 0)
-      // NOTE: count comes via header; if not available, we could do a non-head select and length.
-    }
-    load()
+        .eq('status', 'submitted')
+      if (mounted) setPending(count ?? 0)
+    })()
+    return () => { mounted = false }
   }, [])
 
   return (
-    <AdminShell>
-      <Head><title>Admin • Dashboard</title></Head>
-      <h1 className="text-2xl font-bold mb-4">Admin — Dashboard</h1>
+    <AdminShell title="Admin Dashboard">
+      <Head><title>Admin • HEMPIN</title></Head>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-lg font-semibold">Pending submissions</div>
-              <p className="text-sm text-zinc-400 mt-1">
-                Review incoming brand submissions{typeof pendingCount === 'number' ? ` (${pendingCount})` : ''}.
-              </p>
+              <h3 className="font-semibold">Review incoming brand submissions {typeof pending === 'number' ? `(${pending})` : ''}</h3>
+              <p className="opacity-80 text-sm">Approve or request changes for new brands.</p>
             </div>
-            <Link href="/admin/submissions" className="btn btn-primary">Review</Link>
+            <Link href="/admin/submissions" className="btn btn-primary">Open</Link>
           </div>
         </div>
 
         <div className="card">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-lg font-semibold">Payments</div>
-              <p className="text-sm text-zinc-400 mt-1">See recent PayPal captures.</p>
+              <h3 className="font-semibold">Payments</h3>
+              <p className="opacity-80 text-sm">See captured orders.</p>
             </div>
-            <Link href="/admin/payments" className="btn btn-outline">Open</Link>
+            <Link href="/admin/payments" className="btn btn-outline">View</Link>
           </div>
         </div>
       </div>
