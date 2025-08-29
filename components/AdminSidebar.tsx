@@ -2,9 +2,9 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
-import useUser from '../lib/useUser'
+import { useUser } from '../lib/useUser' // named export
 
-const NAV = [
+const NAV: { href: string; label: string }[] = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/submissions', label: 'Pending submissions' },
   { href: '/admin/payments', label: 'Payments' },
@@ -14,39 +14,26 @@ export default function AdminSidebar() {
   const router = useRouter()
   const { user } = useUser()
 
-  const isActive = (href: string) =>
-    router.pathname === href || router.pathname.startsWith(href + '/')
-
-  const onLogout = async () => {
+  async function handleLogout() {
     await supabase.auth.signOut()
-    router.replace('/logged-out')
+    router.replace('/auth/logout') // simple “You’re logged out” page
   }
 
   return (
-    <aside className="w-[240px] shrink-0 border-r border-white/10 p-4 space-y-4">
+    <aside className="w-[230px] shrink-0 border-r border-white/10 p-4 space-y-4">
       <div className="text-xs opacity-70">
-        Admin<br />
-        <span className="text-white/90">{user?.email ?? '—'}</span>
+        Signed in as<br />{user?.email ?? '—'}
       </div>
 
       <nav className="flex flex-col gap-2">
-        {NAV.map((it) => (
-          <Link
-            key={it.href}
-            href={it.href}
-            className={`block px-2 py-1 rounded ${
-              isActive(it.href) ? 'text-emerald-300' : 'text-white/80 hover:text-white'
-            }`}
-          >
-            {it.label}
+        {NAV.map((i) => (
+          <Link key={i.href} href={i.href} className="hover:underline">
+            {i.label}
           </Link>
         ))}
       </nav>
 
-      <button
-        onClick={onLogout}
-        className="mt-4 inline-flex items-center justify-center rounded bg-white/10 px-4 py-2 hover:bg-white/15"
-      >
+      <button onClick={handleLogout} className="btn btn-outline w-full mt-4">
         Log out
       </button>
     </aside>
