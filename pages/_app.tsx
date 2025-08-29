@@ -1,15 +1,12 @@
 // pages/_app.tsx
-import '../styles/globals.css'                     // <-- brings Tailwind + global styles back
+import '../styles/globals.css'
 import type { AppProps } from 'next/app'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
-import { UserContextProvider } from '../lib/useUser'
 
-// Any route not starting with /account or /admin is public.
-// (/signin and auth routes are public too.)
-const isProtectedPath = (path: string) =>
-  path.startsWith('/account') || path.startsWith('/admin')
+// Guard only account/admin; everything else (marketing, signin, auth) is public
+const isProtected = (p: string) => p.startsWith('/account') || p.startsWith('/admin')
 
 function RouteGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -19,8 +16,7 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
     let unsub: (() => void) | undefined
 
     const run = async () => {
-      // Only guard protected paths
-      if (!isProtectedPath(router.pathname)) {
+      if (!isProtected(router.pathname)) {
         setReady(true)
         return
       }
@@ -32,9 +28,9 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
         return
       }
 
-      // Watch auth state going forward
-      const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
-        if (!session && isProtectedPath(router.pathname)) {
+      // Watch auth changes
+      const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+        if (!session && isProtected(router.pathname)) {
           router.replace('/signin')
         }
       })
@@ -52,10 +48,8 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <UserContextProvider>
-      <RouteGuard>
-        <Component {...pageProps} />
-      </RouteGuard>
-    </UserContextProvider>
+    <RouteGuard>
+      <Component {...pageProps} />
+    </RouteGuard>
   )
 }
