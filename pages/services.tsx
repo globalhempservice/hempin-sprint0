@@ -1,35 +1,29 @@
 // pages/services.tsx
 import Head from 'next/head'
-import AppShell from '../components/AppShell'
 
 export default function ServicesPublic() {
   return (
-    <AppShell>
+    <div className="container py-10 space-y-6">
       <Head><title>Services • HEMPIN</title></Head>
 
-      <h1 className="text-2xl font-bold mb-4">Services</h1>
+      <h1 className="text-3xl font-bold">HEMPIN Services</h1>
+      <p className="opacity-80 max-w-2xl">
+        Pick exactly what you need to get your hemp brand visible online.
+      </p>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card title="Instant brand pages"
-              desc="Beautiful pages with images, story and links — no code." />
-        <Card title="Product slots"
-              desc="Publish and manage a limited number of products per plan." />
-        <Card title="Built-in payments"
-              desc="Secure checkout via PayPal. Simple pricing; keep what you sell." />
-        <Card title="Moderation & quality"
-              desc="We review submissions to keep the marketplace trusted." />
-        <Card title="Roadmap"
-              desc="Wholesale tools, collabs, analytics and more after launch." />
-      </div>
-    </AppShell>
-  )
-}
+        <div className="card">
+          <h3 className="font-semibold mb-1">Brand Page</h3>
+          <p className="opacity-80 text-sm mb-3">A hosted brand profile with your story, imagery, and links.</p>
+          <a href="/signin" className="btn btn-primary">Get started</a>
+        </div>
 
-function Card({ title, desc }: { title:string; desc:string }) {
-  return (
-    <div className="card">
-      <div className="text-lg font-semibold">{title}</div>
-      <p className="text-sm text-zinc-400 mt-1">{desc}</p>
+        <div className="card">
+          <h3 className="font-semibold mb-1">Product Pages</h3>
+          <p className="opacity-80 text-sm mb-3">Create dedicated pages for up to five products.</p>
+          <a href="/signin" className="btn btn-outline">Get started</a>
+        </div>
+      </div>
     </div>
   )
 }
