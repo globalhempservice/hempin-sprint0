@@ -1,16 +1,15 @@
 // middleware.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Always allow public assets and public paths
+  // Public routes/assets
   if (
+    pathname === '/' ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
-    pathname.startsWith('/auth') ||   // your /auth/signin + /auth/logout
-    pathname === '/' ||
+    pathname.startsWith('/auth') ||
     pathname.startsWith('/signin') ||
     pathname.startsWith('/logout') ||
     pathname.startsWith('/services') ||
@@ -19,15 +18,15 @@ export function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // ✅ Only enforce server-side auth for /admin to avoid magic-link loops
+  // ✅ Only protect /admin on the server (avoid magic-link loops)
   if (pathname.startsWith('/admin')) {
-    const hasAccessCookie =
-      req.cookies.has('sb-access-token') ||               // auth-helpers v2
-      req.cookies.has('supabase-auth-token') ||           // older helpers
-      req.cookies.has('sb:token') ||                      // legacy
-      !!req.headers.get('authorization')                  // just in case
+    const authed =
+      req.cookies.has('sb-access-token') ||
+      req.cookies.has('supabase-auth-token') ||
+      req.cookies.has('sb:token') ||
+      !!req.headers.get('authorization')
 
-    if (!hasAccessCookie) {
+    if (!authed) {
       const url = req.nextUrl.clone()
       url.pathname = '/signin'
       url.searchParams.set('next', pathname)
@@ -38,7 +37,6 @@ export function middleware(req: NextRequest) {
   return NextResponse.next()
 }
 
-// Only run on /admin — leave /account to client-side guard to prevent loops
 export const config = {
   matcher: ['/admin/:path*'],
 }
