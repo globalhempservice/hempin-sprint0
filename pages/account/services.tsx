@@ -1,35 +1,36 @@
-// pages/account/services.tsx
+// pages/account/services/index.tsx
 import Head from 'next/head'
-import AccountShell from '../../components/AccountShell'
+import AccountShell from '../../../components/AccountShell'
 
 export default function AccountServices() {
   return (
-    <AccountShell title="HEMPIN services">
-      <Head><title>Services • HEMPIN</title></Head>
+    <AccountShell>
+      <Head><title>HEMPIN services • Account</title></Head>
+      <h1 className="text-2xl font-bold mb-4">HEMPIN services</h1>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <SvcCard
+        <Card
           title="Brand page"
-          desc="Spin up a public brand page with images, story and links."
+          desc="Launch a clean, fast brand page with story, images and links."
         />
-        <SvcCard
+        <Card
           title="Product pages"
-          desc="Add products with photos, pricing and publish to the directory."
+          desc="Create product pages and manage a limited number of slots."
         />
-        <SvcCard
+        <Card
           title="Moderation & quality"
-          desc="We review content to keep the directory trusted."
+          desc="We review submissions to keep the marketplace clean and trusted."
         />
-        <SvcCard
+        <Card
           title="Roadmap"
-          desc="Wholesale tools, collabs and analytics coming after launch."
+          desc="Wholesale tools, collabs, analytics and more after launch."
         />
       </div>
     </AccountShell>
   )
 }
 
-function SvcCard({ title, desc }: { title:string; desc:string }) {
+function Card({ title, desc }: { title: string; desc: string }) {
   return (
     <div className="card">
       <div className="text-lg font-semibold">{title}</div>
