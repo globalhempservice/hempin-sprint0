@@ -1,88 +1,41 @@
 // pages/account/products/index.tsx
+import AccountSidebar from '../../../components/AccountSidebar'
 import { useEffect, useState } from 'react'
-import AppShell from '../../../components/AppShell'
 import { supabase } from '../../../lib/supabaseClient'
 
 export default function ProductsHarness() {
-  const [slots, setSlots] = useState<number | null>(null)
-  const [msg, setMsg] = useState<string>('')
-  const [loading, setLoading] = useState<boolean>(false)
+  const [slots, setSlots] = useState<number>(0)
 
   useEffect(() => {
-    ;(async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        setMsg('Please sign in.')
-        return
-      }
-      const { data, error } = await supabase
-        .from('entitlements')
-        .select('product_slots')
-        .eq('user_id', user.id)
-        .maybeSingle()
-      if (error) setMsg(error.message)
-      setSlots((data as any)?.product_slots ?? 0)
-    })()
+    const load = async () => {
+      const { data } = await supabase.rpc('get_available_product_slots')
+      setSlots((data as number) ?? 0)
+    }
+    load()
   }, [])
 
-  async function adjust(action: 'decrement' | 'increment') {
-    setMsg('')
-    setLoading(true)
-    try {
-      const { data: session } = await supabase.auth.getSession()
-      const access = session.session?.access_token
-      const res = await fetch('/.netlify/functions/entitlements-adjust', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          ...(access ? { Authorization: `Bearer ${access}` } : {}),
-        } as any,
-        body: JSON.stringify({ action }),
-      })
-      if (!res.ok) {
-        const text = await res.text()
-        setMsg(text || 'Request failed')
-        return
-      }
-      const json = await res.json()
-      setSlots(json?.entitlements?.product_slots ?? 0)
-    } catch (e: any) {
-      setMsg(e?.message || 'Error')
-    } finally {
-      setLoading(false)
-    }
+  const useOne = async () => {
+    await supabase.rpc('simulate_use_slot')
+    setSlots((s) => Math.max(0, s - 1))
+  }
+  const releaseOne = async () => {
+    await supabase.rpc('simulate_release_slot')
+    setSlots((s) => s + 1)
   }
 
   return (
-    <AppShell>
-      <div className="max-w-xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-semibold mb-4">Products (test harness)</h1>
-        <div className="border border-neutral-800 rounded p-4">
-          <p className="mb-3">
-            Available product slots:{' '}
-            <span className="font-semibold">{slots ?? '—'}</span>
-          </p>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => adjust('decrement')}
-              disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 rounded px-3 py-1"
-            >
-              Use 1 slot (simulate publish)
-            </button>
-            <button
-              onClick={() => adjust('increment')}
-              disabled={loading}
-              className="bg-neutral-700 hover:bg-neutral-600 disabled:opacity-60 rounded px-3 py-1"
-            >
-              Release 1 slot (simulate delete)
-            </button>
+    <div className="flex">
+      <AccountSidebar />
+      <main className="flex-1 p-6">
+        <h1 className="text-2xl font-bold mb-4">My products</h1>
+        <div className="card max-w-xl">
+          <div className="mb-3">Available product slots: <b>{slots}</b></div>
+          <div className="flex gap-2">
+            <button className="btn btn-primary" onClick={useOne}>Use 1 slot (simulate publish)</button>
+            <button className="btn btn-outline" onClick={releaseOne}>Release 1 slot (simulate delete)</button>
           </div>
-
-          {msg && <p className="mt-3 text-sm text-red-400">{msg}</p>}
         </div>
-      </div>
-    </AppShell>
+      </main>
+    </div>
   )
 }

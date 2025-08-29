@@ -1,85 +1,60 @@
 // components/AccountSidebar.tsx
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
+import useUser from '../lib/useUser'
 
-export type AccountSidebarProps = {
-  /** When true, show admin links instead of user links */
-  admin?: boolean
-}
+type Item = { href: string; label: string }
 
-export default function AccountSidebar({ admin = false }: AccountSidebarProps) {
+const NAV: Item[] = [
+  { href: '/account', label: 'Account home' },
+  { href: '/account/billing', label: 'Billing & entitlements' },
+  { href: '/account/brand', label: 'My brand' },
+  { href: '/account/products', label: 'My products' },
+  { href: '/account/services', label: 'Services' },
+  { href: '/', label: 'Shop' },
+]
+
+export default function AccountSidebar() {
   const router = useRouter()
-  const [email, setEmail] = useState<string | null>(null)
+  const { user } = useUser()
 
-  useEffect(() => {
-    let mounted = true
-    ;(async () => {
-      const { data } = await supabase.auth.getUser()
-      if (!mounted) return
-      setEmail(data.user?.email ?? null)
-    })()
-    return () => { mounted = false }
-  }, [])
+  const isActive = (href: string) =>
+    router.pathname === href ||
+    (href !== '/account' && router.pathname.startsWith(href))
 
-  const signOut = async () => {
+  const onLogout = async () => {
     await supabase.auth.signOut()
-    router.replace('/')
+    router.replace('/logged-out')
   }
 
   return (
-    <aside className="w-56 shrink-0 border-r border-white/10 p-4 space-y-4">
-      <div className="text-sm opacity-70">
-        {email ? <>Signed in as<br /><span className="font-medium opacity-100">{email}</span></> : 'Guest'}
+    <aside className="w-[240px] shrink-0 border-r border-white/10 p-4 space-y-4">
+      <div className="text-xs opacity-70">
+        Signed in as<br />
+        <span className="text-white/90">{user?.email ?? 'Guest'}</span>
       </div>
 
-      {!admin ? (
-        <nav className="flex flex-col gap-2">
-          <Link className="nav-link" href="/account">Account home</Link>
-          <Link className="nav-link" href="/account/billing">Billing & entitlements</Link>
-          <Link className="nav-link" href="/account/brand">My brand</Link>
-          <Link className="nav-link" href="/account/products">Products (test)</Link>
-          <Link className="nav-link" href="/services">Services</Link>
-          <Link className="nav-link" href="/brand">Preview public brand</Link>
-          <Link className="nav-link" href="/start">Start</Link>
-          <Link className="nav-link" href="/">Home</Link>
-          <button className="btn btn-outline mt-2" onClick={signOut}>Log out</button>
-        </nav>
-      ) : (
-        <nav className="flex flex-col gap-2">
-          <Link className="nav-link" href="/admin">Pending submissions</Link>
-          <Link className="nav-link" href="/admin/payments">Payments</Link>
-          <Link className="nav-link" href="/">Home</Link>
-          <button className="btn btn-outline mt-2" onClick={signOut}>Log out</button>
-        </nav>
-      )}
+      <nav className="flex flex-col gap-2">
+        {NAV.map((it) => (
+          <Link
+            key={it.href}
+            href={it.href}
+            className={`block px-2 py-1 rounded ${
+              isActive(it.href) ? 'text-emerald-300' : 'text-white/80 hover:text-white'
+            }`}
+          >
+            {it.label}
+          </Link>
+        ))}
+      </nav>
 
-      <style jsx>{`
-        .nav-link {
-          display: block;
-          padding: 0.5rem 0.75rem;
-          border-radius: 0.5rem;
-          background: transparent;
-          color: #cbd5e1;
-          transition: background 0.15s, color 0.15s;
-        }
-        .nav-link:hover {
-          background: rgba(255,255,255,0.06);
-          color: white;
-        }
-        .btn {
-          padding: 0.5rem 0.75rem;
-          border-radius: 0.5rem;
-        }
-        .btn-outline {
-          border: 1px solid rgba(255,255,255,0.12);
-          color: #e2e8f0;
-        }
-        .btn-outline:hover {
-          background: rgba(255,255,255,0.06);
-        }
-      `}</style>
+      <button
+        onClick={onLogout}
+        className="mt-4 inline-flex items-center justify-center rounded bg-white/10 px-4 py-2 hover:bg-white/15"
+      >
+        Log out
+      </button>
     </aside>
   )
 }
