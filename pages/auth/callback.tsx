@@ -1,32 +1,40 @@
 // pages/auth/callback.tsx
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { createBrowserClient } from '@supabase/ssr' // or '@supabase/supabase-js' if that’s what you use
+import Head from 'next/head'
+import { supabase } from '../../lib/supabaseClient'
 
 export default function AuthCallback() {
   const router = useRouter()
 
   useEffect(() => {
     const run = async () => {
-      // Exchange the code in the URL for a session cookie
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
+      try {
+        // Parses the URL hash (? or #) for access/refresh tokens and stores session
+        const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true })
+        if (error) throw error
 
-      const { error } = await supabase.auth.exchangeCodeForSession(window.location.href)
-      // Ignore "No code" error if user landed here accidentally
-
-      const next = (router.query.next as string) || '/account'
-      router.replace(next)
+        // Go where the user intended, otherwise account
+        const next = (router.query.next as string) || '/account'
+        // cleanup: remove hash fragments
+        window.history.replaceState({}, document.title, next)
+        router.replace(next)
+      } catch (e) {
+        // fallback on error
+        router.replace('/signin?error=callback_failed')
+      }
     }
     run()
+    // only once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
-    <div className="min-h-screen grid place-items-center text-zinc-300">
-      <div className="opacity-80">Signing you in…</div>
-    </div>
+    <>
+      <Head><title>Signing you in… • HEMPIN</title></Head>
+      <div className="min-h-screen grid place-items-center">
+        <p className="opacity-70">Signing you in…</p>
+      </div>
+    </>
   )
 }
