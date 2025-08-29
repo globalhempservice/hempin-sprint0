@@ -1,78 +1,65 @@
 // pages/experiments/index.tsx
 import Link from 'next/link'
-import { useState } from 'react'
 
-type Exp = {
-  id: string
-  title: string
-  emoji: string
-  desc: string
-  href: string
-}
-
-const EXPS: Exp[] = [
+const CARDS = [
   {
-    id: 'brand-preview',
-    title: 'Brand Preview',
-    emoji: '🏷️',
-    desc: 'Early peek at your Hemp’in brand page.',
-    href: '/experiments/brand-preview',
+    href: '/experiments/slot',
+    title: 'Carbon Slot Machine',
+    desc: 'Spin to “grow” micro carbon offsets with hemp-y icons.',
+    badge: 'Play',
   },
   {
-    id: 'earth-tamagotchi',
-    title: 'Earth Tamagotchi',
-    emoji: '🌍',
-    desc: 'Keep Earth happy by balancing diet, mood, and skin.',
-    href: '/experiments/earth-tamagotchi',
+    href: '/experiments/field',
+    title: 'Grow Your Hemp Field',
+    desc: 'Plant • Grow • Harvest → see fiber/seed/hurd output.',
+    badge: 'Simulate',
   },
   {
-    id: 'hemp-jackpot',
-    title: 'Hemp Jackpot',
-    emoji: '🎰',
-    desc: 'Spin the reels and try to win hemp goodies!',
-    href: '/experiments/hemp-jackpot',
+    href: '/experiments/closet',
+    title: 'Hemp Closet',
+    desc: 'Dress an avatar and see water/CO₂ savings vs cotton.',
+    badge: 'Style',
+  },
+  {
+    href: '/experiments/house',
+    title: 'Build a Hemp House',
+    desc: 'Toggle components (hempcrete, insulation) → impact math.',
+    badge: 'Design',
   },
 ]
 
-export default function ExperimentsIndex() {
-  const [votes, setVotes] = useState<Record<string, number>>({})
-
-  const upvote = (id: string) => {
-    setVotes(v => ({ ...v, [id]: (v[id] || 0) + 1 }))
-  }
-
+export default function ExperimentsLab() {
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12 space-y-10">
-      <h1 className="text-3xl font-bold">🧪 Hemp’in Lab</h1>
-      <p className="text-zinc-400">Prototype features. Play, vote, suggest!</p>
+    <div className="min-h-screen bg-gradient-to-b from-emerald-900 via-zinc-900 to-black text-zinc-50">
+      <div className="mx-auto max-w-6xl px-4 py-12">
+        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">HEMPIN Lab</h1>
+        <p className="mt-2 max-w-2xl text-zinc-300">
+          A playful lab of micro-experiments for hemp education, climate impact and good vibes.
+          No login required. Click any card to try it.
+        </p>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        {EXPS.map(e => (
-          <div
-            key={e.id}
-            className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg"
-          >
-            <div className="text-3xl">{e.emoji}</div>
-            <h2 className="mt-3 text-xl font-semibold">{e.title}</h2>
-            <p className="text-sm text-zinc-400">{e.desc}</p>
-
-            <div className="mt-4 flex items-center gap-3">
-              <Link
-                href={e.href}
-                className="rounded-lg bg-emerald-500/20 px-3 py-1.5 text-sm text-emerald-300 hover:bg-emerald-500/30"
-              >
-                Try it
-              </Link>
-              <button
-                onClick={() => upvote(e.id)}
-                className="rounded-lg border border-white/10 px-2 py-1 text-xs text-zinc-400 hover:bg-white/5"
-              >
-                👍 {votes[e.id] || 0}
-              </button>
-            </div>
-          </div>
-        ))}
+        <div className="mt-8 grid gap-6 sm:grid-cols-2">
+          {CARDS.map(c => (
+            <Link
+              key={c.href}
+              href={c.href}
+              className="group rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm transition hover:shadow-emerald-500/20 hover:border-emerald-400/30"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">{c.title}</h2>
+                <span className="rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
+                  {c.badge}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-zinc-300">{c.desc}</p>
+              <div className="mt-4 h-28 rounded-xl bg-gradient-to-br from-emerald-600/20 via-emerald-400/10 to-transparent ring-1 ring-inset ring-white/5" />
+              <div className="mt-4 text-sm text-emerald-300 opacity-0 group-hover:opacity-100 transition">
+                Open experiment →
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
-    </main>
+    </div>
   )
 }
