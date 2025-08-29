@@ -2,57 +2,48 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
-import useUser from '../lib/useUser'
+import { useUser } from '../lib/useUser'   // ✅ named import
 
 type Item = { href: string; label: string }
 
-const NAV: Item[] = [
-  { href: '/account', label: 'Account home' },
-  { href: '/account/billing', label: 'Billing & entitlements' },
-  { href: '/account/brand', label: 'My brand' },
-  { href: '/account/products', label: 'My products' },
-  { href: '/account/services', label: 'Services' },
-  { href: '/', label: 'Shop' },
-]
-
 export default function AccountSidebar() {
   const router = useRouter()
-  const { user } = useUser()
+  const { user, profile, signOut } = useUser() // profile.role used for admin link
 
-  const isActive = (href: string) =>
-    router.pathname === href ||
-    (href !== '/account' && router.pathname.startsWith(href))
+  const common: Item[] = [
+    { href: '/account', label: 'Account home' },
+    { href: '/account/billing', label: 'Billing & entitlements' },
+    { href: '/account/brand', label: 'My brand' },
+    { href: '/account/products', label: 'Products (test)' },
+    { href: '/shop', label: 'Shop' },
+  ]
 
-  const onLogout = async () => {
+  const admin: Item[] = profile?.role === 'admin'
+    ? [{ href: '/admin', label: 'Admin' }]
+    : []
+
+  const items = [...common, ...admin]
+
+  async function handleLogout() {
     await supabase.auth.signOut()
-    router.replace('/logged-out')
+    router.replace('/auth/logout') // a simple “logged out” confirmation page
   }
 
   return (
-    <aside className="w-[240px] shrink-0 border-r border-white/10 p-4 space-y-4">
+    <aside className="w-[230px] shrink-0 border-r border-white/10 p-4 space-y-4">
       <div className="text-xs opacity-70">
-        Signed in as<br />
-        <span className="text-white/90">{user?.email ?? 'Guest'}</span>
+        Signed in as<br />{user?.email ?? 'Guest'}
       </div>
 
       <nav className="flex flex-col gap-2">
-        {NAV.map((it) => (
-          <Link
-            key={it.href}
-            href={it.href}
-            className={`block px-2 py-1 rounded ${
-              isActive(it.href) ? 'text-emerald-300' : 'text-white/80 hover:text-white'
-            }`}
-          >
-            {it.label}
+        {items.map(i => (
+          <Link key={i.href} href={i.href} className="hover:underline">
+            {i.label}
           </Link>
         ))}
       </nav>
 
-      <button
-        onClick={onLogout}
-        className="mt-4 inline-flex items-center justify-center rounded bg-white/10 px-4 py-2 hover:bg-white/15"
-      >
+      <button onClick={handleLogout} className="btn btn-outline w-full mt-4">
         Log out
       </button>
     </aside>
