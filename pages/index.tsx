@@ -133,19 +133,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-zinc-900/60">
-        <div className="mx-auto max-w-6xl px-6 py-10 text-sm text-zinc-500">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div>© {new Date().getFullYear()} Hemp’in</div>
-            <div className="flex gap-4">
-              <Link className="hover:text-zinc-300" href="/account">Account</Link>
-              <Link className="hover:text-zinc-300" href="/admin">Admin</Link>
-              <Link className="hover:text-zinc-300" href="/shop">Shop</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
     </>
   )
 }
