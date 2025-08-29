@@ -1,55 +1,47 @@
 // pages/account/index.tsx
+import Head from 'next/head'
 import Link from 'next/link'
-import AccountSidebar from '../../components/AccountSidebar'
-import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabaseClient'
+import AccountShell from '../../components/AccountShell'
 
 export default function AccountHome() {
-  const [role, setRole] = useState<string | null>(null)
-
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase.auth.getSession()
-      const u = data.session?.user
-      if (!u) return
-      const { data: prof } = await supabase.from('profiles').select('role').eq('id', u.id).maybeSingle()
-      setRole(prof?.role ?? null)
-    }
-    load()
-  }, [])
-
   return (
-    <div className="flex">
-      <AccountSidebar />
-      <main className="flex-1 p-6 space-y-6">
-        <h1 className="text-2xl font-bold">Account</h1>
+    <AccountShell title="Account">
+      <Head><title>Account • HEMPIN</title></Head>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="card">
-            <div className="font-semibold mb-2">Brand</div>
-            <p className="opacity-80 mb-3">
-              Create or edit your brand so you’re ready for the directory launch.
-            </p>
-            <div className="flex gap-2">
-              <Link href="/account/brand" className="btn btn-primary">Go to Brand Setup</Link>
-            </div>
-          </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card
+          title="Brand"
+          desc="Create or edit your brand so you’re ready for the directory launch."
+          href="/account/brand"
+          cta="Go to Brand Setup"
+        />
+        <Card
+          title="My products"
+          desc="Manage your product pages and publishing slots."
+          href="/account/products"
+          cta="Open products"
+        />
+        <Card
+          title="Billing & kits"
+          desc="Manage your plan and pop-up kits."
+          href="/account/billing"
+          cta="View billing"
+        />
+      </div>
+    </AccountShell>
+  )
+}
 
-          <div className="card">
-            <div className="font-semibold mb-2">Billing & Kits</div>
-            <p className="opacity-80 mb-3">Manage your plan and Bangkok showcase kit.</p>
-            <Link href="/account/billing" className="btn btn-primary">View Billing</Link>
-          </div>
-
-          {role === 'admin' && (
-            <div className="card md:col-span-2">
-              <div className="font-semibold mb-2">Admin</div>
-              <p className="opacity-80 mb-3">Moderate submissions and view payments.</p>
-              <Link href="/admin" className="btn btn-outline">Go to Admin</Link>
-            </div>
-          )}
-        </div>
-      </main>
+function Card({
+  title, desc, href, cta,
+}: { title:string; desc:string; href:string; cta:string }) {
+  return (
+    <div className="card">
+      <div className="text-lg font-semibold">{title}</div>
+      <p className="text-sm text-zinc-400 mt-1">{desc}</p>
+      <div className="mt-4">
+        <Link href={href} className="btn btn-primary">{cta}</Link>
+      </div>
     </div>
   )
 }

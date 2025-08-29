@@ -1,15 +1,22 @@
 // pages/auth/logout.tsx
 import Link from 'next/link'
+import Head from 'next/head'
 
 export default function LoggedOut() {
   return (
-    <main className="container max-w-lg mx-auto px-4 py-16 text-center space-y-4">
-      <h1 className="text-2xl font-bold">You’re logged out</h1>
-      <p className="opacity-80">Come back anytime.</p>
-      <div className="flex justify-center gap-3">
-        <Link href="/" className="btn btn-outline">Go to homepage</Link>
-        <Link href="/account" className="btn btn-primary">Sign in</Link>
-      </div>
-    </main>
+    <>
+      <Head><title>Signed out • HEMPIN</title></Head>
+      <main className="min-h-screen flex items-center justify-center p-6">
+        <div className="max-w-md w-full space-y-6 text-center">
+          <h1 className="text-3xl font-bold">You’re logged out</h1>
+          <p className="text-zinc-400">Thanks for visiting. Come back anytime.</p>
+
+          <div className="flex gap-3 justify-center">
+            <Link href="/signin" className="btn btn-primary">Sign in</Link>
+            <Link href="/" className="btn btn-outline">Go to homepage</Link>
+          </div>
+        </div>
+      </main>
+    </>
   )
 }
