@@ -1,40 +1,37 @@
-// pages/account/services/index.tsx
+// pages/account/services.tsx
 import Head from 'next/head'
-import AccountShell from '../../../components/AccountShell'
+import AccountShell from '../../components/AccountShell'
 
 export default function AccountServices() {
   return (
-    <AccountShell>
+    <AccountShell title="HEMPIN services">
       <Head><title>HEMPIN services • Account</title></Head>
-      <h1 className="text-2xl font-bold mb-4">HEMPIN services</h1>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card
-          title="Brand page"
-          desc="Launch a clean, fast brand page with story, images and links."
-        />
-        <Card
-          title="Product pages"
-          desc="Create product pages and manage a limited number of slots."
-        />
-        <Card
-          title="Moderation & quality"
-          desc="We review submissions to keep the marketplace clean and trusted."
-        />
-        <Card
-          title="Roadmap"
-          desc="Wholesale tools, collabs, analytics and more after launch."
-        />
+      <div className="space-y-6">
+        <p className="text-zinc-300">
+          Pick what you need. These are services available to logged-in brands.
+        </p>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Brand / product services bucket */}
+          <div className="card">
+            <h3 className="text-lg font-semibold mb-2">Brand & product</h3>
+            <ul className="list-disc pl-5 space-y-1 text-zinc-300">
+              <li>Brand page — create or refresh your public brand page.</li>
+              <li>Product pages — publish and manage product listings.</li>
+              <li>Special offer — launch limited promos with checkout.</li>
+            </ul>
+          </div>
+
+          {/* Events bucket (no Bangkok popup items for now as requested) */}
+          <div className="card">
+            <h3 className="text-lg font-semibold mb-2">Events</h3>
+            <p className="text-zinc-300">
+              Event add-ons coming soon. We’ll list upcoming pop-ups here.
+            </p>
+          </div>
+        </div>
       </div>
     </AccountShell>
-  )
-}
-
-function Card({ title, desc }: { title: string; desc: string }) {
-  return (
-    <div className="card">
-      <div className="text-lg font-semibold">{title}</div>
-      <p className="text-sm text-zinc-400 mt-1">{desc}</p>
-    </div>
   )
 }
