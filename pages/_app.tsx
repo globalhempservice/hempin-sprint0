@@ -1,47 +1,61 @@
 // pages/_app.tsx
+import '../styles/globals.css'                     // <-- brings Tailwind + global styles back
 import type { AppProps } from 'next/app'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { useEffect } from 'react'
-import { useUser } from '../lib/useUser'
+import { supabase } from '../lib/supabaseClient'
+import { UserContextProvider } from '../lib/useUser'
+
+// Any route not starting with /account or /admin is public.
+// (/signin and auth routes are public too.)
+const isProtectedPath = (path: string) =>
+  path.startsWith('/account') || path.startsWith('/admin')
 
 function RouteGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { user, loading, profile } = useUser()
-
-  const path = router.pathname
-  const protectAccount = path.startsWith('/account')
-  const protectAdmin = path.startsWith('/admin')
-  const needsAuth = protectAccount || protectAdmin
-  const adminOnly = protectAdmin
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (!needsAuth || loading) return
+    let unsub: (() => void) | undefined
 
-    // Not signed in → send to signin, preserve intended destination
-    if (!user) {
-      const next = encodeURIComponent(router.asPath || '/account')
-      router.replace(`/signin?next=${next}`)
-      return
+    const run = async () => {
+      // Only guard protected paths
+      if (!isProtectedPath(router.pathname)) {
+        setReady(true)
+        return
+      }
+
+      // Check current session
+      const { data } = await supabase.auth.getSession()
+      if (!data.session) {
+        router.replace(`/signin?next=${encodeURIComponent(router.asPath)}`)
+        return
+      }
+
+      // Watch auth state going forward
+      const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+        if (!session && isProtectedPath(router.pathname)) {
+          router.replace('/signin')
+        }
+      })
+      unsub = () => sub.subscription.unsubscribe()
+      setReady(true)
     }
 
-    // Admin routes: require role=admin
-    if (adminOnly && profile?.role !== 'admin') {
-      router.replace('/account')
-    }
-  }, [needsAuth, adminOnly, loading, user, profile?.role, router])
+    run()
+    return () => { if (unsub) unsub() }
+  }, [router.pathname, router.asPath])
 
-  // While deciding auth, render nothing to avoid flicker
-  if (needsAuth && (loading || !user || (adminOnly && profile?.role !== 'admin'))) {
-    return null
-  }
-
+  if (!ready) return null
   return <>{children}</>
 }
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <RouteGuard>
-      <Component {...pageProps} />
-    </RouteGuard>
+    <UserContextProvider>
+      <RouteGuard>
+        <Component {...pageProps} />
+      </RouteGuard>
+    </UserContextProvider>
   )
 }
