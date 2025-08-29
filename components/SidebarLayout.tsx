@@ -113,7 +113,7 @@ export default function SidebarLayout({ variant, children }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const key = `hempin.sidebar.collapsed:${variant}`
 
-  // persisted collapsed state
+  // persist collapsed state (client only)
   useEffect(() => {
     const v = typeof window !== 'undefined' ? localStorage.getItem(key) : null
     if (v === '1') setCollapsed(true)
@@ -151,7 +151,8 @@ export default function SidebarLayout({ variant, children }: Props) {
   const Rail = (
     <div
       className={[
-        'flex h-[calc(100vh-1.5rem)] flex-col p-3',
+        // 🔧 height fix: respect viewport and sticky parent; no overflow past bottom
+        'flex h-full min-h-screen flex-col p-3',
         'rounded-2xl border border-white/10 ring-1 ring-white/5',
         'bg-gradient-to-b from-emerald-500/10 via-zinc-900/60 to-black/80',
         'backdrop-blur shadow-[0_0_0_1px_rgba(255,255,255,.04),0_10px_30px_-10px_rgba(0,0,0,.6)]',
@@ -218,6 +219,7 @@ export default function SidebarLayout({ variant, children }: Props) {
 
       {/* Footer (identity + logout) */}
       <div className="mt-3">
+        {/* Hide the text button in collapsed mode */}
         {!collapsed && (
           <button
             onClick={handleLogout}
@@ -231,7 +233,8 @@ export default function SidebarLayout({ variant, children }: Props) {
           href="/account/profile"
           className="flex items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-white/5"
         >
-          <div className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-xs">
+          {/* 🔒 always a circle, fixed size */}
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-xs">
             {initials}
           </div>
           {!collapsed && (
