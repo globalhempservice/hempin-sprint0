@@ -5,43 +5,47 @@ import AccountShell from '../../components/AccountShell'
 
 export default function AccountHome() {
   return (
-    <AccountShell title="Account">
-      <Head><title>Account • HEMPIN</title></Head>
+    <AccountShell>
+      <Head><title>My Account • HEMPIN</title></Head>
+      <h1 className="text-2xl font-bold mb-4">Account</h1>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card
-          title="Brand"
-          desc="Create or edit your brand so you’re ready for the directory launch."
-          href="/account/brand"
-          cta="Go to Brand Setup"
-        />
-        <Card
-          title="My products"
-          desc="Manage your product pages and publishing slots."
-          href="/account/products"
-          cta="Open products"
-        />
-        <Card
-          title="Billing & kits"
-          desc="Manage your plan and pop-up kits."
-          href="/account/billing"
-          cta="View billing"
-        />
+        <div className="card">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-lg font-semibold">Brand</div>
+              <p className="text-sm text-zinc-400 mt-1">
+                Create or edit your brand so you’re ready for the directory launch.
+              </p>
+            </div>
+            <Link href="/account/brand" className="btn btn-primary">Go to Brand Setup</Link>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-lg font-semibold">My products</div>
+              <p className="text-sm text-zinc-400 mt-1">
+                Manage product pages under your brand.
+              </p>
+            </div>
+            <Link href="/account/products" className="btn btn-outline">Open</Link>
+          </div>
+        </div>
+
+        <div className="card md:col-span-2">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-lg font-semibold">Billing & kits</div>
+              <p className="text-sm text-zinc-400 mt-1">
+                Manage your plan and pop-up kits.
+              </p>
+            </div>
+            <Link href="/account/billing" className="btn btn-outline">View Billing</Link>
+          </div>
+        </div>
       </div>
     </AccountShell>
-  )
-}
-
-function Card({
-  title, desc, href, cta,
-}: { title:string; desc:string; href:string; cta:string }) {
-  return (
-    <div className="card">
-      <div className="text-lg font-semibold">{title}</div>
-      <p className="text-sm text-zinc-400 mt-1">{desc}</p>
-      <div className="mt-4">
-        <Link href={href} className="btn btn-primary">{cta}</Link>
-      </div>
-    </div>
   )
 }
