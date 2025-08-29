@@ -1,6 +1,6 @@
 // components/SidebarLayout.tsx
 import type { ReactNode, JSX } from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
@@ -11,13 +11,12 @@ type Variant = 'account' | 'admin'
 type NavItem = {
   href: string
   label: string
-  // was: icon: (props: { className?: string }) => JSX.Element
-  icon: (props: { className?: string }) => ReactElement | ReactNode
+  icon: (props: { className?: string }) => JSX.Element
 }
 
 type Props = {
   variant: Variant
-  children: React.ReactNode
+  children: ReactNode
 }
 
 const ICON = {
@@ -75,18 +74,20 @@ const NAV_ADMIN: NavItem[] = [
 
 export default function SidebarLayout({ variant, children }: Props) {
   const router = useRouter()
-  const { user, session } = useUser()
+  const { user } = useUser()
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const key = `hempin.sidebar.collapsed:${variant}`
 
   // persisted collapsed state
   useEffect(() => {
-    const v = localStorage.getItem(key)
+    const v = typeof window !== 'undefined' ? localStorage.getItem(key) : null
     if (v === '1') setCollapsed(true)
   }, [key])
   useEffect(() => {
-    localStorage.setItem(key, collapsed ? '1' : '0')
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(key, collapsed ? '1' : '0')
+    }
   }, [collapsed, key])
 
   // close drawer on route change
@@ -117,7 +118,7 @@ export default function SidebarLayout({ variant, children }: Props) {
     <div
       className={[
         'flex h-[calc(100vh-1.5rem)] flex-col',
-        'rounded-2xl border border-white/10 bg-white/5/10 backdrop-blur',
+        'rounded-2xl border border-white/10 bg-white/5 backdrop-blur',
         'shadow-[0_0_0_1px_rgba(255,255,255,.04),0_10px_30px_-10px_rgba(0,0,0,.6)]',
         collapsed ? 'w-16' : 'w-72',
         'p-3',
