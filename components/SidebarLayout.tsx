@@ -63,12 +63,6 @@ const ICON = {
       <path d="M12 2v20M16.5 6.5a3.5 3.5 0 1 0-7 0c0 1.933 1.567 3.5 3.5 3.5h1c1.933 0 3.5 1.567 3.5 3.5a3.5 3.5 0 1 1-7 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
-  user: ({ className }: { className?: string }) => (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M4 20a8 8 0 1 1 16 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5"/>
-    </svg>
-  ),
   chevronLeft: ({ className }: { className?: string }) => (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
       <path d="M15 19 8 12l7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -107,24 +101,31 @@ const NAV_ADMIN: NavItem[] = [
 
 export default function SidebarLayout({ variant, children }: Props) {
   const router = useRouter()
-  const { user } = useUser()
+  const { user, session } = useUser()
 
+  // Guard /account when not signed in
+  useEffect(() => {
+    if (variant === 'account' && !session) {
+      const next = encodeURIComponent(router.asPath || '/account')
+      router.replace(`/signin?next=${next}`)
+    }
+  }, [variant, session, router])
+
+  const key = `hempin.sidebar.collapsed:${variant}`
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const key = `hempin.sidebar.collapsed:${variant}`
 
-  // persist collapsed state (client only)
   useEffect(() => {
     const v = typeof window !== 'undefined' ? localStorage.getItem(key) : null
     if (v === '1') setCollapsed(true)
   }, [key])
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(key, collapsed ? '1' : '0')
     }
   }, [collapsed, key])
 
-  // close drawer on route change
   useEffect(() => {
     const close = () => setDrawerOpen(false)
     router.events.on('routeChangeComplete', close)
@@ -138,10 +139,7 @@ export default function SidebarLayout({ variant, children }: Props) {
     (href !== '/account' && href !== '/admin' && router.pathname.startsWith(href))
 
   const initials =
-    (user?.email || '')
-      .split('@')[0]
-      .slice(0, 2)
-      .toUpperCase() || 'HI'
+    (user?.email || '').split('@')[0].slice(0, 2).toUpperCase() || 'HI'
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -151,15 +149,14 @@ export default function SidebarLayout({ variant, children }: Props) {
   const Rail = (
     <div
       className={[
-        // 🔧 height fix: respect viewport and sticky parent; no overflow past bottom
-        'flex h-full min-h-screen flex-col p-3',
-        'rounded-2xl border border-white/10 ring-1 ring-white/5',
+        'flex flex-col p-3',
+        'max-h-[calc(100dvh-2rem)] w-72 overflow-hidden rounded-2xl',
+        'border border-white/10 ring-1 ring-white/5',
         'bg-gradient-to-b from-emerald-500/10 via-zinc-900/60 to-black/80',
         'backdrop-blur shadow-[0_0_0_1px_rgba(255,255,255,.04),0_10px_30px_-10px_rgba(0,0,0,.6)]',
         collapsed ? 'w-[4.25rem]' : 'w-72',
       ].join(' ')}
     >
-      {/* Header */}
       <div className={collapsed ? 'mb-3 flex flex-col items-center gap-2' : 'mb-3 flex items-center justify-between'}>
         <Link
           href={variant === 'admin' ? '/admin' : '/account'}
@@ -171,7 +168,6 @@ export default function SidebarLayout({ variant, children }: Props) {
           {!collapsed && <span className="tracking-wide">HEMPIN</span>}
         </Link>
 
-        {/* Collapse/expand button */}
         {collapsed ? (
           <button
             aria-label="Expand sidebar"
@@ -191,67 +187,64 @@ export default function SidebarLayout({ variant, children }: Props) {
         )}
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto">
-        <ul className="space-y-1">
-          {nav.map(item => {
-            const active = isActive(item.href)
-            const Icon = item.icon
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={[
-                    'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm',
-                    active
-                      ? 'bg-white/10 text-white'
-                      : 'text-zinc-300/90 hover:bg-white/5 hover:text-white',
-                  ].join(' ')}
-                >
-                  <Icon className="h-5 w-5" />
-                  {!collapsed && <span className="truncate">{item.label}</span>}
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
-      </nav>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <nav className="min-h-0 flex-1 overflow-y-auto">
+          <ul className="space-y-1">
+            {nav.map(item => {
+              const active = isActive(item.href)
+              const Icon = item.icon
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={[
+                      'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm',
+                      active
+                        ? 'bg-white/10 text-white'
+                        : 'text-zinc-300/90 hover:bg-white/5 hover:text-white',
+                    ].join(' ')}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {!collapsed && <span className="truncate">{item.label}</span>}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
 
-      {/* Footer (identity + logout) */}
-      <div className="mt-3">
-        {/* Hide the text button in collapsed mode */}
-        {!collapsed && (
-          <button
-            onClick={handleLogout}
-            className="mb-2 w-full rounded-xl border border-emerald-400/30 px-3 py-2 text-center text-sm text-emerald-300 hover:bg-emerald-400/10"
-          >
-            Log out
-          </button>
-        )}
-
-        <Link
-          href="/account/profile"
-          className="flex items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-white/5"
-        >
-          {/* 🔒 always a circle, fixed size */}
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-xs">
-            {initials}
-          </div>
+        <div className="shrink-0 pt-3">
           {!collapsed && (
-            <div className="min-w-0">
-              <div className="truncate text-sm text-white/90">{user?.email || 'Guest'}</div>
-              <div className="truncate text-xs text-zinc-400">View profile</div>
-            </div>
+            <button
+              onClick={handleLogout}
+              className="mb-2 w-full rounded-xl border border-emerald-400/30 px-3 py-2 text-center text-sm text-emerald-300 hover:bg-emerald-400/10"
+            >
+              Log out
+            </button>
           )}
-        </Link>
+          <Link
+            href="/account/profile"
+            className={['flex items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-white/5', collapsed ? 'justify-center' : ''].join(' ')}
+          >
+            <div className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-xs">
+              {initials}
+            </div>
+            {!collapsed && (
+              <div className="min-w-0">
+                <div className="truncate text-sm text-white/90">{user?.email || 'Guest'}</div>
+                <div className="truncate text-xs text-zinc-400">View profile</div>
+              </div>
+            )}
+          </Link>
+        </div>
       </div>
     </div>
   )
 
   return (
-    <div className="mx-auto max-w-7xl px-4 lg:px-6">
-      {/* mobile top bar */}
-      <div className="sticky top-0 z-30 -mx-4 mb-4 flex items-center justify-between border-b border-white/5 bg-black/60 px-4 py-3 backdrop-blur lg:hidden">
+    <div className="mx-auto max-w-7xl px-4 md:px-6">
+      {/* MOBILE top bar (hidden from md and up) */}
+      <div className="sticky top-0 z-30 -mx-4 mb-4 flex items-center justify-between border-b border-white/5 bg-black/60 px-4 py-3 backdrop-blur md:hidden">
         <button
           onClick={() => setDrawerOpen(true)}
           className="inline-flex items-center gap-2 rounded-lg px-2 py-1 text-zinc-300 hover:bg-white/5"
@@ -265,29 +258,34 @@ export default function SidebarLayout({ variant, children }: Props) {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[auto,1fr]">
-        {/* Sticky rail (desktop) */}
-        <aside className="sticky top-4 hidden self-start lg:block">{Rail}</aside>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[auto,1fr]">
+        {/* Sidebar is ALWAYS visible on md+ */}
+        <aside className="sticky top-4 hidden self-start md:block">{Rail}</aside>
 
-        {/* Content */}
         <main className="min-h-screen pb-12">{children}</main>
       </div>
 
       {/* Drawer (mobile) */}
       {drawerOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setDrawerOpen(false)} aria-hidden="true" />
-          <div className="absolute inset-y-0 left-0 w-[80%] max-w-[20rem] p-3">
-            <div className="mb-2 flex items-center justify-end">
-              <button
-                onClick={() => setDrawerOpen(false)}
-                className="rounded-lg p-2 text-zinc-300 hover:bg-white/5"
-                aria-label="Close navigation"
-              >
-                <ICON.close className="h-5 w-5" />
-              </button>
+        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">
+          <button
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setDrawerOpen(false)}
+            aria-label="Close navigation overlay"
+          />
+          <div className="absolute inset-y-0 left-0 flex w-[82%] max-w-[20rem] p-3">
+            <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="mb-2 flex items-center justify-end">
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  className="rounded-lg p-2 text-zinc-300 hover:bg-white/5"
+                  aria-label="Close navigation"
+                >
+                  <ICON.close className="h-5 w-5" />
+                </button>
+              </div>
+              {Rail}
             </div>
-            {Rail}
           </div>
         </div>
       )}
