@@ -4,8 +4,10 @@ import AppShell from '../components/AppShell'
 
 export default function ServicesPublic() {
   return (
-    <AppShell title="Services">
+    <AppShell>
       <Head><title>Services • HEMPIN</title></Head>
+
+      <h1 className="text-2xl font-bold mb-4">Services</h1>
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card title="Instant brand pages"
