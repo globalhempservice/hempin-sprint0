@@ -1,33 +1,56 @@
 // components/RequireAuth.tsx
-import { useEffect } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/router'
-import { useUser } from '../lib/useUser'
+import { supabase } from '../lib/supabaseClient'
 
-type Props = {
-  children: React.ReactNode
-  // when true, also require profile.role === 'admin'
-  adminOnly?: boolean
-}
+type Props = { children: ReactNode }
 
-export default function RequireAuth({ children, adminOnly }: Props) {
-  const { user, loading, profile } = useUser()
+/**
+ * Client-only auth guard:
+ * - Renders nothing until we know the session (prevents flicker)
+ * - If not signed in, redirects to /signin?next=<current path>
+ * - If signed out later, sends back to /signin
+ */
+export default function RequireAuth({ children }: Props) {
   const router = useRouter()
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (loading) return
-    if (!user) {
-      const next = encodeURIComponent(router.asPath || '/account')
-      router.replace(`/signin?next=${next}`)
-      return
-    }
-    if (adminOnly && profile?.role !== 'admin') {
-      router.replace('/account')
-    }
-  }, [user, loading, adminOnly, profile?.role, router])
+    let mounted = true
 
-  if (loading) return null
-  if (!user) return null
-  if (adminOnly && profile?.role !== 'admin') return null
+    async function check() {
+      const { data } = await supabase.auth.getSession()
+      if (!mounted) return
+
+      const session = data?.session
+      if (!session) {
+        const next = encodeURIComponent(router.asPath || '/account')
+        router.replace(`/signin?next=${next}`)
+        return
+      }
+
+      setReady(true)
+    }
+
+    check()
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        const next = encodeURIComponent(router.asPath || '/account')
+        router.replace(`/signin?next=${next}`)
+      }
+    })
+
+    return () => {
+      mounted = false
+      sub?.subscription?.unsubscribe()
+    }
+  }, [router])
+
+  if (!ready) {
+    // keep simple and invisible to prevent layout flicker
+    return null
+  }
 
   return <>{children}</>
 }
