@@ -1,64 +1,44 @@
 // middleware.ts
-import { NextResponse, type NextRequest } from 'next/server'
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
-
-  // Try to load the session from Supabase cookies (set by the callback)
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Allow these paths without auth (static/assets/API/auth routes)
-  const publicPaths = [
-    '/',                        // homepage
-    '/signin',                  // sign-in page
-    '/auth/callback',           // supabase magic-link landing
-    '/auth/logout',
-    '/services',
-    '/contact',
-  ]
-
-  const isPublic =
-    publicPaths.includes(pathname) ||
+  // Always allow public assets and public paths
+  if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon') ||
-    pathname.startsWith('/images') ||
-    pathname.startsWith('/api') ||           // your API routes handle auth themselves
-    pathname.startsWith('/admin/login')      // your dedicated admin login
-
-  // Protected areas:
-  const requiresUser = pathname.startsWith('/account')
-  const requiresAdmin = pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')
-
-  // If user is not signed in and is trying to access protected pages → send to /signin
-  if (!isPublic && !session && (requiresUser || requiresAdmin)) {
-    const url = req.nextUrl.clone()
-    url.pathname = '/signin'
-    url.searchParams.set('next', req.nextUrl.pathname + req.nextUrl.search) // go back after login
-    return NextResponse.redirect(url)
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/auth') ||   // your /auth/signin + /auth/logout
+    pathname === '/' ||
+    pathname.startsWith('/signin') ||
+    pathname.startsWith('/logout') ||
+    pathname.startsWith('/services') ||
+    pathname.startsWith('/shop')
+  ) {
+    return NextResponse.next()
   }
 
-  // If signed in and on /signin, bounce to next or /account (avoid bouncing back & forth)
-  if (session && pathname === '/signin') {
-    const url = req.nextUrl.clone()
-    url.pathname = req.nextUrl.searchParams.get('next') || '/account'
-    return NextResponse.redirect(url)
+  // ✅ Only enforce server-side auth for /admin to avoid magic-link loops
+  if (pathname.startsWith('/admin')) {
+    const hasAccessCookie =
+      req.cookies.has('sb-access-token') ||               // auth-helpers v2
+      req.cookies.has('supabase-auth-token') ||           // older helpers
+      req.cookies.has('sb:token') ||                      // legacy
+      !!req.headers.get('authorization')                  // just in case
+
+    if (!hasAccessCookie) {
+      const url = req.nextUrl.clone()
+      url.pathname = '/signin'
+      url.searchParams.set('next', pathname)
+      return NextResponse.redirect(url)
+    }
   }
 
-  return res
+  return NextResponse.next()
 }
 
+// Only run on /admin — leave /account to client-side guard to prevent loops
 export const config = {
-  matcher: [
-    /*
-      Run the middleware on all routes except static files we already excluded above.
-      Using a wide matcher is simplest; the code will early-return for public routes.
-    */
-    '/((?!.*\\..*).*)',
-  ],
+  matcher: ['/admin/:path*'],
 }
