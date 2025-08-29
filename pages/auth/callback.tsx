@@ -1,71 +1,70 @@
 // pages/auth/callback.tsx
 import { useEffect } from 'react'
-import Head from 'next/head'
 import { useRouter } from 'next/router'
+import Head from 'next/head'
 import { supabase } from '../../lib/supabaseClient'
 
-function getParamsFromLocation() {
-  // Supabase magic link may arrive in the hash (#access_token=...) or in the query (?access_token=...)
-  const raw =
-    typeof window === 'undefined'
-      ? ''
-      : window.location.hash?.startsWith('#')
-      ? window.location.hash.slice(1)
-      : window.location.search?.startsWith('?')
-      ? window.location.search.slice(1)
-      : ''
-  const p = new URLSearchParams(raw)
-  return {
-    access_token: p.get('access_token') || '',
-    refresh_token: p.get('refresh_token') || p.get('refreshToken') || '',
-    next: p.get('next') || '',
-  }
+function parseHash() {
+  if (typeof window === 'undefined') return {}
+  const h = window.location.hash || ''
+  const params = new URLSearchParams(h.startsWith('#') ? h.slice(1) : h)
+  const access_token = params.get('access_token') || undefined
+  const refresh_token = params.get('refresh_token') || undefined
+  const token_type = params.get('token_type') || undefined
+  return { access_token, refresh_token, token_type }
 }
 
 export default function AuthCallback() {
   const router = useRouter()
+  const next = typeof router.query.next === 'string' ? router.query.next : '/account'
 
   useEffect(() => {
-    const run = async () => {
+    let mounted = true
+    async function run() {
       try {
-        const { access_token, refresh_token, next } = getParamsFromLocation()
+        const { access_token, refresh_token } = parseHash()
 
         if (access_token && refresh_token) {
-          // Store the session in Supabase
+          // Email OTP magic-link flow: restore session explicitly
           const { error } = await supabase.auth.setSession({
             access_token,
             refresh_token,
           })
           if (error) throw error
-
-          // Clean the URL (remove tokens) and go to destination
-          const dest = next || '/account'
-          window.history.replaceState({}, document.title, dest)
-          router.replace(dest)
+          // Clean the hash to avoid confusion
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.search)
+          if (!mounted) return
+          router.replace(next || '/account')
           return
         }
 
-        // If tokens aren’t present, maybe the session is already set (e.g. user clicked twice)
+        // Fallback: if session already exists (e.g. different flow)
         const { data } = await supabase.auth.getSession()
         if (data.session) {
-          router.replace((router.query.next as string) || '/account')
-        } else {
-          router.replace('/signin?error=missing_tokens')
+          if (!mounted) return
+          router.replace(next || '/account')
+          return
         }
+
+        // No session → go to signin
+        if (!mounted) return
+        router.replace(`/signin?next=${encodeURIComponent(next || '/account')}`)
       } catch {
-        router.replace('/signin?error=callback_failed')
+        if (!mounted) return
+        router.replace(`/signin?next=${encodeURIComponent(next || '/account')}`)
       }
     }
+
     run()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    return () => {
+      mounted = false
+    }
+  }, [router, next])
 
   return (
-    <>
+    <div className="grid min-h-[60vh] place-items-center">
       <Head><title>Signing you in… • HEMPIN</title></Head>
-      <div className="min-h-screen grid place-items-center">
-        <p className="opacity-70">Signing you in…</p>
-      </div>
-    </>
+      <div className="animate-pulse text-sm opacity-80">Signing you in…</div>
+    </div>
   )
 }
