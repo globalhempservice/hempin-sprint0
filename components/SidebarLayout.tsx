@@ -1,5 +1,5 @@
 // components/SidebarLayout.tsx
-import { useEffect, useMemo, useState } from 'react'
+import type { ReactNode, ReactElement } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
@@ -10,7 +10,8 @@ type Variant = 'account' | 'admin'
 type NavItem = {
   href: string
   label: string
-  icon: (props: { className?: string }) => JSX.Element
+  // was: icon: (props: { className?: string }) => JSX.Element
+  icon: (props: { className?: string }) => ReactElement | ReactNode
 }
 
 type Props = {
