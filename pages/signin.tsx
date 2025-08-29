@@ -1,58 +1,68 @@
 // pages/signin.tsx
 import { useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL
+import { useRouter } from 'next/router'
+import { createBrowserClient } from '@supabase/ssr'
 
 export default function SignIn() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
-  const [sent, setSent] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState<'idle'|'sending'|'sent'|'error'>('idle')
+  const next = (router.query.next as string) || '/account'
 
-  const send = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
-    setLoading(true)
+    setStatus('sending')
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const origin =
+      typeof window !== 'undefined' && window.location.origin
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_SITE_URL // fallback for SSR/Netlify
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${SITE}/account` },
+      options: {
+        emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+      },
     })
-    setLoading(false)
-    if (error) setError(error.message)
-    else setSent(true)
+    if (error) {
+      console.error(error)
+      setStatus('error')
+      return
+    }
+    setStatus('sent')
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-12">
-      <h1 className="mb-6 text-2xl font-semibold">Sign in / Sign up</h1>
-      {sent ? (
-        <p className="rounded-md bg-green-500/10 p-3 text-green-300">
-          Check your email for a magic link. You’ll land in your account.
-        </p>
-      ) : (
-        <form onSubmit={send} className="space-y-3">
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="w-full rounded-md border border-white/15 bg-black/40 px-3 py-2 outline-none"
-          />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-md bg-white px-4 py-2 font-medium text-black disabled:opacity-60"
-          >
-            {loading ? 'Sending…' : 'Send magic link'}
-          </button>
-        </form>
-      )}
-      <p className="mt-6 text-sm text-white/60">
-        By continuing you agree to our terms and privacy policy.
-      </p>
+    <div className="min-h-screen grid place-items-center p-6">
+      <form onSubmit={onSubmit} className="w-full max-w-sm space-y-3">
+        <h1 className="text-2xl font-semibold">Sign in</h1>
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          className="w-full rounded-md bg-zinc-900/60 border border-zinc-700 px-3 py-2"
+        />
+        <button
+          type="submit"
+          disabled={status === 'sending'}
+          className="w-full rounded-md bg-emerald-600 px-3 py-2 font-medium disabled:opacity-60"
+        >
+          {status === 'sending' ? 'Sending…' : 'Send magic link'}
+        </button>
+
+        {status === 'sent' && (
+          <p className="text-sm opacity-80">Check your email for the sign-in link.</p>
+        )}
+        {status === 'error' && (
+          <p className="text-sm text-red-400">There was a problem sending your link.</p>
+        )}
+      </form>
     </div>
   )
 }
