@@ -1,5 +1,6 @@
 // components/SidebarLayout.tsx
-import type { ReactNode, ReactElement } from 'react'
+import { useState } from 'react'
+import type { ReactNode, ReactElement, JSX } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
