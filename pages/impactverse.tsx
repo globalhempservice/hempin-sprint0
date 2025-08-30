@@ -1,7 +1,7 @@
 // pages/impactverse.tsx
 import Head from 'next/head'
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactElement } from 'react'
 
 type NodeDef = {
   id: string
@@ -11,7 +11,7 @@ type NodeDef = {
   hue: number
   x: number // 0..100 (%)
   y: number // 0..100 (%)
-  icon: (props: { className?: string }) => JSX.Element
+  icon: (props: { className?: string }) => ReactElement
 }
 
 // ---- minimal, inline icon set (no external deps) ----
@@ -168,7 +168,7 @@ export default function Impactverse() {
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => { e.preventDefault(); upvote(n.id) }}
+                      onClick={(e) => { e.preventDefault(); const next = { ...votes, [n.id]: (votes[n.id] || 0) + 1 }; setVotes(next); setVotesState(next) }}
                       className="mt-2 inline-flex items-center gap-1 rounded-lg border border-white/10 px-2 py-1 text-xs text-white/80 hover:bg-white/10"
                       aria-label={`Upvote ${n.title}`}
                     >
@@ -184,7 +184,7 @@ export default function Impactverse() {
           <div className="space-y-4">
             <h2 className="text-xl font-bold">Trending Nodes</h2>
             <ul className="space-y-3">
-              {sorted.map(n => (
+              {[...NODES].sort((a, b) => (votes[b.id] || 0) - (votes[a.id] || 0)).map(n => (
                 <li key={n.id}>
                   <Link
                     href={n.href}
