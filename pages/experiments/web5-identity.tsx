@@ -4,6 +4,26 @@ import { useEffect, useState } from 'react'
 
 type Keys = { publicJwk: JsonWebKey; privateJwk: JsonWebKey }
 
+// --- helpers that avoid spread / downlevelIteration issues ---
+function abToBase64(buf: ArrayBuffer) {
+  const bytes = new Uint8Array(buf)
+  let binary = ''
+  const chunk = 0x8000
+  for (let i = 0; i < bytes.length; i += chunk) {
+    const slice = bytes.subarray(i, i + chunk)
+    // convert to regular array of numbers before apply
+    binary += String.fromCharCode.apply(null, Array.prototype.slice.call(slice) as number[])
+  }
+  return btoa(binary)
+}
+
+function base64ToBytes(b64: string) {
+  const bin = atob(b64)
+  const out = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i)
+  return out
+}
+
 async function genKeys(): Promise<Keys> {
   const keyPair = await crypto.subtle.generateKey(
     { name: 'ECDSA', namedCurve: 'P-256' },
@@ -19,13 +39,13 @@ async function sign(privateJwk: JsonWebKey, data: string) {
   const key = await crypto.subtle.importKey('jwk', privateJwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign'])
   const enc = new TextEncoder().encode(data)
   const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, enc)
-  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+  return abToBase64(sig)
 }
 
 async function verify(publicJwk: JsonWebKey, data: string, b64: string) {
   const key = await crypto.subtle.importKey('jwk', publicJwk, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify'])
   const enc = new TextEncoder().encode(data)
-  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0))
+  const bytes = base64ToBytes(b64)
   return crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, bytes, enc)
 }
 
@@ -40,14 +60,14 @@ export default function Web5Identity() {
     if (raw) {
       const k: Keys = JSON.parse(raw)
       setKeys(k)
-      setDid(`did:demo:${(k.publicJwk.x || 'xx').slice(0, 8)}`)
+      setDid(`did:demo:${String(k.publicJwk.x || 'xx').slice(0, 8)}`)
     }
   }, [])
 
   const create = async () => {
     const k = await genKeys()
     setKeys(k)
-    const d = `did:demo:${(k.publicJwk.x || 'xx').slice(0, 8)}`
+    const d = `did:demo:${String(k.publicJwk.x || 'xx').slice(0, 8)}`
     setDid(d)
     localStorage.setItem('lab.did.keys', JSON.stringify(k))
   }
