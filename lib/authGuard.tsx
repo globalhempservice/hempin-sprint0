@@ -1,35 +1,67 @@
-// lib/authGuard.tsx
+// lib/authGuard.ts
 import { useEffect, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from './supabaseClient'
 
+/**
+ * Wrap /account pages with this guard.
+ * - Renders a blocking loader while checking session
+ * - Redirects guests to /signin?next=<current>
+ * - Subscribes to auth changes to avoid flicker
+ */
 export function AccountRouteGuard({ children }: { children: ReactNode }) {
   const router = useRouter()
-  const isAccountRoute = router.asPath.startsWith('/account')
-  const [ready, setReady] = useState(!isAccountRoute) // public pages render immediately
+  const [status, setStatus] = useState<'checking' | 'authed' | 'guest'>('checking')
 
   useEffect(() => {
     let alive = true
-    if (!isAccountRoute) return
+    if (!router.isReady) return
 
-    ;(async () => {
-      const { data } = await supabase.auth.getSession()
-      const session = data?.session
+    async function run() {
+      const { data: { session } } = await supabase.auth.getSession()
       if (!alive) return
-      if (!session) {
+
+      if (session) {
+        setStatus('authed')
+      } else {
+        setStatus('guest')
         const next = encodeURIComponent(router.asPath || '/account')
         router.replace(`/signin?next=${next}`)
-      } else {
-        setReady(true)
       }
-    })()
+    }
 
-    return () => { alive = false }
-  }, [isAccountRoute, router])
+    run()
 
-  if (!ready) {
-    // minimal placeholder to avoid flicker
-    return <div className="min-h-screen bg-black" />
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (!alive) return
+      if (session) {
+        setStatus('authed')
+      } else {
+        setStatus('guest')
+        const next = encodeURIComponent(router.asPath || '/account')
+        router.replace(`/signin?next=${next}`)
+      }
+    })
+
+    return () => {
+      alive = false
+      sub.subscription?.unsubscribe?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady]) // only when router ready
+
+  if (status === 'checking') {
+    return (
+      <div className="min-h-screen grid place-items-center">
+        <div className="text-zinc-400">Loading…</div>
+      </div>
+    )
   }
+
+  if (status === 'guest') {
+    // Router is already replacing; render nothing to prevent flicker
+    return null
+  }
+
   return <>{children}</>
 }
