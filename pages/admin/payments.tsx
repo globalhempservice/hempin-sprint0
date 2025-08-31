@@ -4,10 +4,9 @@ import AdminShell from '../../components/AdminShell'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
-// --- ADMIN SSR GUARD + SSR DATA FETCH ---
+// --- ADMIN SSR GUARD ---
 import type { GetServerSideProps } from 'next'
 import { hasValidAdminCookie, redirectToAdminLogin } from '../../lib/adminAuth'
-import { createClient } from '@supabase/supabase-js'
 
 type OrderRow = {
   id: string
@@ -21,7 +20,7 @@ type OrderRow = {
 
 type Props = {
   initialRows: OrderRow[]
-  ssrError?: string | null
+  ssrError: string | null
 }
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
@@ -29,61 +28,58 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
     return redirectToAdminLogin(ctx)
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  // Always return Props (or redirect). Never {}.
+  let initialRows: OrderRow[] = []
+  let ssrError: string | null = null
 
-  if (!url || !serviceKey) {
-    return { props: { initialRows: [], ssrError: 'Missing Supabase env vars' } }
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id,user_id,status,total_cents,currency,paypal_order_id,created_at')
+      .order('created_at', { ascending: false })
+      .limit(200)
+
+    if (error) ssrError = error.message
+    else initialRows = data ?? []
+  } catch (e: any) {
+    ssrError = e?.message ?? 'Unknown error'
   }
 
-  // server-side client with service role (never sent to the browser)
-  const admin = createClient(url, serviceKey, { auth: { persistSession: false } })
-
-  const { data, error } = await admin
-    .from('orders')
-    .select('id,user_id,status,total_cents,currency,paypal_order_id,created_at')
-    .order('created_at', { ascending: false })
-    .limit(200)
-
-  return {
-    props: {
-      initialRows: data ?? [],
-      ssrError: error?.message ?? null,
-    },
-  }
+  return { props: { initialRows, ssrError } }
 }
-// --- END GUARD + SSR FETCH ---
+// --- END GUARD ---
 
 export default function AdminPayments({ initialRows, ssrError }: Props) {
   const [rows, setRows] = useState<OrderRow[]>(initialRows)
   const [loading, setLoading] = useState(false)
+  const [clientErr, setClientErr] = useState<string | null>(null)
 
-  // Optional fallback: if SSR returned nothing (e.g., local dev), try anon fetch
+  // Optional client refresh after mount (keeps SSR fast + accurate)
   useEffect(() => {
-    if (initialRows.length > 0) return
     let alive = true
-    setLoading(true)
-    const load = async () => {
+    const refresh = async () => {
+      setLoading(true)
       const { data, error } = await supabase
         .from('orders')
         .select('id,user_id,status,total_cents,currency,paypal_order_id,created_at')
         .order('created_at', { ascending: false })
         .limit(200)
       if (!alive) return
-      if (!error) setRows(data ?? [])
+      if (error) setClientErr(error.message)
+      else setRows(data ?? [])
       setLoading(false)
     }
-    load()
+    refresh()
     return () => { alive = false }
-  }, [initialRows])
+  }, [])
 
   return (
     <AdminShell title="Admin — Payments">
       <Head><title>Admin — Payments • HEMPIN</title></Head>
 
-      {ssrError && (
-        <div className="mb-3 text-sm text-red-400">
-          Server fetch error: {ssrError}
+      {(ssrError || clientErr) && (
+        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+          {clientErr || ssrError}
         </div>
       )}
 
