@@ -5,6 +5,18 @@ import AdminShell from '../../components/AdminShell'
 import { supabase } from '../../lib/supabaseClient'
 import { useEffect, useState } from 'react'
 
+// --- ADMIN SSR GUARD (keep your existing imports below this) ---
+import type { GetServerSideProps } from 'next'
+import { hasValidAdminCookie, redirectToAdminLogin } from '../../lib/adminAuth'
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  if (!hasValidAdminCookie(ctx.req)) {
+    return redirectToAdminLogin(ctx)
+  }
+  return { props: {} }
+}
+// --- END GUARD ---
+
 export default function AdminHome() {
   const [pendingCount, setPendingCount] = useState<number | null>(null)
 
