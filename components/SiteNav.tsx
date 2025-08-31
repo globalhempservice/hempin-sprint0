@@ -1,58 +1,105 @@
 // components/SiteNav.tsx
+import React, { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
-import { useUser } from '../lib/useUser'
+
+const NAV = [
+  { href: '/trade', label: 'Trade' },            // blue universe
+  { href: '/supermarket', label: 'Supermarket' },// purple universe
+  { href: '/events', label: 'Events' },          // amber/orange universe
+  { href: '/research', label: 'Research' },      // teal universe
+  { href: '/experiments', label: 'Experiments' } // rainbow lab
+]
 
 export default function SiteNav() {
-  const router = useRouter()
-  const { user } = useUser()
-
-  const nav = [
-    { href: '/', label: 'Home' },
-    { href: '/services', label: 'Services' },
-    { href: '/start', label: 'Start' },
-    { href: '/bangkok-2025', label: 'Bangkok 2025' },
-    { href: '/contact', label: 'Contact' },
-  ]
+  const [open, setOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/60 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="font-semibold tracking-wide">
-          HEMP’IN
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-6">
+        {/* Brand */}
+        <Link href="/" className="flex items-center gap-2 font-semibold tracking-wide">
+          <span className="inline-grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 text-emerald-300">H</span>
+          <span className="text-white">HEMPIN</span>
         </Link>
 
-        <nav className="hidden gap-6 md:flex">
-          {nav.map((i) => (
+        {/* Desktop nav */}
+        <nav className="hidden items-center gap-6 text-sm text-zinc-300 lg:flex">
+          {NAV.map((item) => (
             <Link
-              key={i.href}
-              href={i.href}
-              className={`text-sm transition hover:opacity-80 ${
-                router.pathname === i.href ? 'text-white' : 'text-white/80'
-              }`}
+              key={item.href}
+              href={item.href}
+              className="hover:text-white"
             >
-              {i.label}
+              {item.label}
             </Link>
           ))}
         </nav>
 
-        {/* Primary CTA: Account if logged in, otherwise Sign in / Sign up */}
-        {user ? (
+        {/* Right CTAs */}
+        <div className="hidden items-center gap-3 lg:flex">
+          <Link href="/signin" className="rounded-lg px-3 py-2 text-sm text-zinc-200 hover:bg-white/5">
+            Sign in
+          </Link>
           <Link
             href="/account"
-            className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-black hover:opacity-90"
+            className="rounded-lg bg-emerald-500/20 px-3 py-2 text-sm font-medium text-emerald-300 ring-1 ring-emerald-400/30 hover:bg-emerald-500/25"
           >
             Account
           </Link>
-        ) : (
-          <Link
-            href="/signin"
-            className="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-black hover:opacity-90"
-          >
-            Sign in / Sign up
-          </Link>
-        )}
+        </div>
+
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setOpen(true)}
+          className="rounded-lg p-2 text-zinc-300 hover:bg-white/5 lg:hidden"
+          aria-label="Open menu"
+        >
+          <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
+            <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile drawer */}
+      {open && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} />
+          <div className="absolute inset-y-0 right-0 w-[80%] max-w-xs bg-black/90 p-4 ring-1 ring-white/10">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="font-semibold text-white">Menu</span>
+              <button
+                onClick={() => setOpen(false)}
+                className="rounded-lg p-2 text-zinc-300 hover:bg-white/5"
+                aria-label="Close menu"
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
+                  <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            <nav className="grid gap-2 text-sm">
+              {NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-lg px-3 py-2 text-zinc-200 hover:bg-white/5"
+                  onClick={() => setOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <div className="mt-2 h-px bg-white/10" />
+              <Link href="/signin" className="rounded-lg px-3 py-2 text-zinc-200 hover:bg-white/5" onClick={() => setOpen(false)}>
+                Sign in
+              </Link>
+              <Link href="/account" className="rounded-lg px-3 py-2 text-emerald-300 ring-1 ring-emerald-400/30 hover:bg-emerald-500/10" onClick={() => setOpen(false)}>
+                Account
+              </Link>
+            </nav>
+          </div>
+        </div>
+      )}
     </header>
   )
 }
