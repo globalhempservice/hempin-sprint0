@@ -1,93 +1,100 @@
 // lib/adminAuth.ts
-import type { GetServerSideProps, GetServerSidePropsContext, GetServerSidePropsResult } from 'next'
-import crypto from 'crypto'
+import type { GetServerSidePropsContext } from 'next'
+import type { IncomingMessage, ServerResponse } from 'http'
+import { createHmac, createHash, timingSafeEqual } from 'crypto'
 
-const COOKIE_NAME = 'hp_admin'
-const MAX_AGE_SEC = 60 * 60 * 8 // 8 hours
+export const ADMIN_COOKIE_NAME = 'hempin_admin'
+const DEFAULT_TTL_SECONDS = 60 * 60 * 8 // 8 hours
 
-const b64u = {
-  enc: (buf: Buffer) =>
-    buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_'),
-  dec: (str: string) => Buffer.from(str.replace(/-/g, '+').replace(/_/g, '/'), 'base64'),
+function b64url(input: Buffer | string) {
+  const b = Buffer.isBuffer(input) ? input : Buffer.from(input)
+  return b
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '')
 }
 
-function sha256Hex(input: string) {
-  return crypto.createHash('sha256').update(input, 'utf8').digest('hex')
+function sign(b64Payload: string, secret: string) {
+  return b64url(createHmac('sha256', secret).update(b64Payload).digest())
 }
 
-function sign(payloadB64: string, secret: string) {
-  const mac = crypto.createHmac('sha256', secret).update(payloadB64).digest()
-  return b64u.enc(mac)
-}
-
-export function createSessionToken(userAgent: string) {
-  const secret = process.env.ADMIN_SESSION_SECRET || ''
-  if (!secret) throw new Error('ADMIN_SESSION_SECRET missing')
-
-  const payload = {
-    v: 1,
-    iat: Math.floor(Date.now() / 1000),
-    uah: sha256Hex(userAgent || ''), // bind to UA lightly
+function parseCookies(header?: string): Record<string, string> {
+  const out: Record<string, string> = {}
+  if (!header) return out
+  for (const part of header.split(';')) {
+    const [k, ...rest] = part.trim().split('=')
+    if (!k) continue
+    out[k] = decodeURIComponent(rest.join('=') || '')
   }
-  const payloadB64 = b64u.enc(Buffer.from(JSON.stringify(payload)))
-  const sig = sign(payloadB64, secret)
-  return `v1.${payloadB64}.${sig}`
+  return out
 }
 
-export function verifySessionToken(token: string | undefined, userAgent: string): boolean {
+function setCookie(res: ServerResponse, cookie: string) {
+  const prev = res.getHeader('Set-Cookie')
+  if (Array.isArray(prev)) res.setHeader('Set-Cookie', [...prev, cookie])
+  else if (typeof prev === 'string') res.setHeader('Set-Cookie', [prev, cookie])
+  else res.setHeader('Set-Cookie', cookie)
+}
+
+function buildCookie(value: string, maxAgeSec: number) {
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : ''
+  return `${ADMIN_COOKIE_NAME}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}${secure}`
+}
+
+export function setAdminCookie(res: ServerResponse, maxAgeSec = DEFAULT_TTL_SECONDS) {
+  const secret = process.env.ADMIN_SESSION_SECRET || ''
+  if (!secret) throw new Error('ADMIN_SESSION_SECRET is not set')
+
+  const exp = Math.floor(Date.now() / 1000) + maxAgeSec
+  const payload = b64url(Buffer.from(JSON.stringify({ v: 1, exp })))
+  const signature = sign(payload, secret)
+  const token = `${payload}.${signature}`
+
+  setCookie(res, buildCookie(token, maxAgeSec))
+}
+
+export function clearAdminCookie(res: ServerResponse) {
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : ''
+  setCookie(res, `${ADMIN_COOKIE_NAME}=deleted; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`)
+}
+
+export function hasValidAdminCookie(req: IncomingMessage): boolean {
   try {
-    if (!token) return false
     const secret = process.env.ADMIN_SESSION_SECRET || ''
     if (!secret) return false
+    const cookies = parseCookies(req.headers.cookie)
+    const token = cookies[ADMIN_COOKIE_NAME]
+    if (!token) return false
+    const [payload, sig] = token.split('.')
+    if (!payload || !sig) return false
 
-    const [v, payloadB64, sig] = token.split('.')
-    if (v !== 'v1' || !payloadB64 || !sig) return false
-    const expected = sign(payloadB64, secret)
+    const expected = sign(payload, secret)
+    const ok =
+      expected.length === sig.length &&
+      timingSafeEqual(Buffer.from(expected), Buffer.from(sig))
+    if (!ok) return false
 
-    // timing-safe compare
-    const a = b64u.dec(sig)
-    const b = b64u.dec(expected)
-    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false
-
-    const payload = JSON.parse(b64u.dec(payloadB64).toString('utf8')) as { iat: number; uah: string }
-    // expiry
-    if (payload.iat + MAX_AGE_SEC < Math.floor(Date.now() / 1000)) return false
-    // bind to UA
-    if (payload.uah !== sha256Hex(userAgent || '')) return false
-
+    const json = Buffer.from(payload.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
+    const { exp } = JSON.parse(json)
+    if (typeof exp !== 'number' || exp < Math.floor(Date.now() / 1000)) return false
     return true
   } catch {
     return false
   }
 }
 
-export function adminCookieHeader(token: string) {
-  // Path limited to /admin, httpOnly so JS can’t read it
-  return `${COOKIE_NAME}=${token}; HttpOnly; SameSite=Lax; Secure; Path=/admin; Max-Age=${MAX_AGE_SEC}`
+export function redirectToAdminLogin(ctx: GetServerSidePropsContext) {
+  const next = encodeURIComponent(ctx.resolvedUrl || '/admin')
+  return { redirect: { destination: `/admin/login?next=${next}`, permanent: false as const } }
 }
 
-export function clearAdminCookieHeader() {
-  return `${COOKIE_NAME}=; HttpOnly; SameSite=Lax; Secure; Path=/admin; Max-Age=0`
-}
-
-export function getAdminTokenFromCtx(ctx: GetServerSidePropsContext) {
-  const cookie = ctx.req.headers.cookie || ''
-  const match = cookie.split(';').map(s => s.trim()).find(s => s.startsWith(`${COOKIE_NAME}=`))
-  return match ? match.split('=')[1] : undefined
-}
-
-// Wrap any page's getServerSideProps with this guard
-export function withAdminGuard<T extends Record<string, any> = {}>(
-  inner?: GetServerSideProps<T>
-): GetServerSideProps<T> {
-  return async (ctx: GetServerSidePropsContext): Promise<GetServerSidePropsResult<T>> => {
-    const ok = verifySessionToken(getAdminTokenFromCtx(ctx), ctx.req.headers['user-agent'] || '')
-    if (!ok) {
-      const next = encodeURIComponent(ctx.resolvedUrl || '/admin')
-      return {
-        redirect: { destination: `/admin/login?next=${next}`, permanent: false },
-      }
-    }
-    return inner ? await inner(ctx) : { props: {} as T }
-  }
+// Password check: compare SHA-256 of submitted password to ADMIN_PASSWORD_SHA256
+export function passwordMatchesEnv(plain: string): boolean {
+  const wantHex = (process.env.ADMIN_PASSWORD_SHA256 || '').toLowerCase().trim()
+  if (!wantHex) return false
+  const gotHex = createHash('sha256').update(plain, 'utf8').digest('hex').toLowerCase()
+  const a = Buffer.from(wantHex)
+  const b = Buffer.from(gotHex)
+  return a.length === b.length && timingSafeEqual(a, b)
 }
