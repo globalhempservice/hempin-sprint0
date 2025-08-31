@@ -23,7 +23,8 @@ type Props = {
   ssrError: string | null
 }
 
-export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
   if (!hasValidAdminCookie(ctx.req)) {
     return redirectToAdminLogin(ctx)
   }
