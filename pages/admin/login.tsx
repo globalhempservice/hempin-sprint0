@@ -1,79 +1,65 @@
 // pages/admin/login.tsx
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/router'
-import { supabase } from '../../lib/supabaseClient'
-import { useUser } from '../../lib/useUser'
-
-const SITE = process.env.NEXT_PUBLIC_SITE_URL
+import Head from 'next/head'
 
 export default function AdminLogin() {
   const router = useRouter()
-  const { user, loading } = useUser()
-  const [email, setEmail] = useState('')
-  const [sent, setSent] = useState(false)
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
+  const next = typeof router.query.next === 'string' ? router.query.next : '/admin'
 
-  // If already logged in, route based on role
-  useEffect(() => {
-    const go = async () => {
-      if (loading) return
-      if (!user) return
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle()
-      if (prof?.role === 'admin') router.replace('/admin')
-      else router.replace('/account')
-    }
-    go()
-  }, [user, loading, router])
-
-  const send = async (e: React.FormEvent) => {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setLoading(true)
     setError(null)
-    setBusy(true)
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${SITE}/admin` },
+    const r = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ password }),
     })
-    setBusy(false)
-    if (error) setError(error.message)
-    else setSent(true)
+    const json = await r.json()
+    setLoading(false)
+    if (json.ok) {
+      router.replace(next || '/admin')
+    } else {
+      setError(json.error || 'Login failed')
+    }
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-12">
-      <h1 className="mb-2 text-2xl font-semibold">Admin Sign in</h1>
-      <p className="mb-6 text-sm text-white/70">
-        Admins only. You will be redirected to the admin dashboard after login.
-      </p>
+    <>
+      <Head><title>Admin sign-in • HEMPIN</title></Head>
+      <div className="min-h-screen grid place-items-center bg-black">
+        <form
+          onSubmit={onSubmit}
+          className="w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-900/40 p-6 shadow-xl backdrop-blur"
+        >
+          <div className="mb-5 text-center text-lg font-semibold text-white">Admin access</div>
 
-      {sent ? (
-        <p className="rounded-md bg-green-500/10 p-3 text-green-300">
-          Check your email for a magic link.
-        </p>
-      ) : (
-        <form onSubmit={send} className="space-y-3">
+          <label className="mb-2 block text-sm text-zinc-300">Admin password</label>
           <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="admin@yourcompany.com"
-            className="w-full rounded-md border border-white/15 bg-black/40 px-3 py-2 outline-none"
+            type="password"
+            className="mb-3 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-white outline-none focus:ring-2 focus:ring-emerald-400/50"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoFocus
           />
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error && <div className="mb-3 text-sm text-rose-400">{error}</div>}
+
           <button
             type="submit"
-            disabled={busy}
-            className="rounded-md bg-white px-4 py-2 font-medium text-black disabled:opacity-60"
+            disabled={loading}
+            className="w-full rounded-lg border border-emerald-400/30 px-3 py-2 text-emerald-300 hover:bg-emerald-400/10 disabled:opacity-60"
           >
-            {busy ? 'Sending…' : 'Send magic link'}
+            {loading ? 'Checking…' : 'Enter'}
           </button>
+          <p className="mt-4 text-center text-xs text-zinc-400">
+            This gate is separate from customer accounts.
+          </p>
         </form>
-      )}
-    </div>
+      </div>
+    </>
   )
 }
