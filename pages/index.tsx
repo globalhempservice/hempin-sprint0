@@ -1,156 +1,267 @@
 // pages/index.tsx
 import Head from 'next/head'
 import Link from 'next/link'
-import Countdown from '../components/Countdown'
+import SiteNav from '../components/SiteNav'
+import SiteFooter from '../components/SiteFooter'
 
 export default function Home() {
-  // Nov 1, 2025 at 10:00 Bangkok time (UTC+7). Change if you like.
-  const target = '2025-11-01T10:00:00+07:00'
-
   return (
     <>
       <Head>
-        <title>Hemp’in — Build your hemp brand, fast.</title>
-        <meta name="description" content="Hemp’in is the easiest way to launch and showcase hemp brands — with pop-ups, product pages, and a curated marketplace." />
-        <meta property="og:title" content="Hemp’in — Build your hemp brand, fast." />
-        <meta property="og:description" content="Teaser: Bangkok 2025 pop-up. Launch countdown. Join early." />
+        <title>HEMPIN — Grow the Hemp Ecosystem</title>
+        <meta name="description" content="Trade, Supermarket, Events, Research and playful Experiments—one open platform for the hemp ecosystem." />
       </Head>
 
-      {/* HERO */}
-      <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_0%,rgba(52,211,153,0.18),transparent_60%)]" />
-        <div className="mx-auto max-w-6xl px-6 pt-20 pb-12">
-          <div className="flex flex-col items-center text-center">
-            <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
-              🌱 Hemp’in Preview • Bangkok 2025 pop-up
-            </span>
+      {/* Global shell */}
+      <div className="min-h-screen bg-black text-white flex flex-col">
+        <SiteNav />
 
-            <h1 className="max-w-4xl text-4xl font-semibold leading-tight sm:text-5xl md:text-6xl">
-              Build your <span className="text-emerald-400">hemp brand</span> and sell with confidence
-            </h1>
+        <main className="flex-1">
+          {/* HERO */}
+          <section className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_10%,rgba(16,185,129,0.15),transparent_60%)]" />
+            <div className="mx-auto max-w-7xl px-4 lg:px-8">
+              <div className="pt-16 pb-20 md:pt-24 md:pb-28 grid md:grid-cols-2 gap-10 items-center">
+                <div>
+                  <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
+                    Build the future of <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-violet-400 bg-clip-text text-transparent">hemp</span>
+                  </h1>
+                  <p className="mt-4 text-zinc-300 md:text-lg max-w-xl">
+                    HEMPIN unifies creators, brands and communities across
+                    Trade, the consumer Supermarket, global Events, open Research, and playful Experiments.
+                  </p>
 
-            <p className="mt-5 max-w-2xl text-zinc-400">
-              Pages, payments, pop-ups, and a curated marketplace — all-in-one. We’re opening with a special
-              pop-up in Bangkok this November.
-            </p>
+                  <div className="mt-8 flex flex-wrap gap-3">
+                    <Link href="/experiments" className="btn btn-primary">
+                      Explore Experiments
+                    </Link>
+                    <Link href="/supermarket" className="btn btn-secondary">
+                      Browse Supermarket
+                    </Link>
+                    <Link href="/trade" className="btn btn-ghost">
+                      Open Trade
+                    </Link>
+                  </div>
 
-            <div className="mt-7">
-              <Countdown target={target} label="Launch in" />
-            </div>
+                  <p className="mt-4 text-sm text-zinc-400">
+                    New here? <Link className="underline hover:text-white" href="/signin">Sign in</Link> or{' '}
+                    <Link className="underline hover:text-white" href="/signup">Create an account</Link>
+                  </p>
+                </div>
 
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link
-                href="/shop"
-                className="rounded-xl bg-emerald-500 px-5 py-3 font-medium text-emerald-950 hover:bg-emerald-400"
-              >
-                Explore kits & slots
-              </Link>
-              <Link
-                href="/account/brand"
-                className="rounded-xl border border-zinc-700 px-5 py-3 font-medium hover:border-zinc-500"
-              >
-                Create your brand page
-              </Link>
-            </div>
-
-            <div className="mt-8 text-xs text-zinc-500">
-              Kit ordering closes <strong>Oct 15</strong>. Shipping deadline <strong>Oct 25</strong>.
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* VALUE GRID */}
-      <section className="mx-auto max-w-6xl px-6 py-12">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            {
-              title: 'Instant brand pages',
-              body: 'Spin up a beautiful page with images, story, and product links — no code.',
-            },
-            {
-              title: 'Built-in payments',
-              body: 'Secure checkout via PayPal. Simple pricing; keep what you sell.',
-            },
-            {
-              title: 'Bangkok pop-up 2025',
-              body: 'Join our curated physical showcase to meet buyers and fans IRL.',
-            },
-            {
-              title: 'Product slots',
-              body: 'Publish, unpublish, and manage a limited number of products per plan.',
-            },
-            {
-              title: 'Moderation & quality',
-              body: 'Submissions are reviewed to keep the marketplace clean and trustworthy.',
-            },
-            {
-              title: 'Roadmap',
-              body: 'Wholesale tools, creator collabs, analytics, and more rolling out after launch.',
-            },
-          ].map((c) => (
-            <Card key={c.title} title={c.title} body={c.body} />
-          ))}
-        </div>
-      </section>
-
-      {/* BANGKOK FEATURE */}
-      <section className="mx-auto max-w-6xl px-6 pb-16">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 md:p-8">
-          <div className="grid gap-6 md:grid-cols-2 md:items-center">
-            <div>
-              <h2 className="text-2xl font-semibold">Bangkok Pop-up • November 2025</h2>
-              <p className="mt-2 text-zinc-400">
-                We’re kicking off with a curated showcase in Bangkok. Book a pop-up kit, ship samples, and get real
-                feedback from people who care about mindful materials.
-              </p>
-              <ul className="mt-4 space-y-2 text-sm text-zinc-300">
-                <li>• Order kits by <strong>Oct 15</strong></li>
-                <li>• Ship by <strong>Oct 25</strong></li>
-                <li>• Event opens <strong>Nov 1</strong></li>
-              </ul>
-
-              <div className="mt-6 flex gap-3">
-                <Link href="/shop" className="rounded-lg bg-emerald-500 px-4 py-2 font-medium text-emerald-950">
-                  Get a kit
-                </Link>
-                <Link
-                  href="/account/brand"
-                  className="rounded-lg border border-zinc-700 px-4 py-2 font-medium hover:border-zinc-500"
-                >
-                  Claim your brand space
-                </Link>
+                {/* Right promo rail (universes quick links) */}
+                <div className="grid gap-4">
+                  <UniverseCard
+                    href="/trade"
+                    title="Trade"
+                    desc="B2B listings, buyers & suppliers, materials and services."
+                    badge="B2B"
+                    className="from-blue-600/20 to-cyan-500/10 ring-blue-400/25"
+                    pillClass="bg-blue-600/20 text-blue-300"
+                  />
+                  <UniverseCard
+                    href="/supermarket"
+                    title="Supermarket"
+                    desc="Consumer marketplace for hemp goods—brands, SKUs, kits."
+                    badge="B2C"
+                    className="from-violet-600/20 to-fuchsia-500/10 ring-violet-400/25"
+                    pillClass="bg-violet-600/20 text-violet-300"
+                  />
+                  <UniverseCard
+                    href="/events"
+                    title="Events"
+                    desc="Global calendar. Spotlight: Bangkok Showroom kit."
+                    badge="IRL"
+                    className="from-orange-600/20 to-amber-500/10 ring-orange-400/25"
+                    pillClass="bg-orange-600/20 text-orange-300"
+                  />
+                  <UniverseCard
+                    href="/research"
+                    title="Research (Wiki)"
+                    desc="Literature, studies, data: an open, curated knowledge hub."
+                    badge="Open"
+                    className="from-teal-500/20 to-emerald-500/10 ring-teal-400/30"
+                    pillClass="bg-teal-600/20 text-teal-300"
+                  />
+                </div>
               </div>
             </div>
+          </section>
 
-            <div className="rounded-xl border border-zinc-800 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent p-6">
-              <StatRow label="Brands accepted" value="Limited cohort" />
-              <StatRow label="Venue" value="Central Bangkok (TBA)" />
-              <StatRow label="Audience" value="Design, sustainability, buyers" />
-              <StatRow label="Theme" value="Material honesty • Hemp culture" />
+          {/* FEATURE STRIP — rainbow experiments */}
+          <section className="border-t border-white/10 bg-gradient-to-r from-emerald-900/20 via-blue-900/10 to-violet-900/20">
+            <div className="mx-auto max-w-7xl px-4 lg:px-8 py-12">
+              <div className="flex items-center justify-between gap-4 mb-6">
+                <h2 className="text-xl md:text-2xl font-semibold">Playground Experiments</h2>
+                <Link href="/experiments" className="text-sm text-zinc-300 hover:text-white underline">
+                  View all
+                </Link>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <ExperimentCard
+                  href="/experiments/planetagotchi"
+                  title="Planetagotchi"
+                  desc="Care for a tiny world. Balance energy, soil, water & biodiversity."
+                  gradient="from-emerald-500/30 to-sky-500/30"
+                />
+                <ExperimentCard
+                  href="/experiments/jackpot"
+                  title="Hemp Jackpot"
+                  desc="Spin for community coupons & swag drops."
+                  gradient="from-violet-500/30 to-fuchsia-500/30"
+                />
+                <ExperimentCard
+                  href="/experiments/coupons"
+                  title="Coupon Studio"
+                  desc="Mint, redeem, gift—prototype promo rails."
+                  gradient="from-amber-500/30 to-rose-500/30"
+                />
+                <ExperimentCard
+                  href="/experiments/lca"
+                  title="LCA Builder"
+                  desc="Lightweight lifecycle data collection (level 2)."
+                  gradient="from-teal-500/30 to-emerald-500/30"
+                />
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
 
+          {/* SHOWROOM PROMO (Bangkok under Events) */}
+          <section className="relative">
+            <div className="mx-auto max-w-7xl px-4 lg:px-8 py-16 grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-orange-500/10 text-orange-300 ring-1 ring-orange-400/30">
+                  Events • Spotlight
+                </span>
+                <h3 className="mt-3 text-3xl md:text-4xl font-bold">Bangkok Hempin Showroom</h3>
+                <p className="mt-3 text-zinc-300">
+                  Be featured IRL. Book the showroom kit, demo your products, and
+                  meet buyers. Seamless flow from kit purchase to activation.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link href="/events" className="btn btn-secondary">Explore Events</Link>
+                  <Link href="/bangkoklanding" className="btn btn-primary">View Bangkok kit</Link>
+                </div>
+              </div>
+              <div className="rounded-2xl overflow-hidden ring-1 ring-white/10 bg-gradient-to-br from-orange-500/10 to-rose-500/10 p-1">
+                <div className="aspect-[16/10] rounded-2xl bg-[url('/images/bangkok-hero.jpg')] bg-cover bg-center" />
+              </div>
+            </div>
+          </section>
+
+          {/* CTA STRIP */}
+          <section className="border-t border-white/10">
+            <div className="mx-auto max-w-7xl px-4 lg:px-8 py-12 grid md:grid-cols-3 gap-6">
+              <MiniCTA
+                title="For brands"
+                desc="Set up your page, add products and pick a kit."
+                href="/experiments/brand-preview"
+                color="emerald"
+              />
+              <MiniCTA
+                title="For makers"
+                desc="List materials & services on Trade."
+                href="/trade"
+                color="blue"
+              />
+              <MiniCTA
+                title="For community"
+                desc="Play, vote, and co-create in Experiments."
+                href="/experiments"
+                color="violet"
+              />
+            </div>
+          </section>
+        </main>
+
+        <SiteFooter />
+      </div>
     </>
   )
 }
 
-function Card({ title, body }: { title: string; body: string }) {
+/* ---------- small presentational helpers ---------- */
+
+function UniverseCard({
+  href,
+  title,
+  desc,
+  badge,
+  className,
+  pillClass,
+}: {
+  href: string
+  title: string
+  desc: string
+  badge: string
+  className: string
+  pillClass: string
+}) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
-      <h3 className="text-lg font-medium">{title}</h3>
-      <p className="mt-2 text-sm text-zinc-400">{body}</p>
-    </div>
+    <Link
+      href={href}
+      className={[
+        'group rounded-2xl p-5 ring-1 transition',
+        'bg-gradient-to-br hover:ring-white/30 hover:translate-y-[-2px]',
+        className,
+      ].join(' ')}
+    >
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <span className={['text-[11px] px-2 py-1 rounded-full ring-1', pillClass, 'ring-current/30'].join(' ')}>
+          {badge}
+        </span>
+      </div>
+      <p className="mt-2 text-sm text-zinc-300">{desc}</p>
+      <div className="mt-3 text-sm text-zinc-400 group-hover:text-white underline">Open →</div>
+    </Link>
   )
 }
 
-function StatRow({ label, value }: { label: string; value: string }) {
+function ExperimentCard({
+  href,
+  title,
+  desc,
+  gradient,
+}: {
+  href: string
+  title: string
+  desc: string
+  gradient: string
+}) {
   return (
-    <div className="flex items-center justify-between border-b border-zinc-800/60 py-3 last:border-b-0">
-      <span className="text-zinc-400">{label}</span>
-      <span className="font-medium">{value}</span>
-    </div>
+    <Link
+      href={href}
+      className={[
+        'block rounded-2xl p-5 ring-1 ring-white/10',
+        'bg-gradient-to-br hover:ring-white/30 hover:translate-y-[-2px] transition',
+        gradient,
+      ].join(' ')}
+    >
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <p className="mt-1 text-sm text-zinc-300">{desc}</p>
+      <div className="mt-3 text-sm text-zinc-400 underline">Try it →</div>
+    </Link>
+  )
+}
+
+function MiniCTA({
+  title, desc, href, color,
+}: {
+  title: string
+  desc: string
+  href: string
+  color: 'emerald' | 'blue' | 'violet'
+}) {
+  const ring = color === 'emerald' ? 'ring-emerald-400/30' : color === 'blue' ? 'ring-blue-400/30' : 'ring-violet-400/30'
+  const bg = color === 'emerald' ? 'from-emerald-500/10 to-teal-500/10'
+    : color === 'blue' ? 'from-blue-600/10 to-cyan-500/10'
+    : 'from-violet-600/10 to-fuchsia-500/10'
+  return (
+    <Link href={href} className={['rounded-2xl p-5 ring-1 hover:ring-white/30 transition bg-gradient-to-br', ring, bg].join(' ')}>
+      <h4 className="font-semibold">{title}</h4>
+      <p className="mt-1 text-sm text-zinc-300">{desc}</p>
+      <div className="mt-3 text-sm text-zinc-400 underline">Go →</div>
+    </Link>
   )
 }
