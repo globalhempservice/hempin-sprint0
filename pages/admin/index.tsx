@@ -2,88 +2,51 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import AdminShell from '../../components/AdminShell'
-import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { useEffect, useState } from 'react'
 
-// --- ADMIN SSR GUARD + SSR DATA FETCH ---
+// --- ADMIN SSR GUARD ---
 import type { GetServerSideProps } from 'next'
 import { hasValidAdminCookie, redirectToAdminLogin } from '../../lib/adminAuth'
-import { createClient } from '@supabase/supabase-js'
-
-type Props = {
-  pendingCountSSR: number | null
-  ssrError?: string | null
-}
-
-export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
   if (!hasValidAdminCookie(ctx.req)) return redirectToAdminLogin(ctx)
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !serviceKey) return { props: { pendingCountSSR: null, ssrError: 'Missing Supabase env vars' } }
-
-  const admin = createClient(url, serviceKey, { auth: { persistSession: false } })
-  const { count, error } = await admin
-    .from('submissions')
-    .select('id', { count: 'exact', head: true })
-    .in('status', ['submitted', 'review'])
-
-  return { props: { pendingCountSSR: count ?? 0, ssrError: error?.message ?? null } }
+  return { props: {} }
 }
-// --- END GUARD + SSR FETCH ---
+// --- END GUARD ---
 
-export default function AdminHome({ pendingCountSSR, ssrError }: Props) {
-  // keep your existing state hook
-  const [pendingCount, setPendingCount] = useState<number | null>(pendingCountSSR)
+export default function AdminHome() {
+  const [pendingCount, setPendingCount] = useState<number | null>(null)
 
-  // Optional client fallback (e.g., local dev without service key)
   useEffect(() => {
-    if (pendingCountSSR !== null) return
     let alive = true
     const load = async () => {
       const { count, error } = await supabase
         .from('submissions')
         .select('id', { count: 'exact', head: true })
-        .in('status', ['submitted', 'review'])
+        .in('status', ['submitted','review'])
       if (!alive) return
-      if (!error) setPendingCount(count ?? 0)
+      setPendingCount(error ? null : (count ?? 0))
     }
     load()
     return () => { alive = false }
-  }, [pendingCountSSR])
+  }, [])
 
   return (
     <AdminShell title="Admin — Dashboard">
       <Head><title>Admin — Dashboard • HEMPIN</title></Head>
 
-      {ssrError && <div className="mb-3 text-sm text-red-400">Server fetch error: {ssrError}</div>}
-
       <div className="grid gap-4 md:grid-cols-2">
         <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm opacity-70">Pending submissions</div>
-              <div className="mt-1 text-2xl font-semibold">
-                {pendingCount ?? '—'}
-              </div>
-            </div>
-            <Link href="/admin/submissions" className="btn btn-primary">Review</Link>
-          </div>
+          <div className="font-semibold mb-1">Pending submissions</div>
+          <div className="text-4xl font-bold">{pendingCount ?? 0}</div>
+          <Link className="btn btn-primary mt-4" href="/admin/submissions">Review</Link>
         </div>
 
         <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm opacity-70">Payments</div>
-              <div className="mt-1 opacity-70">See recent PayPal captures.</div>
-            </div>
-            <Link href="/admin/payments" className="btn btn-outline">Open</Link>
-          </div>
+          <div className="font-semibold mb-1">Payments</div>
+          <p className="opacity-80">See recent PayPal captures.</p>
+          <Link className="btn mt-4" href="/admin/payments">Open</Link>
         </div>
-      </div>
-
-      <div className="mt-6">
-        <Link href="/" className="text-emerald-300 hover:underline">Back to site</Link>
       </div>
     </AdminShell>
   )
