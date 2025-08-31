@@ -1,53 +1,37 @@
 // lib/authGuard.tsx
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from './supabaseClient'
 
-type Options = {
-  /** allowGuest true = don't block/redirect guests (for teaser flows) */
-  allowGuest?: boolean
-}
-
-/** Simple guard used by account/admin pages */
-export function useAuthGuard(options?: Options) {
+// Client-side guard for /account/** pages.
+// If no session, redirects to /signin?next=<current-path>
+export function AccountRouteGuard({ children }: { children: ReactNode }) {
   const router = useRouter()
-  const [ready, setReady] = useState(false)
-  const [isAllowed, setIsAllowed] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    let mounted = true
-
-    const init = async () => {
-      const { data } = await supabase.auth.getSession()
-      const u = data.session?.user ?? null
-      if (!mounted) return
-
-      setUser(u)
-
-      if (!u && !options?.allowGuest) {
-        setIsAllowed(false)
-        setReady(true)
-        router.replace('/account') // send guests to account/sign-in
-        return
+    let alive = true
+    ;(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!alive) return
+      if (!session) {
+        const next = encodeURIComponent(router.asPath || '/account')
+        router.replace(`/signin?next=${next}`)
+      } else {
+        setChecking(false)
       }
+    })()
+    return () => { alive = false }
+  }, [router])
 
-      setIsAllowed(true)
-      setReady(true)
-    }
+  // Lightweight loading state while we check/redirect
+  if (checking) {
+    return (
+      <div className="min-h-screen grid place-items-center">
+        <div className="text-sm opacity-70">Checking your session…</div>
+      </div>
+    )
+  }
 
-    init()
-
-    // keep user in sync
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => {
-      mounted = false
-      sub.subscription.unsubscribe()
-    }
-  }, [router, options?.allowGuest])
-
-  return { ready, isAllowed, user }
+  return <>{children}</>
 }
