@@ -1,100 +1,74 @@
 // lib/adminAuth.ts
-import type { GetServerSidePropsContext } from 'next'
-import type { IncomingMessage, ServerResponse } from 'http'
-import { createHmac, createHash, timingSafeEqual } from 'crypto'
+import type { NextApiResponse } from 'next'
+import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next'
+import crypto from 'crypto'
 
-export const ADMIN_COOKIE_NAME = 'hempin_admin'
-const DEFAULT_TTL_SECONDS = 60 * 60 * 8 // 8 hours
+const ADMIN_COOKIE = 'hempin_admin_session'
+const ADMIN_PASSWORD_SHA256 = process.env.ADMIN_PASSWORD_SHA256 || ''
+const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'dev-secret'
+const COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 7 // 7 days
 
-function b64url(input: Buffer | string) {
-  const b = Buffer.isBuffer(input) ? input : Buffer.from(input)
-  return b
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '')
+function b64(buf: Buffer) {
+  return buf.toString('base64url')
+}
+function hmac(data: string) {
+  return crypto.createHmac('sha256', SESSION_SECRET).update(data).digest()
 }
 
-function sign(b64Payload: string, secret: string) {
-  return b64url(createHmac('sha256', secret).update(b64Payload).digest())
+export function verifyAdminPassword(password: string) {
+  const hash = crypto.createHash('sha256').update(password).digest('hex')
+  // constant-time comparison
+  const a = Buffer.from(hash)
+  const b = Buffer.from(ADMIN_PASSWORD_SHA256)
+  return a.length === b.length && crypto.timingSafeEqual(a, b)
 }
 
-function parseCookies(header?: string): Record<string, string> {
-  const out: Record<string, string> = {}
-  if (!header) return out
-  for (const part of header.split(';')) {
-    const [k, ...rest] = part.trim().split('=')
-    if (!k) continue
-    out[k] = decodeURIComponent(rest.join('=') || '')
-  }
-  return out
+export function setAdminCookie(res: NextApiResponse) {
+  const payload = 'ok'
+  const sig = b64(hmac(payload))
+  const value = `${payload}.${sig}`
+  const cookie = [
+    `${ADMIN_COOKIE}=${value}`,
+    `Path=/`,
+    `HttpOnly`,
+    `SameSite=Lax`,
+    `Max-Age=${COOKIE_MAX_AGE_SEC}`,
+    // restrict admin to /admin routes but still allow /api/admin/logout
+    // keeping Path=/ is simplest; if you want /admin only, add a second cookie for /api.
+  ].join('; ')
+  res.setHeader('Set-Cookie', cookie)
 }
 
-function setCookie(res: ServerResponse, cookie: string) {
-  const prev = res.getHeader('Set-Cookie')
-  if (Array.isArray(prev)) res.setHeader('Set-Cookie', [...prev, cookie])
-  else if (typeof prev === 'string') res.setHeader('Set-Cookie', [prev, cookie])
-  else res.setHeader('Set-Cookie', cookie)
+export function clearAdminCookie(res: NextApiResponse) {
+  res.setHeader(
+    'Set-Cookie',
+    `${ADMIN_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`
+  )
 }
 
-function buildCookie(value: string, maxAgeSec: number) {
-  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : ''
-  return `${ADMIN_COOKIE_NAME}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}${secure}`
-}
-
-export function setAdminCookie(res: ServerResponse, maxAgeSec = DEFAULT_TTL_SECONDS) {
-  const secret = process.env.ADMIN_SESSION_SECRET || ''
-  if (!secret) throw new Error('ADMIN_SESSION_SECRET is not set')
-
-  const exp = Math.floor(Date.now() / 1000) + maxAgeSec
-  const payload = b64url(Buffer.from(JSON.stringify({ v: 1, exp })))
-  const signature = sign(payload, secret)
-  const token = `${payload}.${signature}`
-
-  setCookie(res, buildCookie(token, maxAgeSec))
-}
-
-export function clearAdminCookie(res: ServerResponse) {
-  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : ''
-  setCookie(res, `${ADMIN_COOKIE_NAME}=deleted; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`)
-}
-
-export function hasValidAdminCookie(req: IncomingMessage): boolean {
+export function hasValidAdminCookie(req: { headers: { cookie?: string } }) {
+  const raw = req.headers.cookie || ''
+  const match = raw.split(';').map(s => s.trim()).find(s => s.startsWith(`${ADMIN_COOKIE}=`))
+  if (!match) return false
+  const value = match.split('=')[1] || ''
+  const [payload, sig] = value.split('.')
+  if (payload !== 'ok' || !sig) return false
+  const expected = b64(hmac(payload))
   try {
-    const secret = process.env.ADMIN_SESSION_SECRET || ''
-    if (!secret) return false
-    const cookies = parseCookies(req.headers.cookie)
-    const token = cookies[ADMIN_COOKIE_NAME]
-    if (!token) return false
-    const [payload, sig] = token.split('.')
-    if (!payload || !sig) return false
-
-    const expected = sign(payload, secret)
-    const ok =
-      expected.length === sig.length &&
-      timingSafeEqual(Buffer.from(expected), Buffer.from(sig))
-    if (!ok) return false
-
-    const json = Buffer.from(payload.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
-    const { exp } = JSON.parse(json)
-    if (typeof exp !== 'number' || exp < Math.floor(Date.now() / 1000)) return false
-    return true
+    return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
   } catch {
     return false
   }
 }
 
-export function redirectToAdminLogin(ctx: GetServerSidePropsContext) {
+export function redirectToAdminLogin(
+  ctx: GetServerSidePropsContext
+): GetServerSidePropsResult<Record<string, unknown>> {
   const next = encodeURIComponent(ctx.resolvedUrl || '/admin')
-  return { redirect: { destination: `/admin/login?next=${next}`, permanent: false as const } }
-}
-
-// Password check: compare SHA-256 of submitted password to ADMIN_PASSWORD_SHA256
-export function passwordMatchesEnv(plain: string): boolean {
-  const wantHex = (process.env.ADMIN_PASSWORD_SHA256 || '').toLowerCase().trim()
-  if (!wantHex) return false
-  const gotHex = createHash('sha256').update(plain, 'utf8').digest('hex').toLowerCase()
-  const a = Buffer.from(wantHex)
-  const b = Buffer.from(gotHex)
-  return a.length === b.length && timingSafeEqual(a, b)
+  return {
+    redirect: {
+      destination: `/admin/login?next=${next}`,
+      permanent: false
+    }
+  }
 }
