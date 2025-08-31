@@ -1,74 +1,73 @@
 // lib/adminAuth.ts
-import type { NextApiResponse } from 'next'
-import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next'
 import crypto from 'crypto'
+import type { GetServerSidePropsContext } from 'next'
+import type { NextApiResponse } from 'next'
 
-const ADMIN_COOKIE = 'hempin_admin_session'
-const ADMIN_PASSWORD_SHA256 = process.env.ADMIN_PASSWORD_SHA256 || ''
-const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || 'dev-secret'
-const COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 7 // 7 days
+const ADMIN_COOKIE = 'hempin_admin'
+const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET ?? ''
+const PASSWORD_SHA256 = process.env.ADMIN_PASSWORD_SHA256 ?? ''
 
-function b64(buf: Buffer) {
-  return buf.toString('base64url')
+// --- utils
+function sha256Hex(s: string) {
+  return crypto.createHash('sha256').update(s, 'utf8').digest('hex')
 }
-function hmac(data: string) {
-  return crypto.createHmac('sha256', SESSION_SECRET).update(data).digest()
+function hmac(body: string) {
+  return crypto.createHmac('sha256', SESSION_SECRET).update(body).digest('hex')
 }
-
-export function verifyAdminPassword(password: string) {
-  const hash = crypto.createHash('sha256').update(password).digest('hex')
-  // constant-time comparison
-  const a = Buffer.from(hash)
-  const b = Buffer.from(ADMIN_PASSWORD_SHA256)
-  return a.length === b.length && crypto.timingSafeEqual(a, b)
-}
-
-export function setAdminCookie(res: NextApiResponse) {
-  const payload = 'ok'
-  const sig = b64(hmac(payload))
-  const value = `${payload}.${sig}`
-  const cookie = [
-    `${ADMIN_COOKIE}=${value}`,
-    `Path=/`,
-    `HttpOnly`,
-    `SameSite=Lax`,
-    `Max-Age=${COOKIE_MAX_AGE_SEC}`,
-    // restrict admin to /admin routes but still allow /api/admin/logout
-    // keeping Path=/ is simplest; if you want /admin only, add a second cookie for /api.
-  ].join('; ')
-  res.setHeader('Set-Cookie', cookie)
+function findCookie(req: any, name: string): string | null {
+  const raw = req?.headers?.cookie as string | undefined
+  if (!raw) return null
+  const part = raw.split(';').map(s => s.trim()).find(s => s.startsWith(name + '='))
+  return part ? decodeURIComponent(part.split('=').slice(1).join('=')) : null
 }
 
-export function clearAdminCookie(res: NextApiResponse) {
-  res.setHeader(
-    'Set-Cookie',
-    `${ADMIN_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`
-  )
+// --- public API
+
+// ✅ NEW: export used by /api/admin/login
+export function passwordMatchesEnv(plaintext: string): boolean {
+  if (!PASSWORD_SHA256) return false
+  const digest = sha256Hex(plaintext)
+  const a = Buffer.from(digest)
+  const b = Buffer.from(PASSWORD_SHA256)
+  if (a.length !== b.length) return false
+  return crypto.timingSafeEqual(a, b)
 }
 
-export function hasValidAdminCookie(req: { headers: { cookie?: string } }) {
-  const raw = req.headers.cookie || ''
-  const match = raw.split(';').map(s => s.trim()).find(s => s.startsWith(`${ADMIN_COOKIE}=`))
-  if (!match) return false
-  const value = match.split('=')[1] || ''
-  const [payload, sig] = value.split('.')
-  if (payload !== 'ok' || !sig) return false
-  const expected = b64(hmac(payload))
+export function setAdminCookie(res: NextApiResponse | { setHeader: Function }, days = 7) {
+  const exp = Math.floor(Date.now() / 1000) + days * 86400
+  const body = JSON.stringify({ exp })
+  const sig = hmac(body)
+  const value = Buffer.from(`${body}.${sig}`).toString('base64url')
+  const cookie = `${ADMIN_COOKIE}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${days *
+    86400}`
+  ;(res as any).setHeader('Set-Cookie', cookie)
+}
+
+export function clearAdminCookie(res: NextApiResponse | { setHeader: Function }) {
+  const cookie = `${ADMIN_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
+  ;(res as any).setHeader('Set-Cookie', cookie)
+}
+
+export function hasValidAdminCookie(req: any): boolean {
   try {
-    return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
+    const raw = findCookie(req, ADMIN_COOKIE)
+    if (!raw) return false
+    const decoded = Buffer.from(raw, 'base64url').toString('utf8')
+    const [body, sig] = decoded.split('.')
+    if (!body || !sig) return false
+    if (hmac(body) !== sig) return false
+    const { exp } = JSON.parse(body)
+    return typeof exp === 'number' && exp > Math.floor(Date.now() / 1000)
   } catch {
     return false
   }
 }
 
-export function redirectToAdminLogin(
-  ctx: GetServerSidePropsContext
-): GetServerSidePropsResult<Record<string, unknown>> {
+export function redirectToAdminLogin(ctx: GetServerSidePropsContext) {
   const next = encodeURIComponent(ctx.resolvedUrl || '/admin')
-  return {
-    redirect: {
-      destination: `/admin/login?next=${next}`,
-      permanent: false
-    }
-  }
+  return { redirect: { destination: `/admin/login?next=${next}`, permanent: false } }
+}
+
+export function redirectToAdminRoot() {
+  return { redirect: { destination: '/admin', permanent: false } }
 }
