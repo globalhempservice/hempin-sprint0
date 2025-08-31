@@ -4,6 +4,19 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import AdminShell from '../../components/AdminShell'
 
+// --- ADMIN SSR GUARD (keep your existing imports below this) ---
+import type { GetServerSideProps } from 'next'
+import { hasValidAdminCookie, redirectToAdminLogin } from '../../lib/adminAuth'
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  if (!hasValidAdminCookie(ctx.req)) {
+    return redirectToAdminLogin(ctx)
+  }
+  return { props: {} }
+}
+// --- END GUARD ---
+
+
 type Submission = {
   id: string
   status: string | null
