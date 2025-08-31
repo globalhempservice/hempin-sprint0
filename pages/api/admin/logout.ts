@@ -1,8 +1,8 @@
 // pages/api/admin/logout.ts
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { clearAdminSession } from '../../../lib/adminAuth'
+import { clearAdminCookie } from '../../../lib/adminAuth'
 
 export default function handler(_req: NextApiRequest, res: NextApiResponse) {
-  clearAdminSession(res)
+  clearAdminCookie(res)
   res.status(200).json({ ok: true })
 }
