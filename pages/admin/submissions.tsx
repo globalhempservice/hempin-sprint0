@@ -1,84 +1,104 @@
 // pages/admin/submissions.tsx
 import Head from 'next/head'
+import AdminShell from '../../components/AdminShell'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import AdminShell from '../../components/AdminShell'
 
-// --- ADMIN SSR GUARD (keep your existing imports below this) ---
+// --- ADMIN SSR GUARD + SSR DATA FETCH ---
 import type { GetServerSideProps } from 'next'
 import { hasValidAdminCookie, redirectToAdminLogin } from '../../lib/adminAuth'
+import { createClient } from '@supabase/supabase-js'
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  if (!hasValidAdminCookie(ctx.req)) {
-    return redirectToAdminLogin(ctx)
-  }
-  return { props: {} }
-}
-// --- END GUARD ---
-
-
-type Submission = {
+type SubmissionRow = {
   id: string
+  brand_id: string | null
   status: string | null
-  submitted_at: string | null
-  notes_user: string | null
-  brand: { name: string | null; slug: string | null; category: string | null; approved: boolean | null; owner_id: string | null } | null
+  created_at: string | null
+  updated_at: string | null
 }
 
-export default function AdminSubmissions() {
-  const [items, setItems] = useState<Submission[]>([])
-  const [loading, setLoading] = useState(true)
+type Props = {
+  initialRows: SubmissionRow[]
+  ssrError?: string | null
+}
 
-  async function reload() {
-    const { data, error } = await supabase
-      .from('submissions')
-      .select('id,status,submitted_at,notes_user,brand:brands(name,slug,category,approved,owner_id)')
-      .eq('status', 'submitted')
-      .order('submitted_at', { ascending: false })
-    if (error) { console.error(error); setItems([]) }
-    else setItems(((data as unknown) as Submission[]) || [])
-    setLoading(false)
-  }
+export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+  if (!hasValidAdminCookie(ctx.req)) return redirectToAdminLogin(ctx)
 
-  useEffect(() => { reload() }, [])
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !serviceKey) return { props: { initialRows: [], ssrError: 'Missing Supabase env vars' } }
 
-  async function approveBrand(slug: string | null, submissionId: string) {
-    if (!slug) return
-    const { error: e1 } = await supabase.from('brands').update({ approved: true }).eq('slug', slug)
-    const { error: e2 } = await supabase.from('submissions').update({ status: 'approved' }).eq('id', submissionId)
-    if (e1 || e2) alert((e1 || e2)?.message)
-    await reload()
-  }
+  const admin = createClient(url, serviceKey, { auth: { persistSession: false } })
+  const { data, error } = await admin
+    .from('submissions')
+    .select('id,brand_id,status,created_at,updated_at')
+    .order('created_at', { ascending: false })
+    .limit(200)
 
-  async function markNeedsChanges(submissionId: string) {
-    const { error } = await supabase.from('submissions').update({ status: 'needs_changes' }).eq('id', submissionId)
-    if (error) alert(error.message)
-    await reload()
-  }
+  return { props: { initialRows: data ?? [], ssrError: error?.message ?? null } }
+}
+// --- END GUARD + SSR FETCH ---
+
+export default function AdminSubmissions({ initialRows, ssrError }: Props) {
+  const [rows, setRows] = useState<SubmissionRow[]>(initialRows)
+  const [loading, setLoading] = useState(false)
+
+  // Optional anon fallback if SSR didn’t run with service key (local dev)
+  useEffect(() => {
+    if (initialRows.length > 0) return
+    let alive = true
+    setLoading(true)
+    const load = async () => {
+      const { data, error } = await supabase
+        .from('submissions')
+        .select('id,brand_id,status,created_at,updated_at')
+        .order('created_at', { ascending: false })
+        .limit(200)
+      if (!alive) return
+      if (!error) setRows(data ?? [])
+      setLoading(false)
+    }
+    load()
+    return () => { alive = false }
+  }, [initialRows])
 
   return (
-    <AdminShell title="Pending Submissions">
-      <Head><title>Admin • Submissions</title></Head>
-      {loading ? <p className="opacity-70">Loading…</p> : (
-        <div className="grid gap-3">
-          {items.map((it) => (
-            <div key={it.id} className="card">
-              <div className="flex flex-wrap gap-3 justify-between items-start">
-                <div className="min-w-[220px]">
-                  <div className="font-semibold">{it.brand?.name || '(no name)'}</div>
-                  <div className="text-xs opacity-70">/{it.brand?.slug} • {it.brand?.category} • Approved: {String(it.brand?.approved)}</div>
-                  <div className="text-xs opacity-80 mt-1">Notes: {it.notes_user || '—'}</div>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <button className="btn btn-outline" onClick={() => markNeedsChanges(it.id)}>Needs changes</button>
-                  <button className="btn btn-primary" onClick={() => approveBrand(it.brand?.slug ?? null, it.id)}>Approve</button>
-                </div>
-              </div>
-            </div>
-          ))}
-          {items.length === 0 && <p className="opacity-70">No submissions pending.</p>}
-        </div>
+    <AdminShell title="Admin — Submissions">
+      <Head><title>Admin — Submissions • HEMPIN</title></Head>
+
+      {ssrError && (
+        <div className="mb-3 text-sm text-red-400">Server fetch error: {ssrError}</div>
       )}
+
+      <div className="card overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="text-left opacity-70">
+            <tr>
+              <th className="py-2 pr-4">ID</th>
+              <th className="py-2 pr-4">Brand</th>
+              <th className="py-2 pr-4">Status</th>
+              <th className="py-2 pr-4">Created</th>
+              <th className="py-2 pr-4">Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading && <tr><td className="py-3 opacity-60" colSpan={5}>Loading…</td></tr>}
+            {!loading && rows.length === 0 && (
+              <tr><td className="py-3 opacity-60" colSpan={5}>No submissions.</td></tr>
+            )}
+            {rows.map(r => (
+              <tr key={r.id} className="border-t border-zinc-800/60">
+                <td className="py-2 pr-4">{r.id}</td>
+                <td className="py-2 pr-4">{r.brand_id ?? '—'}</td>
+                <td className="py-2 pr-4">{r.status ?? '—'}</td>
+                <td className="py-2 pr-4">{r.created_at ? new Date(r.created_at).toLocaleString() : '—'}</td>
+                <td className="py-2 pr-4">{r.updated_at ? new Date(r.updated_at).toLocaleString() : '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </AdminShell>
   )
 }
