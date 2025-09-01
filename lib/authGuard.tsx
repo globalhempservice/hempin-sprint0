@@ -1,13 +1,13 @@
-// lib/authGuard.ts
+// lib/authGuard.tsx
 import { useEffect, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from './supabaseClient'
 
 /**
  * Wrap /account pages with this guard.
- * - Renders a blocking loader while checking session
- * - Redirects guests to /signin?next=<current>
- * - Subscribes to auth changes to avoid flicker
+ * - Shows a loader briefly while checking session
+ * - If guest, renders a clear sign-in card (no redirect loop)
+ * - Subscribes to auth changes and updates inline
  */
 export function AccountRouteGuard({ children }: { children: ReactNode }) {
   const router = useRouter()
@@ -15,40 +15,30 @@ export function AccountRouteGuard({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let alive = true
-    if (!router.isReady) return
 
-    async function run() {
-      const { data: { session } } = await supabase.auth.getSession()
+    const run = async () => {
+      const { data, error } = await supabase.auth.getSession()
       if (!alive) return
-
-      if (session) {
-        setStatus('authed')
-      } else {
+      if (error) {
+        console.warn('auth getSession error:', error.message)
         setStatus('guest')
-        const next = encodeURIComponent(router.asPath || '/account')
-        router.replace(`/signin?next=${next}`)
+        return
       }
+      setStatus(data.session ? 'authed' : 'guest')
     }
 
     run()
 
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       if (!alive) return
-      if (session) {
-        setStatus('authed')
-      } else {
-        setStatus('guest')
-        const next = encodeURIComponent(router.asPath || '/account')
-        router.replace(`/signin?next=${next}`)
-      }
+      setStatus(session ? 'authed' : 'guest')
     })
 
     return () => {
       alive = false
       sub.subscription?.unsubscribe?.()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router.isReady]) // only when router ready
+  }, [router.isReady])
 
   if (status === 'checking') {
     return (
@@ -59,8 +49,21 @@ export function AccountRouteGuard({ children }: { children: ReactNode }) {
   }
 
   if (status === 'guest') {
-    // Router is already replacing; render nothing to prevent flicker
-    return null
+    const next = encodeURIComponent(router.asPath || '/account')
+    return (
+      <div className="min-h-screen grid place-items-center px-4">
+        <div className="max-w-md w-full rounded-xl border border-white/10 bg-[var(--surface)]/80 backdrop-blur-md p-6 text-center">
+          <div className="text-lg font-semibold mb-2">Sign in required</div>
+          <p className="text-[var(--text-2)] mb-4">Please sign in to access your tools.</p>
+          <a
+            className="inline-block rounded-lg border border-white/15 px-4 py-2 bg-white/5 hover:bg-white/10 transition"
+            href={`/signin?next=${next}`}
+          >
+            Go to Sign in
+          </a>
+        </div>
+      </div>
+    )
   }
 
   return <>{children}</>
