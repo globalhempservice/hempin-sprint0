@@ -8,6 +8,16 @@ function slugify(base) {
   return s || 'event';
 }
 
+async function uploadToBucket(file, pathPrefix) {
+  if (!file) return null;
+  const ext = file.name.split('.').pop() || 'bin';
+  const key = `${pathPrefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error: upErr } = await supabase.storage.from('media').upload(key, file, { cacheControl: '3600', upsert: false });
+  if (upErr) throw upErr;
+  const { data: pub } = supabase.storage.from('media').getPublicUrl(key);
+  return pub?.publicUrl || null;
+}
+
 export default function EventsOwnerPanel() {
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
@@ -17,6 +27,7 @@ export default function EventsOwnerPanel() {
   });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [coverFile, setCoverFile] = useState(null);
 
   const suggestedSlug = useMemo(() => slugify(form.title), [form.title]);
 
@@ -25,12 +36,17 @@ export default function EventsOwnerPanel() {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth?.user) return;
       setUser(auth.user);
-      const { data } = await supabase
-        .from('events')
-        .select('id, slug, title, summary, venue_name, city, country, starts_at, ends_at, cover_url, status, featured, created_at')
-        .eq('owner_profile_id', auth.user.id)
-        .order('created_at', { ascending: false });
-      setEvents(data || []);
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('id, slug, title, summary, venue_name, city, country, starts_at, ends_at, cover_url, status, featured, created_at')
+          .eq('owner_profile_id', auth.user.id)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        setEvents(data || []);
+      } catch (e) {
+        console.warn('events list error:', e?.message || e);
+      }
     };
     init();
     const sub = supabase.auth.onAuthStateChange(() => init());
@@ -39,17 +55,19 @@ export default function EventsOwnerPanel() {
 
   const startNew = () => {
     setForm({ id: null, title: '', summary: '', venue_name: '', city: '', country: '', starts_at: '', ends_at: '', cover_url: '' });
+    setCoverFile(null);
     setMsg(null);
   };
 
-  const startEdit = (e) => {
+  const startEdit = (ev) => {
     setForm({
-      id: e.id, title: e.title || '', summary: e.summary || '',
-      venue_name: e.venue_name || '', city: e.city || '', country: e.country || '',
-      starts_at: (e.starts_at || '').slice(0,16), // yyyy-mm-ddThh:mm
-      ends_at: (e.ends_at || '').slice(0,16),
-      cover_url: e.cover_url || ''
+      id: ev.id, title: ev.title || '', summary: ev.summary || '',
+      venue_name: ev.venue_name || '', city: ev.city || '', country: ev.country || '',
+      starts_at: (ev.starts_at || '').slice(0,16),
+      ends_at: (ev.ends_at || '').slice(0,16),
+      cover_url: ev.cover_url || ''
     });
+    setCoverFile(null);
     setMsg(null);
   };
 
@@ -57,25 +75,26 @@ export default function EventsOwnerPanel() {
     if (!user) return;
     setBusy(true); setMsg(null);
     try {
-      // unique slug
       let base = slugify(form.title);
       if (!base) throw new Error('Please enter a title');
-      let candidate = base, n = 1;
+      let candidate = base; let n = 1;
       while (true) {
         const { data: exists } = await supabase.from('events').select('id').eq('slug', candidate).limit(1);
         if (!exists || exists.length === 0 || (exists[0].id === form.id)) break;
         candidate = `${base}-${++n}`;
       }
 
+      const uploadedCover = coverFile ? await uploadToBucket(coverFile, `events/${user.id}/cover`) : null;
+
       const payload = {
         title: form.title,
-        summary: form.summary,
+        summary: form.summary || null,
         venue_name: form.venue_name || null,
         city: form.city || null,
         country: form.country || null,
         starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
         ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
-        cover_url: form.cover_url || null,
+        cover_url: uploadedCover ?? (form.cover_url || null),
         slug: candidate,
         owner_profile_id: user.id,
         status: 'pending'
@@ -90,6 +109,7 @@ export default function EventsOwnerPanel() {
       if (res.error) throw res.error;
 
       setMsg('Saved. Your event is pending approval.');
+
       const { data } = await supabase
         .from('events')
         .select('id, slug, title, summary, venue_name, city, country, starts_at, ends_at, cover_url, status, featured, created_at')
@@ -108,8 +128,7 @@ export default function EventsOwnerPanel() {
     <main className="mx-auto max-w-5xl px-4 py-8 text-[var(--text)]">
       <h1 className="text-2xl font-semibold mb-4">My Events</h1>
 
-      {/* List */}
-      <section className="rounded-2xl bg-[var(--surface)]/80 backdrop-blur-md border border-white/10 p-4">
+      <section className="rounded-2xl bg-[var(--surface)]/80 border border-white/10 p-4 backdrop-blur-md">
         {!events.length && <div className="text-[var(--text-2)]">You don’t have any events yet.</div>}
         <ul className="grid gap-3">
           {events.map(e => (
@@ -124,8 +143,7 @@ export default function EventsOwnerPanel() {
         </ul>
       </section>
 
-      {/* Form */}
-      <section className="mt-6 rounded-2xl bg-[var(--surface)]/80 backdrop-blur-md border border-white/10 p-4">
+      <section className="mt-6 rounded-2xl bg-[var(--surface)]/80 border border-white/10 p-4 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">{form.id ? 'Edit Event' : 'Create Event'}</h2>
           <button onClick={startNew} className="text-sm underline">New</button>
@@ -169,8 +187,9 @@ export default function EventsOwnerPanel() {
           </div>
 
           <label className="grid gap-1">
-            <span className="text-sm text-[var(--text-2)]">Cover URL</span>
-            <input value={form.cover_url} onChange={e=>setForm(f=>({...f, cover_url:e.target.value}))} className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none" />
+            <span className="text-sm text-[var(--text-2)]">Cover (upload)</span>
+            <input type="file" accept="image/*" onChange={e=>setCoverFile(e.target.files?.[0] || null)} />
+            {form.cover_url && <img alt="cover" src={form.cover_url} className="mt-2 h-24 rounded-lg object-cover" />}
           </label>
 
           <div className="grid gap-3 sm:grid-cols-3 mt-1">
