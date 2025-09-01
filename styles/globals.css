@@ -18,3 +18,18 @@ a { color: var(--brand-2); }
 .btn { display:inline-block; padding: .75rem 1rem; border-radius: .75rem; font-weight:600; }
 .btn-primary { background: var(--brand-1); color: white; }
 .btn-outline { border: 1px solid var(--brand-2); color: var(--brand-2); }
+
+/* === Autofill Fix for Dark Theme === */
+input:-webkit-autofill {
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #fff;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:active {
+  box-shadow: 0 0 0px 1000px #0a0a0a inset !important;
+  -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset !important;
+}
