@@ -9,7 +9,7 @@ import React, {
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabaseClient'
-import { useUser } from '../lib/useUser'
+import { useAuth } from '../lib/authGuard'
 
 type Variant = 'account' | 'admin'
 type IconFC = (props: { className?: string }) => ReactElement
@@ -89,7 +89,7 @@ const NAV_ADMIN: NavItem[] = [
 
 export default function SidebarLayout({ variant, children }: Props) {
   const router = useRouter()
-  const { user, session } = useUser()
+  const { user, session } = useAuth()
 
   // NOTE: removed auto-redirect on !session to stop account/signin loop.
   // Pages render a sign-in card if needed; this layout stays neutral.
