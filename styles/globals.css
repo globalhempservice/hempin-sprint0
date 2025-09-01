@@ -19,17 +19,53 @@ a { color: var(--brand-2); }
 .btn-primary { background: var(--brand-1); color: white; }
 .btn-outline { border: 1px solid var(--brand-2); color: var(--brand-2); }
 
-/* === Autofill Fix for Dark Theme === */
-input:-webkit-autofill {
-  -webkit-text-fill-color: #fff !important;
-  caret-color: #fff;
-  transition: background-color 9999s ease-in-out 0s;
+/* === AUTH INPUTS: make text always visible on dark bg === */
+/* Base */
+input,
+textarea,
+select {
+  color-scheme: dark;                    /* hints to browser */
 }
 
+/* Our form controls (works everywhere) */
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+  background-color: #0b0b0b !important;  /* black-ish */
+  color: #ffffff !important;             /* white text */
+  -webkit-text-fill-color: #ffffff !important; /* Safari/Chrome autofill text */
+  caret-color: #a78bfa;                  /* optional: nice caret */
+  border-color: #27272a !important;      /* subtle border for contrast */
+}
+
+/* Placeholder */
+input::placeholder {
+  color: #9ca3af !important;             /* gray-400 */
+  opacity: 1 !important;
+}
+
+/* Chrome / Edge / Safari (WebKit) autofill background + text */
 input:-webkit-autofill,
-input:-webkit-autofill:focus,
 input:-webkit-autofill:hover,
-input:-webkit-autofill:active {
-  box-shadow: 0 0 0px 1000px #0a0a0a inset !important;
-  -webkit-box-shadow: 0 0 0px 1000px #0a0a0a inset !important;
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #ffffff !important;
+  transition: background-color 864000s ease-in-out 0s; /* neutralize yellow flash */
+  box-shadow: 0 0 0px 1000px #0b0b0b inset !important; /* force dark bg */
+  background-color: #0b0b0b !important;
+  filter: none !important;
+}
+
+/* Firefox autofill */
+input:-moz-autofill {
+  box-shadow: 0 0 0 1000px #0b0b0b inset !important;
+  -moz-text-fill-color: #ffffff !important;
+}
+
+/* Remove iOS bevels/inner shadows that can lighten the field */
+input[type="email"],
+input[type="password"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
 }
