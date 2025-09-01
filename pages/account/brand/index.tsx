@@ -1,4 +1,3 @@
-// pages/account/brand/index.tsx
 import Head from 'next/head'
 import { useEffect, useMemo, useState } from 'react'
 import SidebarLayout from '../../../components/SidebarLayout'
@@ -43,8 +42,8 @@ async function uploadToBucket(file: File | null, pathPrefix: string) {
 export default function BrandOwnerPage() {
   const { user, loading } = useUser()
   const [rows, setRows] = useState<BrandRow[]>([])
-  const [form, setForm] = useState<Partial<BrandRow> & { id?: string | null }>({
-    id: null, name: '', description: '', logo_url: '', cover_url: '', category: '', website: ''
+  const [form, setForm] = useState<Partial<BrandRow> & { id?: string }>({
+    id: undefined, name: '', description: '', logo_url: '', cover_url: '', category: '', website: ''
   })
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [coverFile, setCoverFile] = useState<File | null>(null)
@@ -67,15 +66,19 @@ export default function BrandOwnerPage() {
   }, [loading, user])
 
   const startNew = () => {
-    setForm({ id: null, name: '', description: '', logo_url: '', cover_url: '', category: '', website: '' })
+    setForm({ id: undefined, name: '', description: '', logo_url: '', cover_url: '', category: '', website: '' })
     setLogoFile(null); setCoverFile(null); setMsg(null)
   }
 
   const startEdit = (b: BrandRow) => {
     setForm({
-      id: b.id, name: b.name || '', description: b.description || '',
-      logo_url: b.logo_url || '', cover_url: b.cover_url || '',
-      category: b.category || '', website: b.website || ''
+      id: b.id,
+      name: b.name || '',
+      description: b.description || '',
+      logo_url: b.logo_url || '',
+      cover_url: b.cover_url || '',
+      category: b.category || '',
+      website: b.website || ''
     })
     setLogoFile(null); setCoverFile(null); setMsg(null)
   }
@@ -119,7 +122,6 @@ export default function BrandOwnerPage() {
           }
           // success
           setMsg('Saved. Your brand is pending approval.')
-          // refresh
           const { data } = await supabase
             .from('brands')
             .select('id, slug, name, description, logo_url, cover_url, category, website, approved, featured, created_at')
