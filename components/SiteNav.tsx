@@ -1,105 +1,129 @@
 // components/SiteNav.tsx
-import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
 
-const NAV = [
-  { href: '/trade', label: 'Trade' },            // blue universe
-  { href: '/supermarket', label: 'Supermarket' },// purple universe
-  { href: '/events', label: 'Events' },          // amber/orange universe
-  { href: '/research', label: 'Research' },      // teal universe
-  { href: '/experiments', label: 'Experiments' } // rainbow lab
-]
+type SessionLike = {
+  user: { email?: string | null; user_metadata?: Record<string, any> } | null
+} | null
 
 export default function SiteNav() {
-  const [open, setOpen] = useState(false)
+  const router = useRouter()
+  const [session, setSession] = useState<SessionLike>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      const { data } = await supabase.auth.getSession()
+      if (!mounted) return
+      setSession(data.session ?? null)
+    })()
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSession(s ?? null)
+    })
+    return () => {
+      mounted = false
+      sub.subscription?.unsubscribe?.()
+    }
+  }, [])
+
+  const initials = (() => {
+    const email = session?.user?.email || ''
+    const name = (session?.user?.user_metadata?.full_name as string) || ''
+    const base = name || email.split('@')[0]
+    return base ? base.slice(0, 2).toUpperCase() : 'HI'
+  })()
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    setMenuOpen(false)
+    router.push('/auth/logout')
+  }
+
+  const navItem = (href: string, label: string) => (
+    <Link
+      key={href}
+      href={href}
+      className="rounded-lg px-3 py-2 text-sm text-zinc-300 hover:text-white hover:bg-white/5"
+    >
+      {label}
+    </Link>
+  )
+
+  const nextParam = encodeURIComponent(router.asPath || '/')
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/60 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-6">
-        {/* Brand */}
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-black/60 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 lg:px-6">
+        {/* Left: brand */}
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-wide">
-          <span className="inline-grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/15 text-emerald-300">H</span>
-          <span className="text-white">HEMPIN</span>
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-500/20 text-emerald-300">
+            H
+          </span>
+          <span className="hidden sm:inline">HEMPIN</span>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-6 text-sm text-zinc-300 lg:flex">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="hover:text-white"
-            >
-              {item.label}
-            </Link>
-          ))}
+        {/* Middle: universes */}
+        <nav className="hidden md:flex items-center gap-1">
+          {navItem('/supermarket', 'Supermarket')}
+          {navItem('/trade', 'Trade')}
+          {navItem('/events', 'Events')}
+          {navItem('/research', 'Research')}
+          {navItem('/experiments', 'Experiments')}
         </nav>
 
-        {/* Right CTAs */}
-        <div className="hidden items-center gap-3 lg:flex">
-          <Link href="/signin" className="rounded-lg px-3 py-2 text-sm text-zinc-200 hover:bg-white/5">
-            Sign in
-          </Link>
-          <Link
-            href="/account"
-            className="rounded-lg bg-emerald-500/20 px-3 py-2 text-sm font-medium text-emerald-300 ring-1 ring-emerald-400/30 hover:bg-emerald-500/25"
-          >
-            Account
-          </Link>
-        </div>
-
-        {/* Mobile menu button */}
-        <button
-          onClick={() => setOpen(true)}
-          className="rounded-lg p-2 text-zinc-300 hover:bg-white/5 lg:hidden"
-          aria-label="Open menu"
-        >
-          <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
-            <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Mobile drawer */}
-      {open && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} />
-          <div className="absolute inset-y-0 right-0 w-[80%] max-w-xs bg-black/90 p-4 ring-1 ring-white/10">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="font-semibold text-white">Menu</span>
+        {/* Right: auth state */}
+        <div className="relative">
+          {!session ? (
+            <Link
+              href={`/signin?next=${nextParam}`}
+              className="btn btn-primary text-sm"
+            >
+              Sign in
+            </Link>
+          ) : (
+            <>
               <button
-                onClick={() => setOpen(false)}
-                className="rounded-lg p-2 text-zinc-300 hover:bg-white/5"
-                aria-label="Close menu"
+                onClick={() => setMenuOpen(v => !v)}
+                className="flex items-center gap-2 rounded-full bg-white/10 px-2 py-1 hover:bg-white/20"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
               >
-                <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
-                  <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-emerald-400/20 text-emerald-200 text-xs font-semibold">
+                  {initials}
+                </span>
               </button>
-            </div>
 
-            <nav className="grid gap-2 text-sm">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-lg px-3 py-2 text-zinc-200 hover:bg-white/5"
-                  onClick={() => setOpen(false)}
+              {menuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-zinc-900/95 shadow-xl backdrop-blur"
                 >
-                  {item.label}
-                </Link>
-              ))}
-              <div className="mt-2 h-px bg-white/10" />
-              <Link href="/signin" className="rounded-lg px-3 py-2 text-zinc-200 hover:bg-white/5" onClick={() => setOpen(false)}>
-                Sign in
-              </Link>
-              <Link href="/account" className="rounded-lg px-3 py-2 text-emerald-300 ring-1 ring-emerald-400/30 hover:bg-emerald-500/10" onClick={() => setOpen(false)}>
-                Account
-              </Link>
-            </nav>
-          </div>
+                  <Link
+                    href="/account/profile"
+                    className="block px-3 py-2 text-sm text-zinc-200 hover:bg-white/5"
+                    onClick={() => setMenuOpen(false)}
+                    role="menuitem"
+                  >
+                    Profile
+                  </Link>
+                  <div className="my-1 h-px bg-white/10" />
+                  <button
+                    onClick={handleSignOut}
+                    className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-white/5"
+                    role="menuitem"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
-      )}
+      </div>
     </header>
   )
 }
