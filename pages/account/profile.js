@@ -12,7 +12,16 @@ export default function ProfilePage() {
 
   return (
     <ProfileLayout
-      header={<AvatarXP name={user.name} avatarUrl={user.avatar_url} levelLabel={level.label} levelNum={level.num} pct={level.pct} />}
+      levelPct={level?.pct ?? 0}
+      header={
+        <AvatarXP
+          name={user?.name}
+          avatarUrl={user?.avatar_url}
+          levelLabel={level?.label}
+          levelNum={level?.num}
+          pct={level?.pct}
+        />
+      }
       badges={<BadgeShelf badges={badges} />}
       stats={<StatsPanel stats={stats} />}
       modules={<ModuleGrid modules={modules} onToggle={toggleModule} />}
