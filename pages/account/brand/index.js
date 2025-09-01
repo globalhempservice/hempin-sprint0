@@ -10,12 +10,19 @@ function slugify(base) {
 
 async function uploadToBucket(file, pathPrefix) {
   if (!file) return null;
-  const ext = file.name.split('.').pop() || 'bin';
+  const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
   const key = `${pathPrefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const { error: upErr } = await supabase.storage.from('media').upload(key, file, { cacheControl: '3600', upsert: false });
-  if (upErr) throw upErr;
-  const { data: pub } = supabase.storage.from('media').getPublicUrl(key);
-  return pub?.publicUrl || null;
+
+  const { error } = await supabase.storage.from('media').upload(key, file, {
+    upsert: false,
+    cacheControl: '3600',
+    contentType: file.type || 'application/octet-stream', // 👈 NEW
+    // metadata: { alt: 'logo or cover' }, // optional, if you want to enrich
+  });
+  if (error) throw error;
+
+  const { data } = supabase.storage.from('media').getPublicUrl(key);
+  return data?.publicUrl || null;
 }
 
 export default function BrandOwnerPanel() {
@@ -29,9 +36,11 @@ export default function BrandOwnerPanel() {
 
   const suggestedSlug = useMemo(() => slugify(form.name), [form.name]);
 
+  // Load my brands
   useEffect(() => {
     const init = async () => {
-      const { data: auth } = await supabase.auth.getUser();
+      const { data: auth, error: authErr } = await supabase.auth.getUser();
+      if (authErr) console.warn('auth error:', authErr.message);
       if (!auth?.user) return;
       setUser(auth.user);
       try {
@@ -44,6 +53,7 @@ export default function BrandOwnerPanel() {
         setBrands(data || []);
       } catch (e) {
         console.warn('brands list error:', e?.message || e);
+        setBrands([]);
       }
     };
     init();
@@ -59,35 +69,50 @@ export default function BrandOwnerPanel() {
 
   const startEdit = (b) => {
     setForm({
-      id: b.id, name: b.name || '', description: b.description || '',
-      logo_url: b.logo_url || '', cover_url: b.cover_url || '',
-      category: b.category || '', website: b.website || ''
+      id: b.id,
+      name: b.name || '',
+      description: b.description || '',
+      logo_url: b.logo_url || '',
+      cover_url: b.cover_url || '',
+      category: b.category || '',
+      website: b.website || ''
     });
     setLogoFile(null); setCoverFile(null);
     setMsg(null);
   };
 
   const save = async () => {
-    if (!user) return;
+    if (!user) { setMsg('You must be signed in.'); return; }
     setBusy(true); setMsg(null);
+
+    const withTimeout = (p, ms, label) => new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+      p.then(v => { clearTimeout(t); resolve(v); }).catch(err => { clearTimeout(t); reject(err); });
+    });
+
     try {
-      // slug uniqueness
+      // unique slug
       let base = slugify(form.name);
       if (!base) throw new Error('Please enter a name');
       let candidate = base; let n = 1;
       while (true) {
-        const { data: exists } = await supabase.from('brands').select('id').eq('slug', candidate).limit(1);
+        const { data: exists, error: exErr } = await withTimeout(
+          supabase.from('brands').select('id').eq('slug', candidate).limit(1),
+          8000,
+          'Slug check'
+        );
+        if (exErr) throw exErr;
         if (!exists || exists.length === 0 || (exists[0].id === form.id)) break;
         candidate = `${base}-${++n}`;
       }
 
-      // uploads first (if any)
-      const uploadedLogo = logoFile ? await uploadToBucket(logoFile, `brands/${user.id}/logo`) : null;
-      const uploadedCover = coverFile ? await uploadToBucket(coverFile, `brands/${user.id}/cover`) : null;
+      // uploads first (optional)
+      const uploadedLogo = logoFile ? await withTimeout(uploadToBucket(logoFile, `brands/${user.id}/logo`), 12000, 'Logo upload') : null;
+      const uploadedCover = coverFile ? await withTimeout(uploadToBucket(coverFile, `brands/${user.id}/cover`), 12000, 'Cover upload') : null;
 
       const payload = {
         name: form.name,
-        description: form.description,
+        description: form.description || null,
         logo_url: uploadedLogo ?? (form.logo_url || null),
         cover_url: uploadedCover ?? (form.cover_url || null),
         category: form.category || null,
@@ -97,25 +122,31 @@ export default function BrandOwnerPanel() {
         approved: false
       };
 
-      let res;
+      // insert/update without .single()
+      let error;
       if (form.id) {
-        res = await supabase.from('brands').update(payload).eq('id', form.id).select('id').single();
+        ({ error } = await withTimeout(supabase.from('brands').update(payload).eq('id', form.id), 12000, 'Update brand'));
       } else {
-        res = await supabase.from('brands').insert(payload).select('id').single();
+        ({ error } = await withTimeout(supabase.from('brands').insert(payload), 12000, 'Insert brand'));
       }
-      if (res.error) throw res.error;
+      if (error) throw error;
 
       setMsg('Saved. Your brand is pending approval.');
 
-      // refresh list
-      const { data } = await supabase
-        .from('brands')
-        .select('id, slug, name, description, logo_url, cover_url, category, website, approved, featured, created_at')
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: false });
-      setBrands(data || []);
-      if (!form.id) startNew();
+      // refresh
+      try {
+        const { data } = await supabase
+          .from('brands')
+          .select('id, slug, name, description, logo_url, cover_url, category, website, approved, featured, created_at')
+          .eq('owner_id', user.id)
+          .order('created_at', { ascending: false });
+        setBrands(data || []);
+        if (!form.id) startNew();
+      } catch (e) {
+        console.warn('refresh list err:', e?.message || e);
+      }
     } catch (e) {
+      console.warn('save brand failed:', e?.message || e);
       setMsg(`Error: ${e.message || e}`);
     } finally {
       setBusy(false);

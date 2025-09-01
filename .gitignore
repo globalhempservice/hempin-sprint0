@@ -26,3 +26,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Supabase CLI temps
+supabase/.temp/
+# optional: remote snapshot files
+supabase/migrations/*_remote_schema.sql
