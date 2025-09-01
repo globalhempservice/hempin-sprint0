@@ -8,21 +8,47 @@ function slugify(base) {
   return s || 'event';
 }
 
+// Normalize datetime-local input to ISO (safely)
+function toISO(dt) {
+  if (!dt) return null;
+  // Accept "YYYY-MM-DDTHH:mm" (standard) or local variants like "YYYY/MM/DD, HH:mm"
+  try {
+    // Standard path
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(dt)) {
+      const d = new Date(dt + ':00'); // add seconds
+      return isNaN(d.getTime()) ? null : d.toISOString();
+    }
+    // Fallback: let Date try, but guard
+    const d2 = new Date(dt);
+    return isNaN(d2.getTime()) ? null : d2.toISOString();
+  } catch {
+    return null;
+  }
+}
+
 async function uploadToBucket(file, pathPrefix) {
   if (!file) return null;
-  const ext = file.name.split('.').pop() || 'bin';
+  const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
   const key = `${pathPrefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const { error: upErr } = await supabase.storage.from('media').upload(key, file, { cacheControl: '3600', upsert: false });
-  if (upErr) throw upErr;
-  const { data: pub } = supabase.storage.from('media').getPublicUrl(key);
-  return pub?.publicUrl || null;
+
+  const { error } = await supabase.storage.from('media').upload(key, file, {
+    upsert: false,
+    cacheControl: '3600',
+    contentType: file.type || 'application/octet-stream', // 👈 NEW
+    // metadata: { alt: 'logo or cover' }, // optional, if you want to enrich
+  });
+  if (error) throw error;
+
+  const { data } = supabase.storage.from('media').getPublicUrl(key);
+  return data?.publicUrl || null;
 }
 
 export default function EventsOwnerPanel() {
   const [user, setUser] = useState(null);
   const [events, setEvents] = useState([]);
   const [form, setForm] = useState({
-    id: null, title: '', summary: '', venue_name: '', city: '', country: '',
+    id: null, title: '', summary: '',
+    venue_name: '', city: '', country: '',
     starts_at: '', ends_at: '', cover_url: ''
   });
   const [busy, setBusy] = useState(false);
@@ -31,12 +57,16 @@ export default function EventsOwnerPanel() {
 
   const suggestedSlug = useMemo(() => slugify(form.title), [form.title]);
 
+  // Load my events
   useEffect(() => {
     const init = async () => {
-      const { data: auth } = await supabase.auth.getUser();
+      const { data: auth, error: authErr } = await supabase.auth.getUser();
+      if (authErr) console.warn('auth error:', authErr.message);
       if (!auth?.user) return;
       setUser(auth.user);
+
       try {
+        // created_at now exists, but if it didn’t, we’d still render
         const { data, error } = await supabase
           .from('events')
           .select('id, slug, title, summary, venue_name, city, country, starts_at, ends_at, cover_url, status, featured, created_at')
@@ -46,6 +76,7 @@ export default function EventsOwnerPanel() {
         setEvents(data || []);
       } catch (e) {
         console.warn('events list error:', e?.message || e);
+        setEvents([]); // render anyway
       }
     };
     init();
@@ -61,10 +92,14 @@ export default function EventsOwnerPanel() {
 
   const startEdit = (ev) => {
     setForm({
-      id: ev.id, title: ev.title || '', summary: ev.summary || '',
-      venue_name: ev.venue_name || '', city: ev.city || '', country: ev.country || '',
-      starts_at: (ev.starts_at || '').slice(0,16),
-      ends_at: (ev.ends_at || '').slice(0,16),
+      id: ev.id,
+      title: ev.title || '',
+      summary: ev.summary || '',
+      venue_name: ev.venue_name || '',
+      city: ev.city || '',
+      country: ev.country || '',
+      starts_at: (ev.starts_at || '').slice(0, 16), // yyyy-mm-ddThh:mm
+      ends_at: (ev.ends_at || '').slice(0, 16),
       cover_url: ev.cover_url || ''
     });
     setCoverFile(null);
@@ -72,52 +107,92 @@ export default function EventsOwnerPanel() {
   };
 
   const save = async () => {
-    if (!user) return;
+    if (!user) {
+      setMsg('You must be signed in.');
+      return;
+    }
     setBusy(true); setMsg(null);
+
+    // Time-box everything so UI never hangs
+    const withTimeout = (p, ms, label) => new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+      p.then(v => { clearTimeout(t); resolve(v); }).catch(err => { clearTimeout(t); reject(err); });
+    });
+
     try {
+      // 1) unique slug
       let base = slugify(form.title);
       if (!base) throw new Error('Please enter a title');
       let candidate = base; let n = 1;
       while (true) {
-        const { data: exists } = await supabase.from('events').select('id').eq('slug', candidate).limit(1);
+        const { data: exists, error: exErr } = await withTimeout(
+          supabase.from('events').select('id').eq('slug', candidate).limit(1),
+          8000,
+          'Slug check'
+        );
+        if (exErr) throw exErr;
         if (!exists || exists.length === 0 || (exists[0].id === form.id)) break;
         candidate = `${base}-${++n}`;
       }
 
-      const uploadedCover = coverFile ? await uploadToBucket(coverFile, `events/${user.id}/cover`) : null;
+      // 2) upload cover (optional)
+      let coverUrl = form.cover_url || null;
+      if (coverFile) {
+        coverUrl = await withTimeout(
+          uploadToBucket(coverFile, `events/${user.id}/cover`),
+          12000,
+          'Cover upload'
+        );
+      }
 
+      // 3) build payload
       const payload = {
         title: form.title,
         summary: form.summary || null,
         venue_name: form.venue_name || null,
         city: form.city || null,
         country: form.country || null,
-        starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
-        ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
-        cover_url: uploadedCover ?? (form.cover_url || null),
+        starts_at: toISO(form.starts_at),
+        ends_at: toISO(form.ends_at),
+        cover_url: coverUrl,
         slug: candidate,
         owner_profile_id: user.id,
         status: 'pending'
       };
 
-      let res;
+      // 4) insert or update — do NOT call .single() to avoid representation issues
+      let error;
       if (form.id) {
-        res = await supabase.from('events').update(payload).eq('id', form.id).select('id').single();
+        ({ error } = await withTimeout(
+          supabase.from('events').update(payload).eq('id', form.id),
+          12000,
+          'Update event'
+        ));
       } else {
-        res = await supabase.from('events').insert(payload).select('id').single();
+        ({ error } = await withTimeout(
+          supabase.from('events').insert(payload),
+          12000,
+          'Insert event'
+        ));
       }
-      if (res.error) throw res.error;
+      if (error) throw error;
 
       setMsg('Saved. Your event is pending approval.');
 
-      const { data } = await supabase
-        .from('events')
-        .select('id, slug, title, summary, venue_name, city, country, starts_at, ends_at, cover_url, status, featured, created_at')
-        .eq('owner_profile_id', user.id)
-        .order('created_at', { ascending: false });
-      setEvents(data || []);
-      if (!form.id) startNew();
+      // 5) refresh list (non-blocking; errors don’t kill the UI)
+      try {
+        const { data } = await supabase
+          .from('events')
+          .select('id, slug, title, summary, venue_name, city, country, starts_at, ends_at, cover_url, status, featured, created_at')
+          .eq('owner_profile_id', user.id)
+          .order('created_at', { ascending: false });
+        setEvents(data || []);
+        if (!form.id) startNew();
+      } catch (e) {
+        console.warn('refresh list err:', e?.message || e);
+      }
     } catch (e) {
+      console.warn('save event failed:', e?.message || e);
       setMsg(`Error: ${e.message || e}`);
     } finally {
       setBusy(false);
