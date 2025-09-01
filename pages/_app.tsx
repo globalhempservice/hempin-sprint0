@@ -1,29 +1,18 @@
-// pages/_app.tsx
 import type { AppProps } from 'next/app'
-import { useRouter } from 'next/router'
-import '../styles/globals.css'
-import PublicShell from '../components/PublicShell'
-import { AccountRouteGuard } from '../lib/authGuard'
+import Head from 'next/head'
+import '../styles/globals.css' // keep your global styles
+import { AuthSessionProvider } from '../components/auth/AuthSessionProvider'
 
-export default function App({ Component, pageProps }: AppProps) {
-  const router = useRouter()
-  const isAccount = router.pathname.startsWith('/account')
-
-  // Public shell only for true public pages (no auth, no account, no admin)
-  const shouldWrapWithPublicShell = !(
-    router.pathname === '/signin' ||
-    router.pathname.startsWith('/auth/') ||
-    router.pathname.startsWith('/account') ||
-    router.pathname.startsWith('/admin')
+export default function MyApp({ Component, pageProps }: AppProps) {
+  return (
+    <>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+        <meta name="theme-color" content="#0b0f12" />
+      </Head>
+      <AuthSessionProvider>
+        <Component {...pageProps} />
+      </AuthSessionProvider>
+    </>
   )
-
-  const page = isAccount ? (
-    <AccountRouteGuard>
-      <Component {...pageProps} />
-    </AccountRouteGuard>
-  ) : (
-    <Component {...pageProps} />
-  )
-
-  return shouldWrapWithPublicShell ? <PublicShell>{page}</PublicShell> : page
 }
