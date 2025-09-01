@@ -15,8 +15,15 @@ export default function ModuleGrid({ modules, onToggle }) {
 
   const enterUniverse = (key, enabled) => {
     if (!enabled) return;
-    // TODO: wire destination when ready:
-    // router.push(`/modules/${key}`) or `/account/${key}`
+    const map = {
+      brand: '/marketplace',
+      events: '/events',
+      factory: '/marketplace',   // placeholder
+      farm: '/trade',            // when we add Trade
+      research: '/research'      // when we add Research
+    };
+    const dest = map[key] || '/';
+    router.push(dest);
   };
 
   const Cell = ({ m }) => {
