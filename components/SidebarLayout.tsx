@@ -28,7 +28,7 @@ type Props = {
 const ICON = {
   home: ({ className }: { className?: string }) => (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5a.5.5 0 0 1-.5-.5V15a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v5.5a.5.5 0 0 1-.5.5H5a1 1 0 0 1-1-1v-9.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5a.5.5 0 0 1-.5-.5V16a2 2 0 0 0-2-2h0a2 2 0 0 0-2 2v4.5a.5.5 0 0 1-.5.5H5a1 1 0 0 1-1-1V10.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
   box: ({ className }: { className?: string }) => (
@@ -38,94 +38,63 @@ const ICON = {
   ),
   tag: ({ className }: { className?: string }) => (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M20 13 11 4H4v7l9 9 7-7Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M20 13 13 20a2.828 2.828 0 0 1-4 0l-5-5V4h11l5 5a2.828 2.828 0 0 1 0 4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M7.5 7.5h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
-  credit: ({ className }: { className?: string }) => (
+  calendar: ({ className }: { className?: string }) => (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M3 10h18" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M7 3v4M17 3v4M3 9h18M5 7h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
-  wrench: ({ className }: { className?: string }) => (
+  beaker: ({ className }: { className?: string }) => (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M14.5 5.5a4.5 4.5 0 0 0-6.2 5.8L3 16.5 7.5 21l5.2-5.3A4.5 4.5 0 1 0 14.5 5.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M6 3h12M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
-  list: ({ className }: { className?: string }) => (
+  leaf: ({ className }: { className?: string }) => (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M5 19c8 0 14-6 14-14 0 0-9-1-14 4S4 18 4 18l8-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
-  dollar: ({ className }: { className?: string }) => (
+  chart: ({ className }: { className?: string }) => (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M12 2v20M16.5 6.5a3.5 3.5 0 1 0-7 0c0 1.933 1.567 3.5 3.5 3.5h1c1.933 0 3.5 1.567 3.5 3.5a3.5 3.5 0 1 1-7 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M4 19h16M7 16v-5M12 19v-9M17 19v-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
-  chevronLeft: ({ className }: { className?: string }) => (
+  shield: ({ className }: { className?: string }) => (
     <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M15 19 8 12l7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
-  chevronRight: ({ className }: { className?: string }) => (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="m9 5 7 7-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  ),
-  menu: ({ className }: { className?: string }) => (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  ),
-  close: ({ className }: { className?: string }) => (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M12 3l8 4v6c0 5-3.5 8-8 8S4 18 4 13V7l8-4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
 }
 
 const NAV_ACCOUNT: NavItem[] = [
-  { href: '/account', label: 'Account home', icon: ICON.home },
-  { href: '/account/brand', label: 'My brand', icon: ICON.tag },
-  { href: '/account/products', label: 'My products', icon: ICON.box },
-  { href: '/account/billing', label: 'Billing', icon: ICON.credit },
-  { href: '/account/services', label: 'HEMPIN services', icon: ICON.wrench },
+  { href: '/account/profile', label: 'Profile', icon: ICON.leaf },
+  { href: '/account/brand', label: 'Brands', icon: ICON.tag },
+  { href: '/account/events', label: 'Events', icon: ICON.calendar },
+  { href: '/account/trade', label: 'Trade', icon: ICON.box },
+  { href: '/account/research', label: 'Research', icon: ICON.beaker },
+  { href: '/account/experiments', label: 'Experiments', icon: ICON.chart },
 ]
 
 const NAV_ADMIN: NavItem[] = [
   { href: '/admin', label: 'Dashboard', icon: ICON.home },
-  { href: '/admin/submissions', label: 'Pending submissions', icon: ICON.list },
-  { href: '/admin/payments', label: 'Payments', icon: ICON.dollar },
+  { href: '/admin/review', label: 'Review', icon: ICON.shield },
+  { href: '/admin/brands', label: 'Brands', icon: ICON.tag },
+  { href: '/admin/events', label: 'Events', icon: ICON.calendar },
+  { href: '/admin/featured', label: 'Featured', icon: ICON.leaf },
+  { href: '/admin/stats', label: 'Stats', icon: ICON.chart },
 ]
 
 export default function SidebarLayout({ variant, children }: Props) {
   const router = useRouter()
   const { user, session } = useUser()
 
-  // Guard /account when not signed in
-  useEffect(() => {
-    if (variant === 'account' && !session) {
-      const next = encodeURIComponent(router.asPath || '/account')
-      router.replace(`/signin?next=${next}`)
-    }
-  }, [variant, session, router])
+  // NOTE: removed auto-redirect on !session to stop account/signin loop.
+  // Pages render a sign-in card if needed; this layout stays neutral.
 
-  const key = `hempin.sidebar.collapsed:${variant}`
-  const [collapsed, setCollapsed] = useState(false)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-
-  useEffect(() => {
-    const v = typeof window !== 'undefined' ? localStorage.getItem(key) : null
-    if (v === '1') setCollapsed(true)
-  }, [key])
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(key, collapsed ? '1' : '0')
-    }
-  }, [collapsed, key])
-
+  // close the drawer on route change (mobile)
   useEffect(() => {
     const close = () => setDrawerOpen(false)
     router.events.on('routeChangeComplete', close)
@@ -146,146 +115,171 @@ export default function SidebarLayout({ variant, children }: Props) {
     router.replace('/auth/logout')
   }
 
-  const Rail = (
-    <div
-      className={[
-        'flex flex-col p-3',
-        'max-h-[calc(100dvh-2rem)] w-72 overflow-hidden rounded-2xl',
-        'border border-white/10 ring-1 ring-white/5',
-        'bg-gradient-to-b from-emerald-500/10 via-zinc-900/60 to-black/80',
-        'backdrop-blur shadow-[0_0_0_1px_rgba(255,255,255,.04),0_10px_30px_-10px_rgba(0,0,0,.6)]',
-        collapsed ? 'w-[4.25rem]' : 'w-72',
-      ].join(' ')}
-    >
-      <div className={collapsed ? 'mb-3 flex flex-col items-center gap-2' : 'mb-3 flex items-center justify-between'}>
-        <Link
-          href={variant === 'admin' ? '/admin' : '/account'}
-          className={['flex items-center gap-2 text-sm font-semibold', collapsed ? 'justify-center' : ''].join(' ')}
-        >
-          <div className="grid h-8 w-8 place-items-center rounded-xl bg-emerald-500/20 text-emerald-300">
-            {collapsed ? 'HI' : 'H'}
-          </div>
-          {!collapsed && <span className="tracking-wide">HEMPIN</span>}
-        </Link>
+  const key = `hempin.sidebar.collapsed:${variant}`
+  const [collapsed, setCollapsed] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
-        {collapsed ? (
-          <button
-            aria-label="Expand sidebar"
-            onClick={() => setCollapsed(false)}
-            className="rounded-lg p-1.5 text-zinc-300/80 hover:bg-white/5"
-          >
-            <ICON.chevronRight className="h-5 w-5" />
-          </button>
-        ) : (
-          <button
-            aria-label="Collapse sidebar"
-            onClick={() => setCollapsed(true)}
-            className="rounded-lg p-1.5 text-zinc-300/80 hover:bg-white/5"
-          >
-            <ICON.chevronLeft className="h-5 w-5" />
-          </button>
-        )}
-      </div>
+  // restore collapsed state
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem(key)
+      if (v) setCollapsed(v === '1')
+    } catch {}
+  }, [key])
 
-      <div className="flex min-h-0 flex-1 flex-col">
-        <nav className="min-h-0 flex-1 overflow-y-auto">
-          <ul className="space-y-1">
-            {nav.map(item => {
-              const active = isActive(item.href)
-              const Icon = item.icon
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={[
-                      'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm',
-                      active
-                        ? 'bg-white/10 text-white'
-                        : 'text-zinc-300/90 hover:bg-white/5 hover:text-white',
-                    ].join(' ')}
-                  >
-                    <Icon className="h-5 w-5" />
-                    {!collapsed && <span className="truncate">{item.label}</span>}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
-
-        <div className="shrink-0 pt-3">
-          {!collapsed && (
-            <button
-              onClick={handleLogout}
-              className="mb-2 w-full rounded-xl border border-emerald-400/30 px-3 py-2 text-center text-sm text-emerald-300 hover:bg-emerald-400/10"
-            >
-              Log out
-            </button>
-          )}
-          <Link
-            href="/account/profile"
-            className={['flex items-center gap-3 rounded-xl px-2.5 py-2 text-left hover:bg-white/5', collapsed ? 'justify-center' : ''].join(' ')}
-          >
-            <div className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-xs">
-              {initials}
-            </div>
-            {!collapsed && (
-              <div className="min-w-0">
-                <div className="truncate text-sm text-white/90">{user?.email || 'Guest'}</div>
-                <div className="truncate text-xs text-zinc-400">View profile</div>
-              </div>
-            )}
-          </Link>
-        </div>
-      </div>
-    </div>
-  )
+  // persist collapsed state
+  useEffect(() => {
+    try {
+      localStorage.setItem(key, collapsed ? '1' : '0')
+    } catch {}
+  }, [key, collapsed])
 
   return (
-    <div className="mx-auto max-w-7xl px-4 md:px-6">
-      {/* MOBILE top bar (hidden from md and up) */}
-      <div className="sticky top-0 z-30 -mx-4 mb-4 flex items-center justify-between border-b border-white/5 bg-black/60 px-4 py-3 backdrop-blur md:hidden">
-        <button
-          onClick={() => setDrawerOpen(true)}
-          className="inline-flex items-center gap-2 rounded-lg px-2 py-1 text-zinc-300 hover:bg-white/5"
-          aria-label="Open navigation"
-        >
-          <ICON.menu className="h-5 w-5" />
-          <span className="text-sm">{variant === 'admin' ? 'Admin' : 'Account'}</span>
-        </button>
-        <Link href="/" className="rounded-lg px-2 py-1 text-sm text-zinc-300 hover:bg-white/5">
-          Back to site
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[auto,1fr]">
-        {/* Sidebar is ALWAYS visible on md+ */}
-        <aside className="sticky top-4 hidden self-start md:block">{Rail}</aside>
-
-        <main className="min-h-screen pb-12">{children}</main>
-      </div>
-
-      {/* Drawer (mobile) */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+      {/* top nav (mobile) */}
+      <div className="sticky top-0 z-40 border-b border-white/10 bg-[var(--surface)]/70 backdrop-blur px-4 py-3 sm:hidden">
+        <div className="flex items-center justify-between">
           <button
-            className="absolute inset-0 bg-black/60"
-            onClick={() => setDrawerOpen(false)}
-            aria-label="Close navigation overlay"
-          />
-          <div className="absolute inset-y-0 left-0 flex w-[82%] max-w-[20rem] p-3">
-            <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-              <div className="mb-2 flex items-center justify-end">
-                <button
-                  onClick={() => setDrawerOpen(false)}
-                  className="rounded-lg p-2 text-zinc-300 hover:bg-white/5"
-                  aria-label="Close navigation"
-                >
-                  <ICON.close className="h-5 w-5" />
-                </button>
+            className="rounded-lg border border-white/10 bg-white/5 px-2 py-1"
+            onClick={() => setDrawerOpen(v => !v)}
+            aria-label="Toggle menu"
+          >
+            ☰
+          </button>
+          <Link href="/" className="font-semibold">HEMPIN</Link>
+          <div className="text-sm opacity-70">{session ? initials : 'Guest'}</div>
+        </div>
+      </div>
+
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 sm:grid-cols-[auto,1fr] gap-4 p-4">
+        {/* sidebar */}
+        <aside
+          className={[
+            'rounded-2xl border border-white/10 bg-[var(--surface)]/80',
+            'backdrop-blur shadow-[0_0_0_1px_rgba(255,255,255,.04),0_10px_30px_-10px_rgba(0,0,0,.6)]',
+            collapsed ? 'w-[4.25rem]' : 'w-72',
+          ].join(' ')}
+        >
+          <div className={collapsed ? 'mb-3 flex flex-col items-center gap-2' : 'mb-3 flex items-center justify-between'}>
+            <Link
+              href={variant === 'admin' ? '/admin' : '/account'}
+              className={['flex items-center gap-2 text-sm font-semibold', collapsed ? 'justify-center' : ''].join(' ')}
+            >
+              <div className="grid h-8 w-8 place-items-center rounded-xl bg-emerald-500/20 text-emerald-300">
+                {collapsed ? 'HI' : 'H'}
               </div>
-              {Rail}
+              {!collapsed && <span className="tracking-wide">HEMPIN</span>}
+            </Link>
+
+            {!collapsed && (
+              <button
+                onClick={() => setCollapsed(v => !v)}
+                className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs"
+              >
+                {collapsed ? '»' : '«'}
+              </button>
+            )}
+          </div>
+
+          {/* user chip */}
+          <div className={['mx-3 mb-3 rounded-xl border border-white/10 bg-white/5 p-3', collapsed ? 'text-center' : ''].join(' ')}>
+            <div className={['flex items-center', collapsed ? 'justify-center' : 'gap-3'].join(' ')}>
+              <div className="grid h-9 w-9 place-items-center rounded-full bg-emerald-400/20 text-emerald-200">
+                {initials}
+              </div>
+              {!collapsed && (
+                <div>
+                  <div className="text-sm font-medium">{session ? user?.email : 'Guest'}</div>
+                  <div className="text-xs opacity-60">{variant === 'admin' ? 'Admin' : 'Account'}</div>
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* nav */}
+          <nav className="mx-2 mb-2 space-y-1">
+            {nav.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={[
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm',
+                  isActive(item.href) ? 'bg-white/10' : 'hover:bg-white/5',
+                ].join(' ')}
+              >
+                <item.icon className="h-5 w-5 opacity-80" />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            ))}
+          </nav>
+
+          {/* actions */}
+          <div className="mx-2 mb-4 flex items-center justify-between gap-2">
+            <Link
+              href="/"
+              className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-center text-sm hover:bg-white/10"
+            >
+              Home
+            </Link>
+            {session ? (
+              <button
+                onClick={handleLogout}
+                className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                href={`/signin?next=${encodeURIComponent('/account/profile')}`}
+                className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
+              >
+                Sign in
+              </Link>
+            )}
+          </div>
+        </aside>
+
+        {/* main */}
+        <main>{children}</main>
+      </div>
+
+      {/* mobile drawer */}
+      {(
+        <div
+          className={[
+            'fixed inset-0 z-40 sm:hidden transition',
+            drawerOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
+          ].join(' ')}
+          onClick={() => setDrawerOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/60" />
+          <div
+            className={[
+              'absolute left-0 top-0 h-full w-72 bg-[var(--surface)]/95 backdrop-blur border-r border-white/10 p-4',
+              'shadow-[0_0_0_1px_rgba(255,255,255,.04),0_10px_30px_-10px_rgba(0,0,0,.6)] transition-transform',
+              drawerOpen ? 'translate-x-0' : '-translate-x-full',
+            ].join(' ')}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <Link href="/account" className="font-semibold">HEMPIN</Link>
+              <button onClick={() => setDrawerOpen(false)} className="rounded-lg border border-white/10 bg-white/5 px-2 py-1">✕</button>
+            </div>
+
+            <nav className="space-y-1">
+              {NAV_ACCOUNT.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={[
+                    'block rounded-lg px-3 py-2 text-sm',
+                    isActive(item.href) ? 'bg-white/10' : 'hover:bg-white/5',
+                  ].join(' ')}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
           </div>
         </div>
       )}
