@@ -2,6 +2,7 @@ import Head from 'next/head'
 import { useEffect, useMemo, useState } from 'react'
 import SidebarLayout from '../../../components/SidebarLayout'
 import { supabase } from '../../../lib/supabaseClient'
+import { useAuth, SignInRequiredCard } from '../../../lib/authGuard'
 
 type EventRow = {
   id: string
@@ -50,8 +51,7 @@ async function uploadToBucket(file: File | null, pathPrefix: string) {
 }
 
 export default function EventsOwnerPage() {
-  const [sessionUserId, setSessionUserId] = useState<string | null>(null)
-  const [checking, setChecking] = useState(true)
+  const { loading, user } = useAuth()
 
   const [rows, setRows] = useState<EventRow[]>([])
   const [form, setForm] = useState<Partial<EventRow> & { id?: string }>({
@@ -63,32 +63,18 @@ export default function EventsOwnerPage() {
 
   const suggestedSlug = useMemo(() => slugify(form.title || ''), [form.title])
 
-  // Only check session; do not redirect here. Global guard handles access.
   useEffect(() => {
-    let alive = true
-    ;(async () => {
-      const { data, error } = await supabase.auth.getSession()
-      if (!alive) return
-      if (error) console.warn('auth getSession error:', error.message)
-      setSessionUserId(data?.session?.user?.id ?? null)
-      setChecking(false)
-    })()
-    return () => { alive = false }
-  }, [])
-
-  // Load my events when user id is known
-  useEffect(() => {
-    if (!sessionUserId) return
+    if (!user) return
     ;(async () => {
       const { data, error } = await supabase
         .from('events')
         .select('id, slug, title, summary, venue_name, city, country, starts_at, ends_at, cover_url, status, featured, created_at')
-        .eq('owner_profile_id', sessionUserId)
+        .eq('owner_profile_id', user.id)
         .order('starts_at', { ascending: false })
       if (error) console.warn('events list error:', error.message)
       setRows(data || [])
     })()
-  }, [sessionUserId])
+  }, [user])
 
   const startNew = () => {
     setForm({ id: undefined, title: '', summary: '', venue_name: '', city: '', country: '', starts_at: '', ends_at: '', cover_url: '' })
@@ -107,13 +93,12 @@ export default function EventsOwnerPage() {
   }
 
   const save = async () => {
-    if (!sessionUserId) { setMsg('You must be signed in.'); return }
+    if (!user) { setMsg('You must be signed in.'); return }
     setBusy(true); setMsg(null)
 
-    // Upload cover once (optional)
     let coverUrl = form.cover_url || null
     try {
-      if (coverFile) coverUrl = await uploadToBucket(coverFile, `events/${sessionUserId}/cover`)
+      if (coverFile) coverUrl = await uploadToBucket(coverFile, `events/${user.id}/cover`)
     } catch (e: any) {
       setMsg(`Error uploading image: ${e?.message || e}`)
       setBusy(false)
@@ -132,7 +117,7 @@ export default function EventsOwnerPage() {
       starts_at: toISO(form.starts_at || null),
       ends_at: toISO(form.ends_at || null),
       cover_url: coverUrl,
-      owner_profile_id: sessionUserId,
+      owner_profile_id: user.id,
       status: 'pending' as const,
     }
 
@@ -153,7 +138,7 @@ export default function EventsOwnerPage() {
         const { data } = await supabase
           .from('events')
           .select('id, slug, title, summary, venue_name, city, country, starts_at, ends_at, cover_url, status, featured, created_at')
-          .eq('owner_profile_id', sessionUserId)
+          .eq('owner_profile_id', user.id)
           .order('starts_at', { ascending: false })
         setRows(data || [])
         if (!form.id) startNew()
@@ -180,20 +165,15 @@ export default function EventsOwnerPage() {
 
       <h1 className="text-2xl font-semibold mb-4">My Events</h1>
 
-      {checking && (
+      {loading && (
         <div className="rounded-xl border border-white/10 bg-[var(--surface)]/80 backdrop-blur-md p-6 text-center text-[var(--text-2)]">
           Loading account…
         </div>
       )}
 
-      {!checking && !sessionUserId && (
-        <div className="rounded-xl border border-white/10 bg-[var(--surface)]/80 backdrop-blur-md p-6 text-center">
-          <div className="font-semibold mb-2">Sign in required</div>
-          <p className="text-[var(--text-2)]">Please sign in to access your tools.</p>
-        </div>
-      )}
+      {!loading && !user && <SignInRequiredCard nextPath="/account/events" />}
 
-      {!!sessionUserId && (
+      {!loading && user && (
         <>
           <section className="rounded-2xl bg-[var(--surface)]/80 border border-white/10 p-4 backdrop-blur-md">
             {!rows.length && <div className="text-[var(--text-2)]">You don’t have any events yet.</div>}
