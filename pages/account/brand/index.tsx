@@ -2,6 +2,7 @@ import Head from 'next/head'
 import { useEffect, useMemo, useState } from 'react'
 import SidebarLayout from '../../../components/SidebarLayout'
 import { supabase } from '../../../lib/supabaseClient'
+import { useAuth, SignInRequiredCard } from '../../../lib/authGuard'
 
 type BrandRow = {
   id: string
@@ -39,8 +40,7 @@ async function uploadToBucket(file: File | null, pathPrefix: string) {
 }
 
 export default function BrandOwnerPage() {
-  const [sessionUserId, setSessionUserId] = useState<string | null>(null)
-  const [checking, setChecking] = useState(true)
+  const { loading, user } = useAuth()
 
   const [rows, setRows] = useState<BrandRow[]>([])
   const [form, setForm] = useState<Partial<BrandRow> & { id?: string }>({
@@ -53,32 +53,18 @@ export default function BrandOwnerPage() {
 
   const suggestedSlug = useMemo(() => slugify(form.name || ''), [form.name])
 
-  // Only check session; do not redirect here. Your global guard handles access.
   useEffect(() => {
-    let alive = true
-    ;(async () => {
-      const { data, error } = await supabase.auth.getSession()
-      if (!alive) return
-      if (error) console.warn('auth getSession error:', error.message)
-      setSessionUserId(data?.session?.user?.id ?? null)
-      setChecking(false)
-    })()
-    return () => { alive = false }
-  }, [])
-
-  // Load my brands once we know the user id
-  useEffect(() => {
-    if (!sessionUserId) return
+    if (!user) return
     ;(async () => {
       const { data, error } = await supabase
         .from('brands')
         .select('id, slug, name, description, logo_url, cover_url, category, website, approved, featured, created_at')
-        .eq('owner_id', sessionUserId)
+        .eq('owner_id', user.id)
         .order('created_at', { ascending: false })
       if (error) console.warn('brands list error:', error.message)
       setRows(data || [])
     })()
-  }, [sessionUserId])
+  }, [user])
 
   const startNew = () => {
     setForm({ id: undefined, name: '', description: '', logo_url: '', cover_url: '', category: '', website: '' })
@@ -99,16 +85,15 @@ export default function BrandOwnerPage() {
   }
 
   const save = async () => {
-    if (!sessionUserId) { setMsg('You must be signed in.'); return }
+    if (!user) { setMsg('You must be signed in.'); return }
     setBusy(true); setMsg(null)
 
     try {
       const base = slugify(form.name || '')
       if (!base) throw new Error('Please enter a name')
 
-      // optional uploads
-      const uploadedLogo = logoFile ? await uploadToBucket(logoFile, `brands/${sessionUserId}/logo`) : null
-      const uploadedCover = coverFile ? await uploadToBucket(coverFile, `brands/${sessionUserId}/cover`) : null
+      const uploadedLogo = logoFile ? await uploadToBucket(logoFile, `brands/${user.id}/logo`) : null
+      const uploadedCover = coverFile ? await uploadToBucket(coverFile, `brands/${user.id}/cover`) : null
 
       const payloadBase = {
         name: form.name!,
@@ -117,11 +102,10 @@ export default function BrandOwnerPage() {
         cover_url: uploadedCover ?? (form.cover_url || null),
         category: (form.category || null) as string | null,
         website: (form.website || null) as string | null,
-        owner_id: sessionUserId,
+        owner_id: user.id,
         approved: false,
       }
 
-      // rely on unique index ux_brands_slug; retry on 23505
       const maxTries = 6
       let attempt = 0
       while (attempt < maxTries) {
@@ -135,12 +119,11 @@ export default function BrandOwnerPage() {
             const { error } = await supabase.from('brands').insert(payload)
             if (error) throw error
           }
-          // success
           setMsg('Saved. Your brand is pending approval.')
           const { data } = await supabase
             .from('brands')
             .select('id, slug, name, description, logo_url, cover_url, category, website, approved, featured, created_at')
-            .eq('owner_id', sessionUserId)
+            .eq('owner_id', user.id)
             .order('created_at', { ascending: false })
           setRows(data || [])
           if (!form.id) startNew()
@@ -170,20 +153,15 @@ export default function BrandOwnerPage() {
 
       <h1 className="text-2xl font-semibold mb-4">My Brands</h1>
 
-      {checking && (
+      {loading && (
         <div className="rounded-xl border border-white/10 bg-[var(--surface)]/80 backdrop-blur-md p-6 text-center text-[var(--text-2)]">
           Loading account…
         </div>
       )}
 
-      {!checking && !sessionUserId && (
-        <div className="rounded-xl border border-white/10 bg-[var(--surface)]/80 backdrop-blur-md p-6 text-center">
-          <div className="font-semibold mb-2">Sign in required</div>
-          <p className="text-[var(--text-2)]">Please sign in to access your tools.</p>
-        </div>
-      )}
+      {!loading && !user && <SignInRequiredCard nextPath="/account/brand" />}
 
-      {!!sessionUserId && (
+      {!loading && user && (
         <>
           <section className="rounded-2xl bg-[var(--surface)]/80 border border-white/10 p-4 backdrop-blur-md">
             {!rows.length && <div className="text-[var(--text-2)]">You don’t have any brands yet.</div>}
