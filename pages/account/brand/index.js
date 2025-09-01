@@ -8,14 +8,25 @@ function slugify(base) {
   return s || 'brand';
 }
 
+async function uploadToBucket(file, pathPrefix) {
+  if (!file) return null;
+  const ext = file.name.split('.').pop() || 'bin';
+  const key = `${pathPrefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error: upErr } = await supabase.storage.from('media').upload(key, file, { cacheControl: '3600', upsert: false });
+  if (upErr) throw upErr;
+  const { data: pub } = supabase.storage.from('media').getPublicUrl(key);
+  return pub?.publicUrl || null;
+}
+
 export default function BrandOwnerPanel() {
   const [user, setUser] = useState(null);
   const [brands, setBrands] = useState([]);
-  const [form, setForm] = useState({ id: null, name: '', description: '', logo_url: '', cover_url: '', category: '', website: '', socials: {} });
+  const [form, setForm] = useState({ id: null, name: '', description: '', logo_url: '', cover_url: '', category: '', website: '' });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [coverFile, setCoverFile] = useState(null);
 
-  // derived slug
   const suggestedSlug = useMemo(() => slugify(form.name), [form.name]);
 
   useEffect(() => {
@@ -23,12 +34,17 @@ export default function BrandOwnerPanel() {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth?.user) return;
       setUser(auth.user);
-      const { data } = await supabase
-        .from('brands')
-        .select('id, slug, name, description, logo_url, cover_url, category, website, socials, approved, featured, created_at')
-        .eq('owner_id', auth.user.id)
-        .order('created_at', { ascending: false });
-      setBrands(data || []);
+      try {
+        const { data, error } = await supabase
+          .from('brands')
+          .select('id, slug, name, description, logo_url, cover_url, category, website, approved, featured, created_at')
+          .eq('owner_id', auth.user.id)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        setBrands(data || []);
+      } catch (e) {
+        console.warn('brands list error:', e?.message || e);
+      }
     };
     init();
     const sub = supabase.auth.onAuthStateChange(() => init());
@@ -36,12 +52,18 @@ export default function BrandOwnerPanel() {
   }, []);
 
   const startNew = () => {
-    setForm({ id: null, name: '', description: '', logo_url: '', cover_url: '', category: '', website: '', socials: {} });
+    setForm({ id: null, name: '', description: '', logo_url: '', cover_url: '', category: '', website: '' });
+    setLogoFile(null); setCoverFile(null);
     setMsg(null);
   };
 
   const startEdit = (b) => {
-    setForm({ id: b.id, name: b.name || '', description: b.description || '', logo_url: b.logo_url || '', cover_url: b.cover_url || '', category: b.category || '', website: b.website || '', socials: b.socials || {} });
+    setForm({
+      id: b.id, name: b.name || '', description: b.description || '',
+      logo_url: b.logo_url || '', cover_url: b.cover_url || '',
+      category: b.category || '', website: b.website || ''
+    });
+    setLogoFile(null); setCoverFile(null);
     setMsg(null);
   };
 
@@ -49,28 +71,30 @@ export default function BrandOwnerPanel() {
     if (!user) return;
     setBusy(true); setMsg(null);
     try {
-      // ensure unique slug
+      // slug uniqueness
       let base = slugify(form.name);
       if (!base) throw new Error('Please enter a name');
-      let candidate = base;
-      let n = 1;
+      let candidate = base; let n = 1;
       while (true) {
         const { data: exists } = await supabase.from('brands').select('id').eq('slug', candidate).limit(1);
         if (!exists || exists.length === 0 || (exists[0].id === form.id)) break;
         candidate = `${base}-${++n}`;
       }
 
+      // uploads first (if any)
+      const uploadedLogo = logoFile ? await uploadToBucket(logoFile, `brands/${user.id}/logo`) : null;
+      const uploadedCover = coverFile ? await uploadToBucket(coverFile, `brands/${user.id}/cover`) : null;
+
       const payload = {
         name: form.name,
         description: form.description,
-        logo_url: form.logo_url || null,
-        cover_url: form.cover_url || null,
+        logo_url: uploadedLogo ?? (form.logo_url || null),
+        cover_url: uploadedCover ?? (form.cover_url || null),
         category: form.category || null,
         website: form.website || null,
-        socials: form.socials || {},
         slug: candidate,
         owner_id: user.id,
-        approved: false // submit for approval
+        approved: false
       };
 
       let res;
@@ -82,10 +106,11 @@ export default function BrandOwnerPanel() {
       if (res.error) throw res.error;
 
       setMsg('Saved. Your brand is pending approval.');
+
       // refresh list
       const { data } = await supabase
         .from('brands')
-        .select('id, slug, name, description, logo_url, cover_url, category, website, socials, approved, featured, created_at')
+        .select('id, slug, name, description, logo_url, cover_url, category, website, approved, featured, created_at')
         .eq('owner_id', user.id)
         .order('created_at', { ascending: false });
       setBrands(data || []);
@@ -101,8 +126,7 @@ export default function BrandOwnerPanel() {
     <main className="mx-auto max-w-5xl px-4 py-8 text-[var(--text)]">
       <h1 className="text-2xl font-semibold mb-4">My Brands</h1>
 
-      {/* List */}
-      <section className="rounded-2xl bg-[var(--surface)]/80 backdrop-blur-md border border-white/10 p-4">
+      <section className="rounded-2xl bg-[var(--surface)]/80 border border-white/10 p-4 backdrop-blur-md">
         {!brands.length && <div className="text-[var(--text-2)]">You don’t have any brands yet.</div>}
         <ul className="grid gap-3">
           {brands.map(b => (
@@ -120,8 +144,7 @@ export default function BrandOwnerPanel() {
         </ul>
       </section>
 
-      {/* Form */}
-      <section className="mt-6 rounded-2xl bg-[var(--surface)]/80 backdrop-blur-md border border-white/10 p-4">
+      <section className="mt-6 rounded-2xl bg-[var(--surface)]/80 border border-white/10 p-4 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">{form.id ? 'Edit Brand' : 'Create Brand'}</h2>
           <button onClick={startNew} className="text-sm underline">New</button>
@@ -140,12 +163,14 @@ export default function BrandOwnerPanel() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1">
-              <span className="text-sm text-[var(--text-2)]">Logo URL</span>
-              <input value={form.logo_url} onChange={e=>setForm(f=>({...f, logo_url:e.target.value}))} className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none" />
+              <span className="text-sm text-[var(--text-2)]">Logo (upload)</span>
+              <input type="file" accept="image/*" onChange={e=>setLogoFile(e.target.files?.[0] || null)} />
+              {form.logo_url && <img alt="logo" src={form.logo_url} className="mt-2 h-14 w-14 rounded-full object-cover" />}
             </label>
             <label className="grid gap-1">
-              <span className="text-sm text-[var(--text-2)]">Cover URL</span>
-              <input value={form.cover_url} onChange={e=>setForm(f=>({...f, cover_url:e.target.value}))} className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none" />
+              <span className="text-sm text-[var(--text-2)]">Cover (upload)</span>
+              <input type="file" accept="image/*" onChange={e=>setCoverFile(e.target.files?.[0] || null)} />
+              {form.cover_url && <img alt="cover" src={form.cover_url} className="mt-2 h-20 rounded-lg object-cover" />}
             </label>
           </div>
 
