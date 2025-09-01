@@ -1,11 +1,11 @@
 // pages/index.tsx
 import Head from 'next/head'
 import Link from 'next/link'
-import PublicShell from '../components/PublicShell'
+
 
 export default function Home() {
   return (
-    <PublicShell>
+    
     
       <Head>
         <title>HEMPIN — Grow the Hemp Ecosystem</title>
@@ -176,7 +176,7 @@ export default function Home() {
 
         <SiteFooter />
       </div>
-    </PublicShell>
+  
   )
 }
 

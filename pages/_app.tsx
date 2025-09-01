@@ -8,8 +8,14 @@ import { AccountRouteGuard } from '../lib/authGuard'
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
   const isAccount = router.pathname.startsWith('/account')
-  const hidePublicShell =
-    router.pathname === '/signin' || router.pathname.startsWith('/auth/')
+
+  // Public shell only for true public pages (no auth, no account, no admin)
+  const shouldWrapWithPublicShell = !(
+    router.pathname === '/signin' ||
+    router.pathname.startsWith('/auth/') ||
+    router.pathname.startsWith('/account') ||
+    router.pathname.startsWith('/admin')
+  )
 
   const page = isAccount ? (
     <AccountRouteGuard>
@@ -19,8 +25,5 @@ export default function App({ Component, pageProps }: AppProps) {
     <Component {...pageProps} />
   )
 
-  // Don’t wrap signin/auth with the site shell (prevents double header/footer)
-  if (hidePublicShell) return page
-
-  return <PublicShell>{page}</PublicShell>
+  return shouldWrapWithPublicShell ? <PublicShell>{page}</PublicShell> : page
 }
