@@ -173,25 +173,25 @@ export default function Onboarding() {
           </Stepper>
 
           {step === 1 && (
-            {/* Step 1 */}
-<Section>
-  <Sub>Are you primarily a consumer or a professional?</Sub>
-  <Row>
-    <Choice
-      active={role==='consumer'}
-      onClick={()=>setRole('consumer')}
-      title="Consumer"
-      desc="Browse products, discover brands, and explore the Supermarket."
-    />
-    <Choice
-      active={role==='pro'}
-      onClick={()=>setRole('pro')}
-      title="Pro"
-      desc="Tools for trade, events, research, and vendor features."
-    />
-  </Row>
-</Section>
-          )}
+  <Section>
+    {/* Step 1 */}
+    <Sub>Are you primarily a consumer or a professional?</Sub>
+    <Row>
+      <Choice
+        active={role === 'consumer'}
+        onClick={() => setRole('consumer')}
+        title="Consumer"
+        desc="Browse products, discover brands, and explore the Supermarket."
+      />
+      <Choice
+        active={role === 'pro'}
+        onClick={() => setRole('pro')}
+        title="Pro"
+        desc="Tools for trade, events, research, and vendor features."
+      />
+    </Row>
+  </Section>
+)}
 
           {step === 2 && role === 'consumer' && (
             <Section>
