@@ -3,23 +3,46 @@ import Link from 'next/link'
 import type { GetServerSideProps } from 'next'
 import { supabase } from '../../lib/supabaseClient'
 
-type Brand = {
-  id: string
-  name: string
-  slug: string
-  logo_url?: string | null
-}
+type Brand = { id: string; name: string; slug: string; logo_url?: string | null; approved?: boolean | null }
 type Product = {
   id: string
+  brand_id: string
   name: string
   slug: string
-  price_label?: string | null
-  description?: string | null
-  images?: { url?: string }[] | null
-  brand: Brand
+  description: string | null
+  price_label: string | null
+  images: { url?: string; alt?: string }[] | null
+  approved?: boolean | null
 }
 
-type Props = { product: Product | null }
+type Props = { product: (Product & { brand: Brand }) | null }
+
+export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+  const slug = String(ctx.params?.slug || '').trim()
+  if (!slug) return { props: { product: null } }
+
+  // 1) Fetch the product by slug (approved only), NO JOIN
+  const { data: p, error: pe } = await supabase
+    .from('products')
+    .select('id,brand_id,name,slug,description,price_label,images,approved')
+    .eq('slug', slug)
+    .eq('approved', true)
+    .maybeSingle()
+
+  if (pe || !p) return { props: { product: null } }
+
+  // 2) Fetch the brand explicitly; require approved for public view
+  const { data: b, error: be } = await supabase
+    .from('brands')
+    .select('id,name,slug,logo_url,approved')
+    .eq('id', p.brand_id)
+    .eq('approved', true)
+    .maybeSingle()
+
+  if (be || !b) return { props: { product: null } }
+
+  return { props: { product: { ...(p as Product), brand: b as Brand } } }
+}
 
 export default function ProductPage({ product }: Props) {
   if (!product) {
@@ -43,11 +66,10 @@ export default function ProductPage({ product }: Props) {
       <div className="grid md:grid-cols-2 gap-6">
         <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 aspect-square">
           {img ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={img} alt={product.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full grid place-items-center text-[var(--text-3)]">
-              No image
-            </div>
+            <div className="w-full h-full grid place-items-center text-[var(--text-3)]">No image</div>
           )}
         </div>
 
@@ -58,6 +80,7 @@ export default function ProductPage({ product }: Props) {
           </div>
 
           <h1 className="text-2xl font-semibold">{product.name}</h1>
+
           {product.price_label && (
             <div className="inline-flex items-center px-2 py-1 rounded-lg border border-white/10 bg-white/5 text-sm">
               {product.price_label}
@@ -70,7 +93,10 @@ export default function ProductPage({ product }: Props) {
 
           <div className="pt-4">
             <Link href={`/brands/${product.brand.slug}`} className="inline-flex items-center gap-2 underline">
-              {product.brand.logo_url && <img src={product.brand.logo_url} className="h-6 w-6 rounded-full object-cover border border-white/10" alt="" />}
+              {product.brand.logo_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={product.brand.logo_url} className="h-6 w-6 rounded-full object-cover border border-white/10" alt="" />
+              )}
               Visit {product.brand.name}
             </Link>
           </div>
@@ -78,31 +104,4 @@ export default function ProductPage({ product }: Props) {
       </div>
     </div>
   )
-}
-
-export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
-  const slug = String(ctx.params?.slug || '')
-
-  // Use anon client on the server; RLS only allows approved content.
-  const { data, error } = await supabase
-    .from('products')
-    .select(`
-      id, name, slug, price_label, description, images, approved,
-      brand:brands!inner(id, name, slug, logo_url, approved)
-    `)
-    .eq('slug', slug)
-    .eq('approved', true)
-    .eq('brands.approved', true)
-    .maybeSingle()
-
-  if (error) {
-    // Log server-side if you like; don't expose internals to users
-    return { props: { product: null } }
-  }
-
-  if (!data) {
-    return { props: { product: null } }
-  }
-
-  return { props: { product: data as any } }
 }
