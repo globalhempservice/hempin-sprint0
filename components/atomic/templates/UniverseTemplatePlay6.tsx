@@ -38,7 +38,9 @@ export default function UniverseTemplatePlay6({
   // lock the moving background to viewport (no scroll parallax)
   useEffect(() => {
     document.documentElement.style.setProperty('--bgFixed', 'fixed')
-    return () => document.documentElement.style.removeProperty('--bgFixed')
+    return () => {
+      document.documentElement.style.removeProperty('--bgFixed') // return void
+    }
   }, [])
 
   const bg = paletteToStops(bgPalette)
