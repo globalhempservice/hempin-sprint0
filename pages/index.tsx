@@ -69,7 +69,9 @@ export default function Home() {
             <Link href="/events" className="btn btn-ghost">Events</Link>
             <Link href="/research" className="btn btn-ghost">Research</Link>
             <Link href="/account/profile" className="btn btn-ghost">Profile</Link>
-            <Link href="/signin?next=/onboarding" className="btn btn-primary">Join • It’s free</Link>
+            <Link href="/join?next=/onboarding">
+  <a className="btn-primary">Join HEMPIN</a>
+</Link>
           </nav>
         </header>
 
@@ -90,7 +92,9 @@ export default function Home() {
                   profile flourish 🌿.
                 </p>
                 <div className="mt-6 flex gap-3 flex-wrap">
-                  <Link href="/signin?next=/onboarding" className="btn btn-primary">Start your journey</Link>
+                <Link href="/join?next=/onboarding">
+  <a className="btn-primary">Start your journey</a>
+</Link>
                   <Link href="/supermarket" className="btn btn-ghost">Explore the Supermarket</Link>
                 </div>
               </div>
@@ -139,7 +143,9 @@ export default function Home() {
               <h4 style={{color:'#eafff7', fontWeight:800, fontSize:'1.1rem', marginTop:'.35rem'}}>Take the 60-second onboarding ritual</h4>
               <p className="foot">Tell us who you are (consumer or pro), pick your modules, earn your first badge.</p>
             </div>
-            <Link href="/signin?next=/onboarding" className="btn btn-primary">Begin onboarding</Link>
+            <Link href="/join?next=/onboarding">
+  <a className="btn-primary">Begin onboarding</a>
+</Link>
           </section>
         </main>
 
