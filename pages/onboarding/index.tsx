@@ -173,23 +173,24 @@ export default function Onboarding() {
           </Stepper>
 
           {step === 1 && (
-            <Section>
-              <Sub>Are you primarily a consumer or a professional?</Sub>
-              <Row>
-                <Pick
-                  active={role==='consumer'}
-                  onClick={()=>setRole('consumer')}
-                  title="Consumer"
-                  desc="Browse products, discover brands, and explore the Supermarket."
-                />
-                <Pick
-                  active={role==='pro'}
-                  onClick={()=>setRole('pro')}
-                  title="Pro"
-                  desc="Tools for trade, events, research, and vendor features."
-                />
-              </Row>
-            </Section>
+            {/* Step 1 */}
+<Section>
+  <Sub>Are you primarily a consumer or a professional?</Sub>
+  <Row>
+    <Choice
+      active={role==='consumer'}
+      onClick={()=>setRole('consumer')}
+      title="Consumer"
+      desc="Browse products, discover brands, and explore the Supermarket."
+    />
+    <Choice
+      active={role==='pro'}
+      onClick={()=>setRole('pro')}
+      title="Pro"
+      desc="Tools for trade, events, research, and vendor features."
+    />
+  </Row>
+</Section>
           )}
 
           {step === 2 && role === 'consumer' && (
@@ -290,6 +291,40 @@ function Chip({children,active,onClick}:{children:any,active:boolean,onClick:()=
     color:'#eafff7'
   }}>{children}</button>
 }
+
+function Choice({
+  active,
+  onClick,
+  title,
+  desc
+}: {
+  active: boolean
+  onClick: () => void
+  title: string
+  desc: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1,
+        padding: '16px',
+        borderRadius: 12,
+        border: '1px solid rgba(255,255,255,.12)',
+        background: active
+          ? 'rgba(37,225,176,.18)'
+          : 'rgba(255,255,255,.03)',
+        color: '#eafff7',
+        textAlign: 'left',
+        cursor: 'pointer'
+      }}
+    >
+      <div style={{ fontWeight: 800, marginBottom: 4 }}>{title}</div>
+      <div style={{ opacity: 0.8 }}>{desc}</div>
+    </button>
+  )
+}
+
 function Grid({children}:{children:any}) {
   return <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:12,marginTop:8}}>{children}</div>
 }
