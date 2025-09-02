@@ -1,36 +1,55 @@
-// pages/auth/callback.tsx
+import Head from 'next/head'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import supaMaybe from '../../lib/supabaseClient'
-const supabase = (supaMaybe as any)?.supabase || supaMaybe
+import { supabase } from '../../lib/supabaseClient'
 
 export default function AuthCallback() {
-  const router = useRouter()
-  const [msg, setMsg] = useState('Finishing sign-in…')
+  const r = useRouter()
+  const [msg, setMsg] = useState('Finalizing sign-in…')
 
   useEffect(() => {
     (async () => {
       try {
-        // Exchange ?code= for a session (Supabase v2)
-        const { error } = await (supabase as any).auth.exchangeCodeForSession(window.location.href)
-        if (error) {
-          setMsg(error.message)
+        // Prefer the "code" param (PKCE / email magic link)
+        const code = (r.query.code as string) || ''
+        const next = (r.query.next as string) || '/onboarding'
+
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code)
+          if (error) throw error
+          setMsg('Signed in. Redirecting…')
+          r.replace(next)
           return
         }
-        const next = (router.query.next as string) || '/onboarding'
-        router.replace(next)
+
+        // Fallback for hash-based redirects (older flows)
+        if (typeof window !== 'undefined' && window.location.hash.includes('access_token')) {
+          const { error } = await supabase.auth.getSessionFromUrl({
+            storeSession: true,
+          } as any)
+          if (error) throw error
+          setMsg('Signed in. Redirecting…')
+          r.replace(next)
+          return
+        }
+
+        // Nothing to exchange — bounce to join
+        r.replace('/join')
       } catch (e: any) {
         setMsg(e?.message || 'Could not complete sign-in.')
       }
     })()
-  }, [router])
+  }, [r])
 
   return (
-    <div style={{
-      minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',
-      background:'#0b0d0f',color:'#eafff7',fontFamily:'ui-sans-serif, system-ui'
-    }}>
-      {msg}
-    </div>
+    <>
+      <Head><title>Signing you in… • HEMPIN</title></Head>
+      <div style={{
+        minHeight:'60vh',display:'grid',placeItems:'center',
+        color:'#eafff7',background:'#090b0d',fontFamily:'ui-sans-serif,system-ui'
+      }}>
+        <div style={{opacity:.9}}>{msg}</div>
+      </div>
+    </>
   )
 }
