@@ -7,16 +7,28 @@ type Sesh = Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['sessio
 
 export default function SiteHeader() {
   const [session, setSession] = useState<Sesh | null>(null)
-  const [open, setOpen] = useState(false)        // mobile drawer
+  const [open, setOpen] = useState(false)         // mobile drawer
   const [deskOpen, setDeskOpen] = useState(false) // desktop avatar dropdown
   const deskWrapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let mounted = true
-    supabase.auth.getSession().then(({ data }) => mounted && setSession(data.session))
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => mounted && setSession(s))
-    return () => { mounted = false; sub.subscription.unsubscribe() }
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted) setSession(data.session)
+    })
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (mounted) setSession(s)
+    })
+    return () => {
+      mounted = false
+      sub.subscription.unsubscribe()
+    }
   }, [])
+
+  // simple avatar from metadata or initials
+  const user = session?.user
+  const avatarUrl = (user?.user_metadata as any)?.avatar_url as string | undefined
+  const initials = (user?.email || 'U').slice(0, 1).toUpperCase()
 
   // Close desktop dropdown on outside click / ESC
   useEffect(() => {
@@ -33,11 +45,6 @@ export default function SiteHeader() {
       document.removeEventListener('keydown', onKey)
     }
   }, [deskOpen])
-
-  // simple avatar from metadata or initials
-  const user = session?.user
-  const avatarUrl = (user?.user_metadata as any)?.avatar_url as string | undefined
-  const initials = (user?.email || 'U').slice(0, 1).toUpperCase()
 
   function close() { setOpen(false); setDeskOpen(false) }
   function toggleDrawer() { setOpen(v => !v) }

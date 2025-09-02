@@ -15,8 +15,15 @@ export default function Home() {
   // Auth-aware CTA (lightweight; header also listens but it's fine)
   useEffect(() => {
     let mounted = true
-    supabase.auth.getSession().then(({ data }) => mounted && setSession(data.session))
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => mounted && setSession(s))
+  
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted) setSession(data.session)
+    })
+  
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (mounted) setSession(s)
+    })
+  
     return () => {
       mounted = false
       sub.subscription.unsubscribe()
