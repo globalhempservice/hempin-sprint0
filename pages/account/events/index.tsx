@@ -20,6 +20,29 @@ type EventRow = {
   created_at?: string
 }
 
+/** Keep the list short + useful. Add more later if needed. */
+const COUNTRY_OPTIONS = [
+  'Thailand',
+  'United States',
+  'United Kingdom',
+  'France',
+  'Germany',
+  'Italy',
+  'Spain',
+  'Netherlands',
+  'Canada',
+  'Brazil',
+  'Mexico',
+  'Japan',
+  'China',
+  'India',
+  'Australia',
+  'South Africa',
+  'United Arab Emirates',
+  'Other',
+] as const
+type CountryOption = typeof COUNTRY_OPTIONS[number]
+
 function slugify(base: string) {
   const s = (base || '').toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -145,9 +168,9 @@ export default function EventsOwnerPage() {
         setBusy(false)
         return
       } catch (e: any) {
-        const msg = (e?.message || '').toLowerCase()
+        const m = (e?.message || '').toLowerCase()
         const code = e?.code || ''
-        const dup = code === '23505' || (msg.includes('duplicate key') && msg.includes('slug'))
+        const dup = code === '23505' || (m.includes('duplicate key') && m.includes('slug'))
         if (dup) { attempt++; continue }
         setMsg(`Error: ${e?.message || e}`)
         setBusy(false)
@@ -180,9 +203,11 @@ export default function EventsOwnerPage() {
             <ul className="grid gap-3">
               {rows.map(e => (
                 <li key={e.id} className="rounded-xl border border-white/10 bg-white/5 p-3 flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold">{e.title}</div>
-                    <div className="text-xs text-[var(--text-2)]">{e.slug} {e.status === 'approved' ? '• approved' : `• ${e.status}`}</div>
+                  <div className="min-w-0">
+                    <div className="font-semibold truncate">{e.title}</div>
+                    <div className="text-xs text-[var(--text-2)]">
+                      {e.slug} {e.status === 'approved' ? '• approved' : `• ${e.status}`}
+                    </div>
                   </div>
                   <button className="text-sm underline" onClick={() => startEdit(e)}>Edit</button>
                 </li>
@@ -218,7 +243,16 @@ export default function EventsOwnerPage() {
                 </label>
                 <label className="grid gap-1">
                   <span className="text-sm text-[var(--text-2)]">Country</span>
-                  <input value={form.country || ''} onChange={e=>setForm(f=>({...f, country:e.target.value}))} className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none" />
+                  <select
+                    value={(form.country as CountryOption) || ''}
+                    onChange={e=>setForm(f=>({...f, country: e.target.value as CountryOption}))}
+                    className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none"
+                  >
+                    <option value="" disabled>Select a country…</option>
+                    {COUNTRY_OPTIONS.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
                 </label>
               </div>
 
