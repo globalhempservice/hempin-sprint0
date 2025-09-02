@@ -18,3 +18,15 @@
 
 #[[context.deploy-preview.environment]]
 #  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/brand/:slug"
+  to = "/brands/:slug"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/product/:slug"
+  to = "/products/:slug"
+  status = 301
+  force = true
