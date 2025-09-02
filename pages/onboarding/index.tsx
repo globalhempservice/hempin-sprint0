@@ -2,8 +2,7 @@
 import Head from 'next/head'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/router'
-import supaMaybe from '../../lib/supabaseClient'
-const supabase = (supaMaybe as any)?.supabase || supaMaybe
+import { supabase } from '../../lib/supabaseClient'
 
 type Role = 'consumer' | 'pro'
 type Step = 1 | 2 | 3
