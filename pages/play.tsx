@@ -1,6 +1,6 @@
 // pages/play.tsx
 import Head from 'next/head'
-import UniverseTemplate from '../components/templates/UniverseTemplate'
+import UniverseTemplate from '../components/universe/UniverseTemplate'
 import UniverseHeader from '../components/organisms/UniverseHeader'
 import HeroCTA from '../components/molecules/HeroCTA'
 
