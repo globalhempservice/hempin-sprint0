@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { supabase } from '../../lib/supabaseClient'
+import { supabase } from '../../../lib/supabaseClient'
 
 export async function getServerSideProps(ctx: any) {
   const slug = ctx.params?.slug as string
