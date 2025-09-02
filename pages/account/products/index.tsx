@@ -74,7 +74,6 @@ export default function MyProducts() {
             cacheControl: '3600',
             upsert: false,
             contentType: f.type || 'application/octet-stream',
-            metadata: { scope: 'product', user_id: user.id },
           })
           if (error) throw error
           const { data: pub } = supabase.storage.from('media').getPublicUrl(key)
