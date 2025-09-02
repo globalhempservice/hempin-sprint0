@@ -46,26 +46,28 @@ export default function Play3() {
     setNodes(arr)
   }, [])
 
-  // resize canvas to container width
-  useEffect(() => {
-    const c = canvasRef.current
-    if (!c) return
-    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1))
-    function fit() {
-      const rect = c.parentElement?.getBoundingClientRect()
-      const w = Math.floor((rect?.width || 1000))
-      const h = 360
-      c.width = w * dpr
-      c.height = h * dpr
-      c.style.width = w + 'px'
-      c.style.height = h + 'px'
-      const ctx = c.getContext('2d')!
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    }
-    fit()
-    window.addEventListener('resize', fit)
-    return () => window.removeEventListener('resize', fit)
-  }, [])
+  // resize canvas to container width (safe null checks)
+useEffect(() => {
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1))
+
+  function fit() {
+    const el = canvasRef.current
+    if (!el) return
+    const rect = el.parentElement?.getBoundingClientRect()
+    const w = Math.floor(rect?.width || 1000)
+    const h = 360
+    el.width = w * dpr
+    el.height = h * dpr
+    el.style.width = w + 'px'
+    el.style.height = h + 'px'
+    const ctx = el.getContext('2d')
+    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  }
+
+  fit()
+  window.addEventListener('resize', fit)
+  return () => window.removeEventListener('resize', fit)
+}, [])
 
   // animate connectome + inertial swipe + knob drag
   useEffect(() => {
