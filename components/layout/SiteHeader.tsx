@@ -1,12 +1,17 @@
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
 type Sesh = Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session']
 
 export default function SiteHeader() {
   const [session, setSession] = useState<Sesh | null>(null)
-  const [open, setOpen] = useState(false) // used for mobile drawer and desktop dropdown
+
+  // split open states
+  const [openDesk, setOpenDesk] = useState(false) // desktop dropdown
+  const [openMob, setOpenMob] = useState(false)   // mobile drawer
+
+  const panelRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -15,6 +20,24 @@ export default function SiteHeader() {
     return () => { mounted = false; sub.subscription.unsubscribe() }
   }, [])
 
+  // close desktop panel on outside click / ESC
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!openDesk) return
+      const t = e.target as Node
+      if (panelRef.current && !panelRef.current.contains(t)) setOpenDesk(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') { setOpenDesk(false); setOpenMob(false) }
+    }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [openDesk])
+
   const user = session?.user
   const avatarUrl = (user?.user_metadata as any)?.avatar_url as string | undefined
   const initials  = (user?.email || 'U').slice(0,1).toUpperCase()
@@ -22,18 +45,16 @@ export default function SiteHeader() {
   const ctaHref  = session ? '/account' : '/join?next=/onboarding'
   const ctaLabel = session ? 'Open account' : 'Signup / Login'
 
-  function close()  { setOpen(false) }
-  function toggle() { setOpen(v => !v) }
-
   async function handleLogout() {
     await supabase.auth.signOut()
-    close()
+    setOpenDesk(false)
+    setOpenMob(false)
   }
 
   return (
     <header className="sh">
       <style jsx>{`
-        .sh { position: relative; z-index: 60; }                 /* keep header above hero */
+        .sh { position: relative; z-index: 60; }
         .bar{ max-width:72rem; margin:0 auto; padding:12px 20px;
               display:flex; align-items:center; justify-content:space-between; }
         .logo{ display:flex; align-items:center; gap:.5rem; text-decoration:none }
@@ -58,7 +79,7 @@ export default function SiteHeader() {
           .centerCTA{ position:absolute; left:50%; transform:translateX(-50%) }
         }
 
-        /* --- Mobile drawer --- */
+        /* Mobile drawer */
         .scrim{ position:fixed; inset:0; background:rgba(0,0,0,.45); backdrop-filter:blur(2px);
                 opacity:0; pointer-events:none; transition:opacity .18s; z-index:50 }
         .scrim.open{ opacity:1; pointer-events:auto }
@@ -72,8 +93,8 @@ export default function SiteHeader() {
         .link{ display:block; color:#cfe9df }
         .row{ display:flex; align-items:center; justify-content:space-between; gap:10px }
 
-        /* --- Desktop dropdown panel --- */
-        .panelWrap{ position:relative }                            /* anchor for absolute panel */
+        /* Desktop dropdown */
+        .panelWrap{ position:relative }
         .panel{ position:absolute; right:0; top:46px; width:320px;
                 background:rgba(20,20,24,.96); border:1px solid rgba(255,255,255,.08);
                 border-radius:14px; padding:12px; box-shadow:0 16px 40px rgba(0,0,0,.45); z-index:65 }
@@ -85,7 +106,7 @@ export default function SiteHeader() {
 
       <div className="bar">
         {/* left: logo */}
-        <Link href="/" className="logo" onClick={close}>
+        <Link href="/" className="logo" onClick={() => { setOpenDesk(false); setOpenMob(false) }}>
           <div className="pill">HEMPIN</div><span className="foot">ecosystem</span>
         </Link>
 
@@ -94,7 +115,7 @@ export default function SiteHeader() {
           <Link href={ctaHref} className="btn primary">{ctaLabel}</Link>
         </div>
 
-        {/* desktop links + auth control */}
+        {/* desktop nav */}
         <nav className="links deskOnly">
           <Link href="/supermarket" className="btn ghost">Supermarket</Link>
           <Link href="/events" className="btn ghost">Events</Link>
@@ -102,29 +123,35 @@ export default function SiteHeader() {
           <Link href="/experiments" className="btn ghost">Experiments</Link>
 
           {session ? (
-            <div className="panelWrap">
-              <button className="avatar" onClick={toggle} aria-label="Open menu" aria-expanded={open}>
+            <div className="panelWrap" ref={panelRef}>
+              <button
+                className="avatar"
+                onClick={() => setOpenDesk(v => !v)}
+                aria-label="Open menu"
+                aria-expanded={openDesk}
+              >
                 {avatarUrl ? <img src={avatarUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/> : initials}
               </button>
-              {open && (
+
+              {openDesk && (
                 <div className="panel" role="menu">
                   <div className="psect">
                     <div className="plabel">Account</div>
                     <div className="plist">
-                      <Link className="link" href="/account" onClick={close}>Account home</Link>
-                      <Link className="link" href="/account/profile" onClick={close}>Profile</Link>
-                      <Link className="link" href="/account/brand" onClick={close}>My Brand</Link>
-                      <Link className="link" href="/account/products" onClick={close}>My Products</Link>
+                      <Link className="link" href="/account" onClick={() => setOpenDesk(false)}>Account home</Link>
+                      <Link className="link" href="/account/profile" onClick={() => setOpenDesk(false)}>Profile</Link>
+                      <Link className="link" href="/account/brand" onClick={() => setOpenDesk(false)}>My Brand</Link>
+                      <Link className="link" href="/account/products" onClick={() => setOpenDesk(false)}>My Products</Link>
                     </div>
                   </div>
                   <div className="psect">
                     <div className="plabel">Universes</div>
                     <div className="plist">
-                      <Link className="link" href="/supermarket" onClick={close}>Supermarket</Link>
-                      <Link className="link" href="/trade" onClick={close}>Trade</Link>
-                      <Link className="link" href="/events" onClick={close}>Events</Link>
-                      <Link className="link" href="/research" onClick={close}>Research</Link>
-                      <Link className="link" href="/experiments" onClick={close}>Experiments</Link>
+                      <Link className="link" href="/supermarket" onClick={() => setOpenDesk(false)}>Supermarket</Link>
+                      <Link className="link" href="/trade" onClick={() => setOpenDesk(false)}>Trade</Link>
+                      <Link className="link" href="/events" onClick={() => setOpenDesk(false)}>Events</Link>
+                      <Link className="link" href="/research" onClick={() => setOpenDesk(false)}>Research</Link>
+                      <Link className="link" href="/experiments" onClick={() => setOpenDesk(false)}>Experiments</Link>
                     </div>
                   </div>
                   <div className="psect">
@@ -141,21 +168,21 @@ export default function SiteHeader() {
         {/* right: mobile burger or avatar */}
         <div className="mobOnly">
           {session ? (
-            <button className="avatar" onClick={toggle} aria-label="Open menu" aria-expanded={open}>
+            <button className="avatar" onClick={() => setOpenMob(v => !v)} aria-label="Open menu" aria-expanded={openMob}>
               {avatarUrl ? <img src={avatarUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/> : initials}
             </button>
           ) : (
-            <button className="burger" onClick={toggle} aria-label="Open menu" aria-expanded={open}>☰</button>
+            <button className="burger" onClick={() => setOpenMob(v => !v)} aria-label="Open menu" aria-expanded={openMob}>☰</button>
           )}
         </div>
       </div>
 
-      {/* Mobile drawer */}
-      <div className={`scrim ${open ? 'open' : ''}`} onClick={close}/>
-      <aside className={`drawer ${open ? 'open' : ''}`} role="dialog" aria-modal="true" aria-label="Navigation menu">
+      {/* Mobile drawer (only tied to openMob) */}
+      <div className={`scrim ${openMob ? 'open' : ''}`} onClick={() => setOpenMob(false)}/>
+      <aside className={`drawer ${openMob ? 'open' : ''}`} role="dialog" aria-modal="true" aria-label="Navigation menu">
         <div className="sect row">
           <div className="title">Menu</div>
-          <button className="burger" onClick={close} aria-label="Close">✕</button>
+          <button className="burger" onClick={() => setOpenMob(false)} aria-label="Close">✕</button>
         </div>
 
         {session ? (
@@ -163,20 +190,20 @@ export default function SiteHeader() {
             <div className="sect">
               <div className="title">Account</div>
               <div className="list">
-                <Link className="link" href="/account" onClick={close}>Account home</Link>
-                <Link className="link" href="/account/profile" onClick={close}>Profile</Link>
-                <Link className="link" href="/account/brand" onClick={close}>My Brand</Link>
-                <Link className="link" href="/account/products" onClick={close}>My Products</Link>
+                <Link className="link" href="/account" onClick={() => setOpenMob(false)}>Account home</Link>
+                <Link className="link" href="/account/profile" onClick={() => setOpenMob(false)}>Profile</Link>
+                <Link className="link" href="/account/brand" onClick={() => setOpenMob(false)}>My Brand</Link>
+                <Link className="link" href="/account/products" onClick={() => setOpenMob(false)}>My Products</Link>
               </div>
             </div>
             <div className="sect">
               <div className="title">Universes</div>
               <div className="list">
-                <Link className="link" href="/supermarket" onClick={close}>Supermarket</Link>
-                <Link className="link" href="/trade" onClick={close}>Trade</Link>
-                <Link className="link" href="/events" onClick={close}>Events</Link>
-                <Link className="link" href="/research" onClick={close}>Research</Link>
-                <Link className="link" href="/experiments" onClick={close}>Experiments</Link>
+                <Link className="link" href="/supermarket" onClick={() => setOpenMob(false)}>Supermarket</Link>
+                <Link className="link" href="/trade" onClick={() => setOpenMob(false)}>Trade</Link>
+                <Link className="link" href="/events" onClick={() => setOpenMob(false)}>Events</Link>
+                <Link className="link" href="/research" onClick={() => setOpenMob(false)}>Research</Link>
+                <Link className="link" href="/experiments" onClick={() => setOpenMob(false)}>Experiments</Link>
               </div>
             </div>
             <div className="sect">
@@ -188,16 +215,16 @@ export default function SiteHeader() {
             <div className="sect">
               <div className="title">Welcome</div>
               <div className="list">
-                <Link href="/join?next=/onboarding" className="btn primary" onClick={close}>Signup / Login</Link>
-                <Link href="/supermarket" className="btn ghost" onClick={close}>Explore the Supermarket</Link>
+                <Link href="/join?next=/onboarding" className="btn primary" onClick={() => setOpenMob(false)}>Signup / Login</Link>
+                <Link href="/supermarket" className="btn ghost" onClick={() => setOpenMob(false)}>Explore the Supermarket</Link>
               </div>
             </div>
             <div className="sect">
               <div className="title">Universes</div>
               <div className="list">
-                <Link className="link" href="/events" onClick={close}>Events</Link>
-                <Link className="link" href="/research" onClick={close}>Research</Link>
-                <Link className="link" href="/experiments" onClick={close}>Experiments</Link>
+                <Link className="link" href="/events" onClick={() => setOpenMob(false)}>Events</Link>
+                <Link className="link" href="/research" onClick={() => setOpenMob(false)}>Research</Link>
+                <Link className="link" href="/experiments" onClick={() => setOpenMob(false)}>Experiments</Link>
               </div>
             </div>
           </>
