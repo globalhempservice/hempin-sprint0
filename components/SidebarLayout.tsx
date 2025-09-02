@@ -20,6 +20,8 @@ export default function SidebarLayout({
             <nav className="grid gap-1">
               <Link href="/account/profile" className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10">Profile</Link>
               <Link href="/account/brand" className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10">Brands</Link>
+              <Link href="/account/products" className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10">Products</Link>
+              <Link href="/supermarket" className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10">Supermarket</Link> 
               <Link href="/account/events" className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10">Events</Link>
               <Link href="/experiments" className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10">Experiments</Link>
             </nav>
