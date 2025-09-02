@@ -1,9 +1,9 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import type { GetServerSideProps } from 'next'
-import { supabase } from '../../lib/supabaseClient'
+import { supabaseAdmin } from '../../lib/supabaseAdmin' // <- server-side client (service role)
 
-type Brand = { id: string; name: string; slug: string; logo_url?: string | null; approved?: boolean | null }
+type Brand = { id: string; name: string; slug: string; logo_url?: string | null; approved?: boolean | null; is_cannabis?: boolean | null }
 type Product = {
   id: string
   brand_id: string
@@ -13,6 +13,7 @@ type Product = {
   price_label: string | null
   images: { url?: string; alt?: string }[] | null
   approved?: boolean | null
+  is_cannabis?: boolean | null
 }
 
 type Props = { product: (Product & { brand: Brand }) | null }
@@ -21,25 +22,36 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const slug = String(ctx.params?.slug || '').trim()
   if (!slug) return { props: { product: null } }
 
-  // 1) Fetch the product by slug (approved only), NO JOIN
-  const { data: p, error: pe } = await supabase
+  // 1) Fetch product by slug using service role (bypasses RLS for SSR)
+  const { data: p, error: pe } = await supabaseAdmin
     .from('products')
-    .select('id,brand_id,name,slug,description,price_label,images,approved')
+    .select('id,brand_id,name,slug,description,price_label,images,approved,is_cannabis')
     .eq('slug', slug)
-    .eq('approved', true)
     .maybeSingle()
 
-  if (pe || !p) return { props: { product: null } }
+  if (pe || !p) {
+    return { props: { product: null } }
+  }
 
-  // 2) Fetch the brand explicitly; require approved for public view
-  const { data: b, error: be } = await supabase
+  // 2) Fetch brand explicitly
+  const { data: b, error: be } = await supabaseAdmin
     .from('brands')
-    .select('id,name,slug,logo_url,approved')
+    .select('id,name,slug,logo_url,approved,is_cannabis')
     .eq('id', p.brand_id)
-    .eq('approved', true)
     .maybeSingle()
 
-  if (be || !b) return { props: { product: null } }
+  if (be || !b) {
+    return { props: { product: null } }
+  }
+
+  // 3) Enforce public visibility rules here (instead of relying on RLS joins)
+  const brandApproved = !!b.approved && (b.is_cannabis ?? false) === false
+  const productApproved = !!p.approved && (p.is_cannabis ?? false) === false
+
+  if (!brandApproved || !productApproved) {
+    // Not public → render "not found" (don’t leak drafts)
+    return { props: { product: null } }
+  }
 
   return { props: { product: { ...(p as Product), brand: b as Brand } } }
 }
