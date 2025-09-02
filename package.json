@@ -13,7 +13,8 @@
     "jsonwebtoken": "^9.0.2",
     "next": "14.2.5",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "swr": "^2.3.6"
   },
   "devDependencies": {
     "@netlify/functions": "^4.2.4",
