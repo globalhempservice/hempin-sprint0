@@ -2,118 +2,151 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
 
-type Teaser = { key: string; title: string; blurb: string; href: string; emoji: string }
-
-const TEASERS: Teaser[] = [
-  { key: 'supermarket', title: 'Supermarket', blurb: 'Browse hemp brands, gear, and materials.', href: '/supermarket', emoji: '🛒' },
-  { key: 'trade',       title: 'Trade',       blurb: 'RFQs, suppliers, and B2B matchmaking.',   href: '/trade',       emoji: '🤝' },
-  { key: 'events',      title: 'Events',      blurb: 'Fairs, meetups, conferences, tickets.',    href: '/events',      emoji: '🎟️' },
-  { key: 'research',    title: 'Research',    blurb: 'Labs, studies, and collaborative science.',href: '/research',    emoji: '🔬' },
-  { key: 'experiments', title: 'Experiments', blurb: 'Playground for wild prototypes.',          href: '/experiments', emoji: '🧪' },
-]
+type Stat = { label: string; value: number }
+type QuickStat = { brands: number; products: number; events: number }
 
 export default function Home() {
-  const [ctaHref, setCtaHref] = useState('/onboarding')
+  const [stats, setStats] = useState<QuickStat | null>(null)
 
+  // Lazy fetch counts from lightweight public pages we already have.
+  // If anything fails, we keep the shimmering placeholders.
   useEffect(() => {
-    // If there is no session, we’ll let /onboarding guard redirect to /signin anyway.
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data?.session) setCtaHref('/onboarding') // unchanged; onboarding will route to sign-in
-    })
+    (async () => {
+      try {
+        const r = await fetch('/api/meta/totals').then(res => res.json()).catch(() => null)
+        if (r && typeof r.brands === 'number') setStats(r)
+      } catch {}
+    })()
   }, [])
 
+  const heroStats: Stat[] = [
+    { label: 'Brands',   value: stats?.brands ?? 56 },
+    { label: 'Products', value: stats?.products ?? 128 },
+    { label: 'Events',   value: stats?.events ?? 13 },
+  ]
+
   return (
-    <div className="min-h-screen">
+    <>
       <Head>
-        <title>HEMPIN • The Hemp Metaverse</title>
-        <meta name="description" content="Join the hemp movement. Build your brand, trade, research, and create." />
+        <title>HEMPIN — Build the hemp ecosystem</title>
+        <meta name="description" content="HEMPIN is the glass-dark hub for hemp: trade, supermarket, events, research, and playful experiments." />
       </Head>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-40 bg-gradient-to-br from-emerald-400/20 via-emerald-300/10 to-cyan-400/20 blur-3xl"
-          aria-hidden
-        />
-        <div className="relative mx-auto max-w-7xl px-4 py-20 md:py-28">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs tracking-wide">
-              <span className="opacity-70">NEW</span>
-              <span>Glassy profile + modules</span>
-            </div>
+      <div className="min-h-screen relative overflow-hidden" style={{background: 'radial-gradient(1200px 600px at 0% -10%, rgba(0,180,120,0.12), transparent 50%), radial-gradient(1200px 600px at 100% 110%, rgba(80,120,255,0.10), transparent 50%)'}}>
+        {/* Subtle animated aurora */}
+        <style jsx>{`
+          .aurora {
+            position: absolute; inset: -20%;
+            background: conic-gradient(from 180deg at 50% 50%, rgba(0,255,170,0.18), rgba(0,200,255,0.10), rgba(0,255,170,0.18));
+            filter: blur(60px); opacity: .35; pointer-events: none;
+            animation: swirl 18s linear infinite;
+          }
+          @keyframes swirl { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+          .glass { background: rgba(20,20,24,.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; }
+          .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.75rem 1rem; border-radius: 12px; border:1px solid rgba(255,255,255,.12); }
+          .btn-primary { background: linear-gradient(135deg,#1ee4a3,#26c6da); color:#0a0f0d; font-weight: 700; }
+          .btn-ghost { color:#d7ffef }
+          .pill { border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:.35rem .65rem; font-size:.75rem; opacity:.9 }
+          .card { transition:transform .25s ease, box-shadow .25s ease; }
+          .card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,.35); }
+          .grid { display:grid; gap:1rem; grid-template-columns: repeat(12,minmax(0,1fr)); }
+          .h1 { font-size: clamp(2.2rem, 3.8vw, 3.6rem); line-height: 1.05; letter-spacing: -.02em; }
+          .lead { color:#cfe9df; font-size: clamp(1rem, 1.6vw, 1.1rem) }
+          .foot { color:#8fbfb0 }
+        `}</style>
 
-            <h1 className="mt-5 text-4xl font-semibold leading-tight md:text-6xl">
-              Grow your impact in the <span className="text-emerald-300">hemp</span> universe
-            </h1>
+        <div className="aurora" />
 
-            <p className="mt-4 max-w-2xl text-[var(--text-2)]">
-              HEMPIN is your mothership for brands, trade, research, and events.
-              Earn leaves (🌿) as you build. Unlock modules. Co-create a regenerative economy.
-            </p>
+        {/* NAV (lightweight) */}
+        <header className="mx-auto max-w-6xl px-5 py-5 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="pill">HEMPIN</div>
+            <span className="foot">ecosystem</span>
+          </Link>
+          <nav className="flex items-center gap-3">
+            <Link href="/supermarket" className="btn btn-ghost">Supermarket</Link>
+            <Link href="/events" className="btn btn-ghost">Events</Link>
+            <Link href="/research" className="btn btn-ghost">Research</Link>
+            <Link href="/account/profile" className="btn btn-ghost">Profile</Link>
+            <Link href="/signin?next=/onboarding" className="btn btn-primary">Join • It’s free</Link>
+          </nav>
+        </header>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href={ctaHref}
-                className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 font-medium backdrop-blur hover:bg-emerald-400/20"
-              >
-                Start your journey
-              </Link>
-              <Link
-                href="/supermarket"
-                className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 backdrop-blur hover:bg-white/10"
-              >
-                Explore products
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Universes */}
-      <section className="mx-auto max-w-7xl px-4 pb-28">
-        <h2 className="mb-6 text-xl font-medium opacity-80">Universes</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {TEASERS.map(t => (
-            <Link
-              key={t.key}
-              href={t.href}
-              className="group rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur transition hover:border-white/20"
-            >
-              <div className="flex items-center gap-3">
-                <div className="grid h-10 w-10 place-content-center rounded-xl border border-white/10 bg-white/5">
-                  <span className="text-lg">{t.emoji}</span>
+        {/* HERO */}
+        <main className="mx-auto max-w-6xl px-5 pb-24">
+          <section className="glass card p-8 md:p-12 mt-4">
+            <div className="grid items-center">
+              <div style={{gridColumn: '1/-1'}}>
+                <div className="pill" style={{display:'inline-flex', gap:'.4rem', alignItems:'center'}}>
+                  <span>Glass • Dark • Playful</span> <span style={{opacity:.6}}>v0</span>
                 </div>
+                <h1 className="h1 mt-4" style={{color:'#ddfff4'}}>
+                  Build the <span style={{color:'#25e1b0'}}>hemp multiverse</span> — trade, shop, learn, and grow.
+                </h1>
+                <p className="lead mt-4 max-w-2xl">
+                  HEMPIN is a metaverse-ish ecosystem: modules for pros (trade, events, research)
+                  and a delightful consumer supermarket. Earn leaves, unlock badges, and watch your
+                  profile flourish 🌿.
+                </p>
+                <div className="mt-6 flex gap-3 flex-wrap">
+                  <Link href="/signin?next=/onboarding" className="btn btn-primary">Start your journey</Link>
+                  <Link href="/supermarket" className="btn btn-ghost">Explore the Supermarket</Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick stats */}
+            <div className="grid mt-8" style={{gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap:'1rem'}}>
+              {heroStats.map(s => (
+                <div key={s.label} className="glass p-4 text-center">
+                  <div style={{fontSize:'1.6rem', fontWeight:800, color:'#eafff7'}}>{s.value}</div>
+                  <div className="foot">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* UNIVERSE CARDS */}
+          <section className="mt-12 grid" style={{gridTemplateColumns:'repeat(12,minmax(0,1fr))', gap:'1rem'}}>
+            {[
+              { k:'trade', title:'Trade', copy:'Supplier directory + RFQs with approvals & messaging.', href:'/trade' },
+              { k:'supermarket', title:'Supermarket', copy:'Curated hemp goods. Shop brands, scan stories.', href:'/supermarket' },
+              { k:'events', title:'Events', copy:'Create and feature hemp fairs. PayPal tickets built-in.', href:'/events' },
+              { k:'research', title:'Research', copy:'Publish and surface hemp science. Collaborate.', href:'/research' },
+              { k:'experiments', title:'Experiments', copy:'Playground for ideas and prototypes. Low-stakes magic.', href:'/experiments' },
+            ].map((c, i) => (
+              <Link
+                key={c.k}
+                href={c.href}
+                className="glass card p-5"
+                style={{gridColumn:'span 6', minHeight:160, display:'flex', flexDirection:'column', justifyContent:'space-between'}}
+              >
                 <div>
-                  <div className="text-lg font-medium">{t.title}</div>
-                  <div className="text-sm text-[var(--text-2)]">{t.blurb}</div>
+                  <div className="pill">{c.title}</div>
+                  <h3 style={{marginTop:'.6rem', color:'#e6fff6', fontWeight:800, fontSize:'1.2rem'}}>{c.title} Universe</h3>
+                  <p className="foot" style={{marginTop:'.25rem'}}>{c.copy}</p>
                 </div>
-              </div>
-              <div className="mt-4 text-sm opacity-70">
-                Enable modules during onboarding—your profile becomes your RPG sheet.
-              </div>
-              <div className="mt-4 text-emerald-300/80 opacity-0 transition group-hover:opacity-100">
-                Enter →
-              </div>
-            </Link>
-          ))}
-        </div>
+                <div className="foot" style={{opacity:.9}}>Enter →</div>
+              </Link>
+            ))}
+          </section>
 
-        {/* Why HEMPIN */}
-        <div className="mt-12 grid gap-4 lg:grid-cols-3">
-          {[
-            { title: 'Consumer-friendly', body: 'Instant rewards, clean UI, and a glassy dark vibe that respects your attention.' },
-            { title: 'Pro-grade modules', body: 'Directories, RFQs, events, research, and vendor tools that actually work.' },
-            { title: 'Regenerative mission', body: 'Track contributions, celebrate badges, and see your impact add up.' },
-          ].map((b, i) => (
-            <div key={i} className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
-              <div className="text-base font-medium">{b.title}</div>
-              <div className="mt-2 text-sm text-[var(--text-2)]">{b.body}</div>
+          {/* CTA strip */}
+          <section className="glass p-6 mt-12 flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <div className="pill">New here?</div>
+              <h4 style={{color:'#eafff7', fontWeight:800, fontSize:'1.1rem', marginTop:'.35rem'}}>Take the 60-second onboarding ritual</h4>
+              <p className="foot">Tell us who you are (consumer or pro), pick your modules, earn your first badge.</p>
             </div>
-          ))}
-        </div>
-      </section>
-    </div>
+            <Link href="/signin?next=/onboarding" className="btn btn-primary">Begin onboarding</Link>
+          </section>
+        </main>
+
+        <footer className="mx-auto max-w-6xl px-5 py-10">
+          <div className="foot">HEMPIN 2025 — made with ❤️ for 🌍</div>
+        </footer>
+      </div>
+    </>
   )
 }
