@@ -6,44 +6,55 @@ import { requireAdmin } from './_utils'
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!requireAdmin(req, res)) return
 
-  try {
-    const [brandsTotal, brandsApproved, eventsTotal, eventsApproved, productsApproved, usersTotal, ordersTotal] =
-      await Promise.all([
-        supabaseAdmin.from('brands').select('id', { count: 'exact', head: true }),
-        supabaseAdmin.from('brands').select('id', { count: 'exact', head: true }).eq('approved', true),
-        supabaseAdmin.from('events').select('id', { count: 'exact', head: true }),
-        supabaseAdmin.from('events').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
-        supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('approved', true),
-        supabaseAdmin.from('profiles').select('id', { count: 'exact', head: true }),
-        supabaseAdmin.from('orders').select('id', { count: 'exact', head: true }), // if you have it
-      ])
+  // Counts
+  const [{ count: brands_pending }, { count: events_pending }, { count: products_pending }] =
+    await Promise.all([
+      supabaseAdmin.from('brands').select('id', { count: 'exact', head: true }).eq('approved', false),
+      supabaseAdmin.from('events').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('approved', false),
+    ])
 
-    const recentBrands = await supabaseAdmin
+  const [{ count: brands_approved }, { count: events_approved }, { count: products_approved }] =
+    await Promise.all([
+      supabaseAdmin.from('brands').select('id', { count: 'exact', head: true }).eq('approved', true),
+      supabaseAdmin.from('events').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+      supabaseAdmin.from('products').select('id', { count: 'exact', head: true }).eq('approved', true),
+    ])
+
+  // Recent items (approved or pending, newest first)
+  const [recentBrands, recentEvents, recentProducts] = await Promise.all([
+    supabaseAdmin
       .from('brands')
-      .select('id,name,slug,approved,created_at,logo_url,category')
+      .select('id,name,slug,approved')
       .order('created_at', { ascending: false })
-      .limit(6)
-
-    const recentEvents = await supabaseAdmin
+      .limit(10),
+    supabaseAdmin
       .from('events')
-      .select('id,title,slug,status,created_at,city,country')
+      .select('id,title,slug,status')
       .order('created_at', { ascending: false })
-      .limit(6)
+      .limit(10),
+    supabaseAdmin
+      .from('products')
+      .select('id,name,slug,approved,price_label')
+      .order('created_at', { ascending: false })
+      .limit(10),
+  ])
 
-    res.json({
-      stats: {
-        brandsPending: (brandsTotal.count ?? 0) - (brandsApproved.count ?? 0),
-        brandsApproved: brandsApproved.count ?? 0,
-        eventsPending: (eventsTotal.count ?? 0) - (eventsApproved.count ?? 0),
-        eventsApproved: eventsApproved.count ?? 0,
-        productsApproved: productsApproved.count ?? 0,
-        usersTotal: usersTotal.count ?? 0,
-        ordersTotal: ordersTotal.count ?? 0,
-      },
-      recentBrands: recentBrands.data ?? [],
-      recentEvents: recentEvents.data ?? [],
-    })
-  } catch (e: any) {
-    res.status(500).json({ error: e?.message || 'Server error' })
-  }
+  res.json({
+    pending: {
+      brands: brands_pending ?? 0,
+      events: events_pending ?? 0,
+      products: products_pending ?? 0,
+    },
+    approved: {
+      brands: brands_approved ?? 0,
+      events: events_approved ?? 0,
+      products: products_approved ?? 0,
+    },
+    recent: {
+      brands: recentBrands.data ?? [],
+      events: recentEvents.data ?? [],
+      products: recentProducts.data ?? [],
+    },
+  })
 }
