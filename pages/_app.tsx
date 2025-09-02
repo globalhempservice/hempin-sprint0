@@ -7,6 +7,7 @@ import { useRouter } from 'next/router'
 import { useEffect } from 'react'
 import { AccountGuard } from '../lib/authGuard'
 import { supabase } from '../lib/supabaseClient'
+import SiteHeader from '../components/layout/SiteHeader'
 
 /** Debug tracer: logs route changes and auth events to the console */
 function useDebugRouting() {
@@ -29,14 +30,18 @@ function useDebugRouting() {
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   useDebugRouting()
+  const router = useRouter()
+  const hideHeader = router.pathname.startsWith('/admin')
+
   return (
     <>
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
         <meta name="theme-color" content="#0b0f12" />
       </Head>
-      {/* Wrap EVERYTHING so the context is always present */}
+
       <AccountGuard>
+        {!hideHeader && <SiteHeader />}
         <Component {...pageProps} />
       </AccountGuard>
     </>

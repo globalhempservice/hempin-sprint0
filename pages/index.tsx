@@ -2,15 +2,28 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
 
 type Stat = { label: string; value: number }
 type QuickStat = { brands: number; products: number; events: number }
+type Sesh = Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session']
 
 export default function Home() {
   const [stats, setStats] = useState<QuickStat | null>(null)
+  const [session, setSession] = useState<Sesh | null>(null)
 
-  // Lazy fetch counts from lightweight public pages we already have.
-  // If anything fails, we keep the shimmering placeholders.
+  // Auth-aware CTA (lightweight; header also listens but it's fine)
+  useEffect(() => {
+    let mounted = true
+    supabase.auth.getSession().then(({ data }) => mounted && setSession(data.session))
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => mounted && setSession(s))
+    return () => {
+      mounted = false
+      sub.subscription.unsubscribe()
+    }
+  }, [])
+
+  // Lazy fetch counts (fallback to pretty placeholders)
   useEffect(() => {
     (async () => {
       try {
@@ -26,27 +39,38 @@ export default function Home() {
     { label: 'Events',   value: stats?.events ?? 13 },
   ]
 
+  const ctaHref   = session ? '/supermarket' : '/join?next=/onboarding'
+  const ctaLabel  = session ? 'Open Supermarket' : 'Create your account'
+  const showSignInHint = !session
+
   return (
     <>
       <Head>
         <title>HEMPIN — Build the hemp ecosystem</title>
-        <meta name="description" content="HEMPIN is the glass-dark hub for hemp: trade, supermarket, events, research, and playful experiments." />
+        <meta
+          name="description"
+          content="HEMPIN is the glass-dark hub for hemp: trade, supermarket, events, research, and playful experiments."
+        />
       </Head>
 
-      <div className="min-h-screen relative overflow-hidden" style={{background: 'radial-gradient(1200px 600px at 0% -10%, rgba(0,180,120,0.12), transparent 50%), radial-gradient(1200px 600px at 100% 110%, rgba(80,120,255,0.10), transparent 50%)'}}>
-        {/* Subtle animated aurora */}
+      <div
+        className="min-h-screen relative overflow-hidden"
+        style={{
+          background:
+            'radial-gradient(1200px 600px at 0% -10%, rgba(0,180,120,0.12), transparent 50%), radial-gradient(1200px 600px at 100% 110%, rgba(80,120,255,0.10), transparent 50%)'
+        }}
+      >
+        {/* Subtle animated aurora + tiny utility CSS */}
         <style jsx>{`
-          .aurora {
-            position: absolute; inset: -20%;
+          .aurora { position:absolute; inset:-20%;
             background: conic-gradient(from 180deg at 50% 50%, rgba(0,255,170,0.18), rgba(0,200,255,0.10), rgba(0,255,170,0.18));
-            filter: blur(60px); opacity: .35; pointer-events: none;
-            animation: swirl 18s linear infinite;
-          }
+            filter: blur(60px); opacity:.35; pointer-events:none; animation: swirl 18s linear infinite; }
           @keyframes swirl { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
           .glass { background: rgba(20,20,24,.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; }
           .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.75rem 1rem; border-radius: 12px; border:1px solid rgba(255,255,255,.12); }
           .btn-primary { background: linear-gradient(135deg,#1ee4a3,#26c6da); color:#0a0f0d; font-weight: 700; }
-          .btn-ghost { color:#d7ffef }
+          .btn-ghost { color:#d7ffef; background:transparent; }
+          .btn-text { color:#9be9d3; text-decoration:underline; background:transparent; border:0; padding:0 .25rem; }
           .pill { border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:.35rem .65rem; font-size:.75rem; opacity:.9 }
           .card { transition:transform .25s ease, box-shadow .25s ease; }
           .card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,.35); }
@@ -57,23 +81,6 @@ export default function Home() {
         `}</style>
 
         <div className="aurora" />
-
-        {/* NAV (lightweight) */}
-        <header className="mx-auto max-w-6xl px-5 py-5 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="pill">HEMPIN</div>
-            <span className="foot">ecosystem</span>
-          </Link>
-          <nav className="flex items-center gap-3">
-            <Link href="/supermarket" className="btn btn-ghost">Supermarket</Link>
-            <Link href="/events" className="btn btn-ghost">Events</Link>
-            <Link href="/research" className="btn btn-ghost">Research</Link>
-            <Link href="/account/profile" className="btn btn-ghost">Profile</Link>
-            <Link href="/join?next=/onboarding">
-  <a className="btn-primary">Join HEMPIN</a>
-</Link>
-          </nav>
-        </header>
 
         {/* HERO */}
         <main className="mx-auto max-w-6xl px-5 pb-24">
@@ -91,11 +98,16 @@ export default function Home() {
                   and a delightful consumer supermarket. Earn leaves, unlock badges, and watch your
                   profile flourish 🌿.
                 </p>
+
+                {/* Auth-aware CTA row */}
                 <div className="mt-6 flex gap-3 flex-wrap">
-                <Link href="/join?next=/onboarding">
-  <a className="btn-primary">Start your journey</a>
-</Link>
+                  <Link href={ctaHref} className="btn btn-primary">{ctaLabel}</Link>
                   <Link href="/supermarket" className="btn btn-ghost">Explore the Supermarket</Link>
+                  {showSignInHint && (
+                    <Link href="/signin?next=/onboarding" className="btn btn-text">
+                      Already have an account? Sign in
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
@@ -119,7 +131,7 @@ export default function Home() {
               { k:'events', title:'Events', copy:'Create and feature hemp fairs. PayPal tickets built-in.', href:'/events' },
               { k:'research', title:'Research', copy:'Publish and surface hemp science. Collaborate.', href:'/research' },
               { k:'experiments', title:'Experiments', copy:'Playground for ideas and prototypes. Low-stakes magic.', href:'/experiments' },
-            ].map((c, i) => (
+            ].map(c => (
               <Link
                 key={c.k}
                 href={c.href}
@@ -140,12 +152,14 @@ export default function Home() {
           <section className="glass p-6 mt-12 flex items-center justify-between flex-wrap gap-4">
             <div>
               <div className="pill">New here?</div>
-              <h4 style={{color:'#eafff7', fontWeight:800, fontSize:'1.1rem', marginTop:'.35rem'}}>Take the 60-second onboarding ritual</h4>
+              <h4 style={{color:'#eafff7', fontWeight:800, fontSize:'1.1rem', marginTop:'.35rem'}}>
+                Take the 60-second onboarding ritual
+              </h4>
               <p className="foot">Tell us who you are (consumer or pro), pick your modules, earn your first badge.</p>
             </div>
-            <Link href="/join?next=/onboarding">
-  <a className="btn-primary">Begin onboarding</a>
-</Link>
+            <Link href={ctaHref} className="btn btn-primary">
+              {session ? 'Open Supermarket' : 'Begin onboarding'}
+            </Link>
           </section>
         </main>
 
