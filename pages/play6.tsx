@@ -1,8 +1,10 @@
 import Head from 'next/head'
 import Link from 'next/link'
-import { PropsWithChildren, useEffect, useRef } from 'react'
+import { PropsWithChildren, useEffect, useRef, useState } from 'react'
 
-/* ========= Atoms ========= */
+/* =========================================================
+   ATOMS
+   ======================================================= */
 function Pill({ children }: PropsWithChildren) {
   return (
     <span className="pill">{children}
@@ -18,6 +20,7 @@ function Pill({ children }: PropsWithChildren) {
     </span>
   )
 }
+
 function Button({ children, primary=false }: PropsWithChildren<{primary?:boolean}>) {
   return (
     <button className={primary?'btn primary':'btn'}>
@@ -34,6 +37,41 @@ function Button({ children, primary=false }: PropsWithChildren<{primary?:boolean
     </button>
   )
 }
+
+/** Floating Action Button (FAB) — atom */
+function Fab({ onClick, label='Menu' }: {onClick:()=>void; label?:string}) {
+  return (
+    <button className="fab" onClick={onClick} aria-label={label}>
+      ☰
+      <style jsx>{`
+        .fab{
+          position:fixed; left:18px; top:50%; transform:translateY(-50%);
+          width:48px; height:48px; border-radius:14px; border:0;
+          display:grid; place-items:center; font-size:1.15rem; cursor:pointer;
+          color:#dffaf1; background:rgba(255,255,255,.10);
+          backdrop-filter:blur(10px) saturate(120%);
+          box-shadow:0 12px 30px rgba(0,0,0,.35);
+          transition:transform .18s ease, filter .18s ease; z-index:30;
+        }
+        .fab:hover{ transform:translateY(-50%) scale(1.04); filter:brightness(1.1) }
+      `}</style>
+    </button>
+  )
+}
+
+/** Scrim — atom */
+function Scrim({ open, onClick }: {open:boolean; onClick:()=>void}) {
+  return (
+    <div className={`scrim ${open?'open':''}`} onClick={onClick} aria-hidden={!open}/>
+  )
+}
+const scrimCss = `
+.scrim{position:fixed; inset:0; background:rgba(0,0,0,.45);
+opacity:0; pointer-events:none; transition:opacity .22s ease; z-index:25;}
+.scrim.open{opacity:1; pointer-events:auto;}
+`;
+
+/** GlassSurface — atom */
 function GlassSurface({ children }: PropsWithChildren) {
   return (
     <div className="surf">{children}
@@ -47,6 +85,7 @@ function GlassSurface({ children }: PropsWithChildren) {
     </div>
   )
 }
+
 function Caption({ children }: PropsWithChildren) {
   return <div className="cap">
     {children}
@@ -54,7 +93,9 @@ function Caption({ children }: PropsWithChildren) {
   </div>
 }
 
-/* ========= Molecules ========= */
+/* =========================================================
+   MOLECULES
+   ======================================================= */
 function ChipRow({ items }:{items:string[]}) {
   return (
     <div className="row">
@@ -100,10 +141,12 @@ function CardPiece({title,desc}:{title:string;desc:string}) {
   )
 }
 
-/* ========= Organisms ========= */
+/* =========================================================
+   ORGANISMS
+   ======================================================= */
+/** HeroOrb — feathered ring, no hard edge */
 function HeroOrb() {
   const ref = useRef<HTMLDivElement>(null)
-  // smoother aurora drift + parallax via CSS vars
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -119,10 +162,7 @@ function HeroOrb() {
   return (
     <div ref={ref} className="hero">
       <div className="orb"/>
-      <div className="label">
-        <Pill>Flow into HEMPIN →</Pill>
-      </div>
-
+      <div className="label"><Pill>Flow into HEMPIN →</Pill></div>
       <style jsx>{`
         .hero{position:relative; width:min(76vmin,1200px); height:min(76vmin,1200px); margin:0 auto;
           --mx:0; --my:0;
@@ -130,7 +170,7 @@ function HeroOrb() {
         .orb{
           position:absolute; inset:0; border-radius:50%;
           background:
-            radial-gradient(closest-side, rgba(255,255,255,.08), rgba(255,255,255,.06) 45%, rgba(255,255,255,0) 70%),
+            radial-gradient(closest-side, rgba(255,255,255,.07), rgba(255,255,255,.05) 46%, transparent 70%),
             conic-gradient(var(--a,0deg), #28e1ae, #2bc1e0, #c86bdc, #28e1ae);
           -webkit-mask: radial-gradient(farthest-side, rgba(0,0,0,.95), rgba(0,0,0,.7) 58%, rgba(0,0,0,.28) 78%, rgba(0,0,0,0) 100%);
                   mask: radial-gradient(farthest-side, rgba(0,0,0,.95), rgba(0,0,0,.7) 58%, rgba(0,0,0,.28) 78%, rgba(0,0,0,0) 100%);
@@ -147,6 +187,8 @@ function HeroOrb() {
     </div>
   )
 }
+
+/** ActionBar — organism */
 function ActionBar() {
   return (
     <div className="bar">
@@ -159,88 +201,149 @@ function ActionBar() {
     </div>
   )
 }
-function PiecesGrid() {
-  const items = Array.from({length:8}, (_,i)=>({t:`Liquid piece #${i+1}`, d:'Borderless surface with soft depth. Content flows, not boxes.'}))
+
+/** NavDrawer — organism (slides over, glassy) */
+function NavDrawer({ open, onClose }:{open:boolean; onClose:()=>void}) {
+  const itemsA = ['Account home', 'Profile', 'My Brand', 'My Products']
+  const itemsU = ['Supermarket', 'Trade', 'Events', 'Research', 'Places']
+
   return (
-    <div className="wrap">
-      <div className="grid">
-        {items.map(x => <CardPiece key={x.t} title={x.t} desc={x.d}/>)}
-      </div>
+    <>
+      <style jsx>{scrimCss}</style>
+      <Scrim open={open} onClick={onClose} />
+      <aside className={`drawer ${open?'open':''}`} role="dialog" aria-modal="true" aria-label="Navigation menu">
+        <div className="sect head">
+          <div className="title">Menu</div>
+          <button className="x" onClick={onClose} aria-label="Close">✕</button>
+        </div>
+
+        <div className="sect">
+          <div className="title">Account</div>
+          <ul>{itemsA.map(x => <li key={x}><Link href="#">{x}</Link></li>)}</ul>
+        </div>
+
+        <div className="sect">
+          <div className="title">Universes</div>
+          <ul>{itemsU.map(x => <li key={x}><Link href="#">{x}</Link></li>)}</ul>
+        </div>
+
+        <div className="sect tail">
+          <Button>Log out</Button>
+        </div>
+      </aside>
+
       <style jsx>{`
+        .drawer{
+          position:fixed; left:72px; top:50%; transform:translate(-20px,-50%);
+          width:min(380px, 88vw); max-height:82vh; overflow:auto; padding:14px;
+          border-radius:22px; z-index:28;
+          background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+          backdrop-filter:blur(18px) saturate(130%);
+          box-shadow:0 30px 80px rgba(0,0,0,.45);
+          opacity:0; pointer-events:none; transition:opacity .22s ease, transform .22s ease;
+        }
+        .drawer.open{opacity:1; pointer-events:auto; transform:translate(0,-50%);}
+        .sect{padding:12px 14px; border-top:1px solid rgba(255,255,255,.06);}
+        .head{display:flex; align-items:center; justify-content:space-between; border-top:0; padding-top:8px}
+        .title{font-weight:800; color:#eafff7; margin-bottom:6px}
+        ul{list-style:none; padding:0; margin:0}
+        li{padding:8px 0}
+        a{color:#aef3df}
+        .x{
+          width:38px; height:38px; border-radius:12px; border:0; background:rgba(255,255,255,.10);
+          color:#eafff7; display:grid; place-items:center; cursor:pointer;
+        }
+        .tail{display:flex; justify-content:flex-end}
+      `}</style>
+    </>
+  )
+}
+
+/* =========================================================
+   TEMPLATE (page-level composition)
+   - Fixed aurora background (does not scroll)
+   - Content scrolls over it
+   - Floating FAB opens glass NavDrawer
+   ======================================================= */
+export default function Play6() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <Head><title>Playground v6 — atomic liquid (fixed bg + floating menu)</title></Head>
+
+      {/* Fixed, moving background */}
+      <div className="bg" aria-hidden />
+      <style jsx global>{`
+        :root{ --bg:#0b1012; --ink:#eafff7; }
+        html,body,#__next{height:100%}
+        body{background:var(--bg); color:var(--ink); font-family:ui-sans-serif,system-ui}
+      `}</style>
+      <style jsx>{`
+        .bg{
+          position:fixed; inset:0; z-index:0; pointer-events:none;
+          background:
+            radial-gradient(1400px 900px at 60% 10%, rgba(40,225,174,.10), transparent 60%),
+            radial-gradient(1200px 820px at 25% 85%, rgba(200,107,220,.10), transparent 60%),
+            radial-gradient(1200px 800px at 90% 70%, rgba(43,193,224,.10), transparent 60%),
+            var(--bg);
+          animation: hue 28s linear infinite;
+        }
+        @keyframes hue { 0%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(8deg)} 100%{filter:hue-rotate(0deg)} }
+      `}</style>
+
+      {/* Content layer (scrollable) */}
+      <div className="layer" style={{position:'relative', zIndex:1}}>
+        {/* Top chips (molecule) */}
+        <div style={{position:'sticky', top:10, zIndex:2, padding:'10px 16px'}}>
+          <ChipRow items={['Supermarket','Trade','Events','Research','Experiments']} />
+        </div>
+
+        {/* Hero — organism */}
+        <div style={{paddingTop:'8vmin'}}>
+          <HeroOrb />
+        </div>
+
+        {/* Actions — organism */}
+        <ActionBar />
+
+        {/* Metrics — organism */}
+        <div className="m">
+          <Metric label="Brands" value="56" />
+          <Metric label="Products" value="128" />
+          <Metric label="Events" value="13" />
+        </div>
+
+        {/* Pieces grid — organism */}
+        <div className="wrap">
+          <div className="grid">
+            {Array.from({length:8}, (_,i)=>(
+              <CardPiece key={i} title={`Liquid piece #${i+1}`}
+                desc="Borderless surface with soft depth. Content flows, not boxes."/>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer note */}
+        <div style={{textAlign:'center', color:'#a7d9ca', opacity:.9, margin:'0 0 8vmin 0'}}>
+          Universes guideline template • Atoms → Molecules → Organisms → Template
+        </div>
+      </div>
+
+      {/* Floating menu — atoms+organism */}
+      <Fab onClick={()=>setOpen(true)} />
+      <NavDrawer open={open} onClose={()=>setOpen(false)} />
+
+      <style jsx>{`
+        .m{display:grid; gap:16px; grid-template-columns:repeat(3,minmax(0,1fr));
+           width:min(95vw,1400px); margin:2vmin auto 5vmin}
+        @media (max-width:760px){ .m{grid-template-columns:1fr;} }
         .wrap{width:min(96vw,2200px); margin:4vmin auto 8vmin}
         .grid{
           display:grid; gap:clamp(10px,1.4vmin,20px);
           grid-template-columns:repeat(auto-fit, minmax(clamp(220px,26vmin,360px), 1fr));
         }
       `}</style>
-    </div>
-  )
-}
-function MetricsStrip() {
-  return (
-    <div className="m">
-      <Metric label="Brands" value="56" />
-      <Metric label="Products" value="128" />
-      <Metric label="Events" value="13" />
-      <style jsx>{`
-        .m{display:grid; gap:16px; grid-template-columns:repeat(3,minmax(0,1fr)); width:min(95vw,1400px); margin:2vmin auto 5vmin}
-        @media (max-width:760px){ .m{grid-template-columns:1fr; } }
-      `}</style>
-    </div>
-  )
-}
-
-/* ========= Page (Template) ========= */
-export default function Play6() {
-  return (
-    <>
-      <Head><title>Playground v6 — atomic liquid</title></Head>
-
-      <div className="stage">
-        {/* moveable, very subtle aurora */}
-        <style jsx global>{`
-          :root{ --bg:#0b1012; --ink:#eafff7; }
-          html,body,#__next{height:100%}
-          body{background:var(--bg); color:var(--ink); font-family:ui-sans-serif,system-ui}
-        `}</style>
-        <style jsx>{`
-          .stage{
-            min-height:100vh; position:relative; overflow:hidden;
-            --mx:.0; --my:.0;
-            background:
-              radial-gradient(1400px 900px at calc(50% + 28vmax*var(--mx)) calc(8% + 20vmax*var(--my)), rgba(40,225,174,.10), transparent 60%),
-              radial-gradient(1200px 780px at calc(15% + 8vmax*var(--mx)) calc(88% + 8vmax*var(--my)), rgba(200,107,220,.10), transparent 60%),
-              radial-gradient(1200px 800px at calc(88% - 10vmax*var(--mx)) calc(74% - 10vmax*var(--my)), rgba(43,193,224,.10), transparent 60%),
-              var(--bg);
-            animation: hue 28s linear infinite;
-          }
-          @keyframes hue { 0%{filter:hue-rotate(0deg)} 50%{filter:hue-rotate(8deg)} 100%{filter:hue-rotate(0deg)} }
-        `}</style>
-
-        {/* top chips (molecule) */}
-        <div style={{position:'fixed', inset:'12px 16px auto 16px', zIndex:5}}>
-          <ChipRow items={['Supermarket','Trade','Events','Research','Experiments']} />
-        </div>
-
-        {/* hero */}
-        <div style={{paddingTop:'10vmin'}}>
-          <HeroOrb />
-        </div>
-
-        {/* action bar */}
-        <ActionBar />
-
-        {/* metrics */}
-        <MetricsStrip />
-
-        {/* pieces grid */}
-        <PiecesGrid />
-
-        {/* foot */}
-        <div style={{textAlign:'center', color:'#a7d9ca', opacity:.9, margin:'0 0 8vmin 0'}}>
-          Super-responsive • atomic parts • palette-ready • CSS-only motion
-        </div>
-      </div>
     </>
   )
 }
