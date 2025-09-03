@@ -1,37 +1,38 @@
+// components/atomic/taxons/UniverseExploreTaxon.tsx
 import GlassSection from '../molecules/GlassSection'
-import SearchBar from '../molecules/SearchBar'
 import MetaLineKPI from '../molecules/MetaLineKPI'
 import StatTriplet from '../molecules/StatTriplet'
-import ItemGrid from '../organisms/ItemGrid'
-import { useState } from 'react'
+import SearchBar from '../molecules/SearchBar'
+import { tokens, type AccentKey } from '../particles/tokens'
+import React from 'react'
+
+type Totals = { brands: number; products: number; events: number }
+
+type Props = {
+  totals: Totals
+  density?: 'normal' | 'roomy'
+  accent?: AccentKey
+}
 
 export default function UniverseExploreTaxon({
   totals,
-}: {
-  totals: { brands: number; products: number; events: number }
-}) {
-  const [q, setQ] = useState('')
-
+  density = 'normal',
+  accent = 'supermarket',
+}: Props) {
   return (
-    <GlassSection>
-      <SearchBar value={q} onChange={setQ} onReset={() => setQ('')} />
-      <div style={{ margin: '20px 0' }}>
-        <MetaLineKPI
-          items={[
-            { label: 'Brands', value: totals.brands },
-            { label: 'Products', value: totals.products },
-            { label: 'Events', value: totals.events },
-          ]}
-        />
+    <GlassSection density={density} accent={accent}>
+      {/* example layout – keep whatever you already had here */}
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+        <SearchBar value={''} onChange={() => {}} placeholder="Search…" />
       </div>
-      <StatTriplet
-        a={{ label: 'Brands', value: totals.brands }}
-        b={{ label: 'Products', value: totals.products }}
-        c={{ label: 'Events', value: totals.events }}
+
+      <MetaLineKPI
+        items={[
+          { label: 'Brands', value: totals.brands },
+          { label: 'Products', value: totals.products },
+          { label: 'Events', value: totals.events },
+        ]}
       />
-      <div style={{ marginTop: 20 }}>
-        <ItemGrid q={q} />
-      </div>
     </GlassSection>
   )
 }
