@@ -133,19 +133,17 @@ export default function ItemGrid({ limit = 48, q }: { limit?: number; q?: string
           '/img/placeholder-product.png'
 
         return (
-          <FeedProductCard
-            key={p.id}
-            slug={p.slug}
-            name={p.name}
-            brandName={p.brand?.name || null}
-            priceLabel={
-              typeof p.price_cents === 'number'
-                ? `$${(p.price_cents / 100).toFixed(0)}`
-                : p.price_label || null
-            }
-            img={img}
-          />
-        )
+  <FeedProductCard
+    key={p.id}
+    id={p.id}
+    slug={p.slug}
+    name={p.name}
+    brand={p.brand} // { name, slug } | null
+    image={img}     // string | null
+    price_cents={typeof p.price_cents === 'number' ? p.price_cents : null}
+    price_label={p.price_label ?? null}
+  />
+)
       })}
     </div>
   )
