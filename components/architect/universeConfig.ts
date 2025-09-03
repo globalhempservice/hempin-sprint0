@@ -4,9 +4,10 @@ import type { AccentKey } from '../atomic/particles/tokens'
 export type Density = 'normal' | 'roomy'
 
 export type UniverseConfig = {
+  look: {
   accent: AccentKey
   density: Density
-
+  }
   // section toggles
   showFeatured: boolean
   showExplore: boolean
