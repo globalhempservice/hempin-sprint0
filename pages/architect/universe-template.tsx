@@ -141,13 +141,7 @@ export default function UniverseTemplatePlay() {
                 totals={totals}
                 density={density}
                 accent={accent}
-                /** pass-throughs we may wire later */
-                searchSlot={{
-                  value: search,
-                  onChange: setSearch,
-                  placeholder: 'Search…',
-                  onReset: () => setSearch(''),
-                }}
+               
               />
             ) : null
           }
