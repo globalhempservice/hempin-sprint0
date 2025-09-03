@@ -10,10 +10,10 @@ export function ControlsPanel({
   cfg: UniverseConfig
   setCfg: React.Dispatch<React.SetStateAction<UniverseConfig>>
 }) {
-  const set = <K extends keyof UniverseConfig>(path: (draft: UniverseConfig) => void) =>
+  const set = (mutate: (draft: UniverseConfig) => void) =>
     setCfg(prev => {
       const next = structuredClone(prev)
-      path(next)
+      mutate(next)
       return next
     })
 
@@ -44,6 +44,7 @@ export function ControlsPanel({
     >
       <h3 style={{ marginTop: 0 }}>Universe — Controls</h3>
 
+      {/* Look & feel */}
       <div style={{ marginTop: 10 }}>
         <div style={{ opacity: 0.8, marginBottom: 6 }}>Look &amp; feel</div>
 
@@ -88,57 +89,44 @@ export function ControlsPanel({
         />
       </div>
 
-      <hr
-        style={{
-          border: 'none',
-          borderTop: '1px solid rgba(255,255,255,.08)',
-          margin: '12px 0',
-        }}
-      />
+      <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.08)', margin: '12px 0' }} />
 
-      {/* Taxon → Organisms → Molecules */}
-      {(
-        [
-          ['Header', 'header', ['universeHeader', 'headerCta', 'bigTitle', 'kicker', 'headerCtaStrip']],
-          ['Featured', 'featured', ['featuredA', 'featuredB', 'featBrandCard', 'featProductCard']],
-          [
-            'Explore',
-            'explore',
-            [
-              'leadAction',
-              'aboveFold',
-              'primaryFeed',
-              'searchBar',
-              'metaKpi',
-              'statTriplet',
-              'meta',
-              'feedProductCard',
-            ],
-          ],
-          ['Lower', 'lower', ['howItWorks', 'lowerCta', 'lowerHow', 'lowerCtaStrip']],
-        ] as const
-      ).map(([title, key, items]) => {
-        const group = (cfg.taxons as any)[key]
-        return (
-          <div key={key} style={{ marginBottom: 10 }}>
-            <Toggle
-              label={`${title} taxon`}
-              checked={group.enabled}
-              onChange={v => set(s => void ((s.taxons as any)[key].enabled = v))}
+      {/* Section toggles that exist in UniverseConfig */}
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ opacity: 0.8, marginBottom: 6 }}>Sections</div>
+        <Toggle
+          label="Featured zone"
+          checked={cfg.showFeatured}
+          onChange={v => set(s => void (s.showFeatured = v))}
+        />
+        <Toggle
+          label="Explore zone"
+          checked={cfg.showExplore}
+          onChange={v => set(s => void (s.showExplore = v))}
+        />
+        <Toggle
+          label="Lower zone"
+          checked={cfg.showLower}
+          onChange={v => set(s => void (s.showLower = v))}
+        />
+      </div>
+
+      {/* Explore totals preview */}
+      <div>
+        <div style={{ opacity: 0.8, margin: '6px 0' }}>Explore totals</div>
+        {(['brands', 'products', 'events'] as const).map(k => (
+          <label key={k} style={{ display: 'flex', justifyContent: 'space-between', margin: '6px 0' }}>
+            <span style={{ textTransform: 'capitalize' }}>{k}</span>
+            <input
+              type="number"
+              min={0}
+              value={cfg.totals[k]}
+              onChange={e => set(s => void (s.totals[k] = Number(e.target.value) || 0))}
+              style={{ width: 72 }}
             />
-            <div style={{ paddingLeft: 8, opacity: 0.9 }}>
-              {items.map(k => (
-                <Toggle
-                  key={k}
-                  label={k}
-                  checked={group[k].enabled}
-                  onChange={v => set(s => void ((s.taxons as any)[key][k].enabled = v))}
-                />
-              ))}
-            </div>
-          </div>
-        )
-      })}
+          </label>
+        ))}
+      </div>
     </aside>
   )
 }
