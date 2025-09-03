@@ -1,7 +1,5 @@
-import { useMemo, useState } from 'react'
-import Head from 'next/head'
-
-// template + taxons
+// pages/architect/universe-template.tsx
+import { useEffect, useMemo, useState } from 'react'
 import UniverseTemplate from '../../components/atomic/templates/UniverseTemplate'
 import {
   UniverseHeaderSection,
@@ -9,169 +7,310 @@ import {
   UniverseExploreSection,
   UniverseLowerSection,
 } from '../../components/atomic/taxons'
+import { tokens, type AccentKey } from '../../components/atomic/particles/tokens'
 
-// molecules for controls preview bits
-import { Button } from '../../components/atomic/atoms/Button'
-import { tokens } from '../../components/atomic/particles/tokens'
-
-// --- simple control widget ---
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+// ——————————————————————————————————
+// Tiny background helper (accent-aware)
+function AccentBG({ accent }: { accent: AccentKey }) {
+  const { a, b } = tokens.accent[accent]
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'140px 1fr', alignItems:'center', gap:12, margin:'8px 0' }}>
-      <div style={{ color: tokens.text.dim, fontSize: 14 }}>{label}</div>
-      <div>{children}</div>
+    <div style={{ position: 'fixed', inset: 0, zIndex: tokens.z.orb, background: tokens.neutral[900] }}>
+      <div
+        style={{
+          position: 'absolute',
+          width: '60vw',
+          height: '60vw',
+          borderRadius: tokens.radii.orb,
+          filter: 'blur(70px)',
+          opacity: 0.22,
+          mixBlendMode: 'screen',
+          left: '-18vw',
+          top: '-10vh',
+          background: `radial-gradient(closest-side, ${a}, transparent 70%)`,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          width: '60vw',
+          height: '60vw',
+          borderRadius: tokens.radii.orb,
+          filter: 'blur(70px)',
+          opacity: 0.22,
+          mixBlendMode: 'screen',
+          right: '-15vw',
+          bottom: '-18vh',
+          background: `radial-gradient(closest-side, ${b}, transparent 70%)`,
+        }}
+      />
     </div>
   )
 }
 
-export default function UniverseTemplateArchitect() {
-  // Controls
-  const [accent, setAccent] = useState<'supermarket'|'events'|'places'|'trade'|'research'>('supermarket')
-  const [orbOpacity, setOrbOpacity] = useState(0.35)
-  const [density, setDensity] = useState<'normal'|'roomy'>('roomy')
+// ——————————————————————————————————
+// Control UI primitives (unstyled on purpose)
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center' }}>
+      <span style={{ color: tokens.text.base }}>{label}</span>
+      <div>{children}</div>
+    </label>
+  )
+}
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ marginTop: 14, marginBottom: 8, color: tokens.text.high, fontWeight: 800, fontSize: 14 }}>
+      {children}
+    </div>
+  )
+}
+
+// ——————————————————————————————————
+// The page
+export default function UniverseTemplatePlay() {
+  // live state
+  const [accent, setAccent] = useState<AccentKey>('supermarket')
+  const [density, setDensity] = useState<'normal' | 'roomy'>('normal')
+
   const [showFeatured, setShowFeatured] = useState(true)
   const [showExplore, setShowExplore] = useState(true)
   const [showLower, setShowLower] = useState(true)
+  const [showBackground, setShowBackground] = useState(true)
 
-  // Fake totals so you can feel it
-  const totals = { brands: 12, products: 98, events: 3 }
+  const [totals, setTotals] = useState({ brands: 12, products: 98, events: 3 })
+  const [search, setSearch] = useState('')
 
-  // Background node that reacts to sliders
-  const Background = useMemo(() => {
-    const a = tokens.accent[accent].a
-    const b = tokens.accent[accent].b
-    return (
-      <div style={{ position:'fixed', inset:0, zIndex:0, background: tokens.neutral[900] }}>
-        <div style={{
-          position:'absolute', inset:0,
-          background: tokens.orb(a,b),
-          opacity: orbOpacity,
-          filter:'blur(28px)',
-          pointerEvents:'none'
-        }}/>
-      </div>
+  // persist simple settings so refresh doesn’t wipe your play state
+  useEffect(() => {
+    const saved = localStorage.getItem('ut-play')
+    if (saved) {
+      try {
+        const obj = JSON.parse(saved)
+        if (obj) {
+          setAccent(obj.accent ?? 'supermarket')
+          setDensity(obj.density ?? 'normal')
+          setShowFeatured(obj.showFeatured ?? true)
+          setShowExplore(obj.showExplore ?? true)
+          setShowLower(obj.showLower ?? true)
+          setShowBackground(obj.showBackground ?? true)
+          setTotals(obj.totals ?? { brands: 12, products: 98, events: 3 })
+          setSearch(obj.search ?? '')
+        }
+      } catch {}
+    }
+  }, [])
+  useEffect(() => {
+    localStorage.setItem(
+      'ut-play',
+      JSON.stringify({ accent, density, showFeatured, showExplore, showLower, showBackground, totals, search })
     )
-  }, [accent, orbOpacity])
+  }, [accent, density, showFeatured, showExplore, showLower, showBackground, totals, search])
 
-  // Header CTA config
-  const cta = { label: 'Submit your product', href: '/account/products/new' }
+  // options
+  const accentKeys = useMemo<AccentKey[]>(() => ['supermarket', 'trade', 'events', 'research', 'places'], [])
 
   return (
-    <>
-      <Head><title>Architect • UniverseTemplate</title></Head>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: tokens.neutral[900],
+        color: tokens.text.high,
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0,1fr) 320px',
+      }}
+    >
+      {/* preview */}
+      <div style={{ position: 'relative' }}>
+        {showBackground && <AccentBG accent={accent} />}
 
-      {/* layout: left controls, right live preview */}
-      <div style={{ display:'grid', gridTemplateColumns:'320px 1fr', minHeight:'100vh' }}>
-        {/* Controls */}
-        <aside style={{
-          position:'sticky', top:0, alignSelf:'start',
-          padding:16, borderRight:`1px solid ${tokens.neutral[700]}`,
-          background: tokens.neutral[850], height:'100vh', overflow:'auto'
-        }}>
-          <h2 style={{ marginTop:4, color: tokens.text.high, fontSize:18 }}>Architect</h2>
-          <div style={{ marginTop:12 }}>
-
-            <Row label="Accent">
-              <select
-                value={accent}
-                onChange={e=>setAccent(e.target.value as any)}
-                style={{ background:'transparent', color:tokens.text.high, border:`1px solid ${tokens.neutral[700]}`, borderRadius:8, padding:'6px 8px' }}
-              >
-                <option value="supermarket">supermarket</option>
-                <option value="trade">trade</option>
-                <option value="events">events</option>
-                <option value="places">places</option>
-                <option value="research">research</option>
-              </select>
-            </Row>
-
-            <Row label="Orb opacity">
-              <input type="range" min={0} max={0.7} step={0.05} value={orbOpacity}
-                onChange={e=>setOrbOpacity(parseFloat(e.target.value))} style={{ width:'100%' }}/>
-            </Row>
-
-            <Row label="Section density">
-              <select
-                value={density}
-                onChange={e=>setDensity(e.target.value as any)}
-                style={{ background:'transparent', color:tokens.text.high, border:`1px solid ${tokens.neutral[700]}`, borderRadius:8, padding:'6px 8px' }}
-              >
-                <option value="roomy">roomy</option>
-                <option value="normal">normal</option>
-              </select>
-            </Row>
-
-            <Row label="Show featured">
-              <input type="checkbox" checked={showFeatured} onChange={e=>setShowFeatured(e.target.checked)} />
-            </Row>
-            <Row label="Show explore">
-              <input type="checkbox" checked={showExplore} onChange={e=>setShowExplore(e.target.checked)} />
-            </Row>
-            <Row label="Show lower">
-              <input type="checkbox" checked={showLower} onChange={e=>setShowLower(e.target.checked)} />
-            </Row>
-
-            <div style={{ marginTop:16 }}>
-              <Button kind="ghost" onClick={()=>{
-                setAccent('supermarket'); setOrbOpacity(0.35); setDensity('roomy')
-                setShowFeatured(true); setShowExplore(true); setShowLower(true)
-              }}>Reset</Button>
-            </div>
-          </div>
-        </aside>
-
-        {/* Live preview uses the actual template + taxons */}
-        <main style={{ position:'relative', zIndex:1 }}>
-          <UniverseTemplate
-            background={Background}
-            header={
-              <UniverseHeaderSection
-                kicker="Supermarket"
-                title="Shop the hemp multiverse"
-                subtitle="Curated goods from vetted brands. Cannabis items are separate by default."
-                cta={{ label: 'Register your brand', href: '/account/brands/new' }}
+        <UniverseTemplate
+          background={null /* background handled above so panel stays readable */}
+          header={
+            <UniverseHeaderSection
+              kicker="Supermarket"
+              title="Shop the hemp multiverse"
+              subtitle="Curated goods from vetted brands. Cannabis items are separate by default."
+              cta={{ label: 'Register your brand', href: '/account/brands/new' }}
+              density={density}
+              accent={accent}
+            />
+          }
+          leadActions={
+            showExplore ? (
+              <UniverseExploreSection
+                totals={totals}
                 density={density}
                 accent={accent}
+                /** pass-throughs we may wire later */
+                searchSlot={{
+                  value: search,
+                  onChange: setSearch,
+                  placeholder: 'Search…',
+                  onReset: () => setSearch(''),
+                }}
               />
-            }
-            secondaryFeed={
-              showFeatured ? (
-                <UniverseFeaturedSection density={density} />
-              ) : null
-            }
-            leadActions={
-              showExplore ? (
-                <UniverseExploreSection
-                  totals={totals}
-                  density={density}
-                  accent={accent}
-                />
-              ) : null
-            }
-            primaryFeed={
-              <div style={{ marginTop: 8 }}>
-                {/* We reuse ItemGrid in the real page; for the architect we can hint with a placeholder */}
-                <div style={{
-                  padding:16, borderRadius:16, background:tokens.glass, boxShadow:tokens.shadow, color:tokens.text.base
-                }}>
-                  Primary feed goes here (ItemGrid on the real page)
-                </div>
-              </div>
-            }
-            howItWorks={
-              showLower ? (
-                <UniverseLowerSection density={density} />
-              ) : null
-            }
-            ctaStrip={
-              <div style={{ marginTop: 12 }}>
-                <Button kind="primary" href={cta.href}>{cta.label}</Button>
-              </div>
-            }
-            footerMeta={<div style={{ color: tokens.text.foot }}>Architect preview</div>}
-          />
-        </main>
+            ) : null
+          }
+          primaryFeed={
+            <div
+              style={{
+                borderRadius: tokens.radii.lg,
+                background: tokens.glass,
+                boxShadow: tokens.shadow,
+                padding: tokens.space[6],
+                color: tokens.text.base,
+              }}
+            >
+              Primary feed goes here (ItemGrid on the real page)
+            </div>
+          }
+          secondaryFeed={showFeatured ? <UniverseFeaturedSection density={density} accent={accent} /> : null}
+          howItWorks={showLower ? <UniverseLowerSection density={density} accent={accent} /> : null}
+          ctaStrip={null}
+          footerMeta={
+            <div style={{ color: tokens.text.foot }}>
+              HEMPIN — {accent} • density: <b>{density}</b>
+            </div>
+          }
+        />
       </div>
-    </>
+
+      {/* side panel */}
+      <aside
+        style={{
+          position: 'sticky',
+          top: 0,
+          alignSelf: 'start',
+          height: '100dvh',
+          padding: 16,
+          borderLeft: `1px solid ${tokens.neutral[700]}`,
+          background:
+            'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00))',
+        }}
+      >
+        <div style={{ fontWeight: 800, marginBottom: 8 }}>UniverseTemplate — Controls</div>
+
+        <SectionTitle>Look & feel</SectionTitle>
+        <Row label="Accent">
+          <select
+            value={accent}
+            onChange={(e) => setAccent(e.target.value as AccentKey)}
+            style={{ background: 'transparent', color: tokens.text.high, border: `1px solid ${tokens.neutral[700]}`, borderRadius: 8, padding: '6px 8px' }}
+          >
+            {accentKeys.map((k) => (
+              <option key={k} value={k}>
+                {k}
+              </option>
+            ))}
+          </select>
+        </Row>
+        <Row label="Density">
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setDensity('normal')}
+              style={{
+                padding: '6px 10px',
+                borderRadius: 999,
+                border: `1px solid ${tokens.neutral[700]}`,
+                background: density === 'normal' ? tokens.glassStrong : 'transparent',
+                color: tokens.text.base,
+                cursor: 'pointer',
+              }}
+            >
+              normal
+            </button>
+            <button
+              onClick={() => setDensity('roomy')}
+              style={{
+                padding: '6px 10px',
+                borderRadius: 999,
+                border: `1px solid ${tokens.neutral[700]}`,
+                background: density === 'roomy' ? tokens.glassStrong : 'transparent',
+                color: tokens.text.base,
+                cursor: 'pointer',
+              }}
+            >
+              roomy
+            </button>
+          </div>
+        </Row>
+        <Row label="Background">
+          <input type="checkbox" checked={showBackground} onChange={(e) => setShowBackground(e.target.checked)} />
+        </Row>
+
+        <SectionTitle>Sections</SectionTitle>
+        <Row label="Featured">
+          <input type="checkbox" checked={showFeatured} onChange={(e) => setShowFeatured(e.target.checked)} />
+        </Row>
+        <Row label="Explore strip">
+          <input type="checkbox" checked={showExplore} onChange={(e) => setShowExplore(e.target.checked)} />
+        </Row>
+        <Row label="Lower (how it works)">
+          <input type="checkbox" checked={showLower} onChange={(e) => setShowLower(e.target.checked)} />
+        </Row>
+
+        <SectionTitle>Explore totals</SectionTitle>
+        <Row label="Brands">
+          <input
+            type="number"
+            value={totals.brands}
+            onChange={(e) => setTotals((t) => ({ ...t, brands: Number(e.target.value) }))}
+            style={{ width: 90, background: 'transparent', color: tokens.text.high, border: `1px solid ${tokens.neutral[700]}`, borderRadius: 8, padding: '4px 8px' }}
+          />
+        </Row>
+        <Row label="Products">
+          <input
+            type="number"
+            value={totals.products}
+            onChange={(e) => setTotals((t) => ({ ...t, products: Number(e.target.value) }))}
+            style={{ width: 90, background: 'transparent', color: tokens.text.high, border: `1px solid ${tokens.neutral[700]}`, borderRadius: 8, padding: '4px 8px' }}
+          />
+        </Row>
+        <Row label="Events">
+          <input
+            type="number"
+            value={totals.events}
+            onChange={(e) => setTotals((t) => ({ ...t, events: Number(e.target.value) }))}
+            style={{ width: 90, background: 'transparent', color: tokens.text.high, border: `1px solid ${tokens.neutral[700]}`, borderRadius: 8, padding: '4px 8px' }}
+          />
+        </Row>
+
+        <SectionTitle>Search preview</SectionTitle>
+        <Row label="Query">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search…"
+            style={{ width: 180, background: 'transparent', color: tokens.text.high, border: `1px solid ${tokens.neutral[700]}`, borderRadius: 8, padding: '4px 8px' }}
+          />
+        </Row>
+
+        <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => {
+              setAccent('supermarket')
+              setDensity('normal')
+              setShowFeatured(true)
+              setShowExplore(true)
+              setShowLower(true)
+              setShowBackground(true)
+              setTotals({ brands: 12, products: 98, events: 3 })
+              setSearch('')
+            }}
+            style={{
+              padding: '8px 10px',
+              borderRadius: 10,
+              border: `1px solid ${tokens.neutral[700]}`,
+              background: tokens.glassStrong,
+              color: tokens.text.base,
+              cursor: 'pointer',
+            }}
+          >
+            Reset
+          </button>
+        </div>
+      </aside>
+    </div>
   )
 }
