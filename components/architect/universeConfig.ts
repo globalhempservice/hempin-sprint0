@@ -7,6 +7,7 @@ export type UniverseConfig = {
   look: {
   accent: AccentKey
   density: Density
+  showBackground: boolean
   }
   // section toggles
   showFeatured: boolean
