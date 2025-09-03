@@ -4,7 +4,7 @@ import { tokens, getAccent } from '../particles/tokens'
 import type { AccentKey } from '../particles/tokens'
 
 type Props = {
-  children: React.ReactNode
+  children?: React.ReactNode
   /** Optional small label above the title */
   kicker?: string
   /** Optional section title */
