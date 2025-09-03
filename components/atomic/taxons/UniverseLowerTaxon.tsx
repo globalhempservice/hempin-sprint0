@@ -1,7 +1,7 @@
-import GlassSection from '../atomic/molecules/GlassSection'
-import HowItWorks from '../atomic/organisms/HowItWorks'
-import LowerCta from '../atomic/molecules/LowerCta'
-import Meta from '../atomic/molecules/Meta'
+import GlassSection from '../molecules/GlassSection'
+import HowItWorks from '../organisms/HowItWorks'
+import LowerCta from '../molecules/LowerCta'
+import Meta from '../molecules/Meta'
 
 export default function UniverseLowerTaxon({
   note,

@@ -1,8 +1,8 @@
-import GlassSection from '../atomic/molecules/GlassSection'
-import SearchBar from '../atomic/molecules/SearchBar'
-import MetaLineKPI from '../atomic/molecules/MetaLineKPI'
-import StatTriplet from '../atomic/molecules/StatTriplet'
-import ItemGrid from '../atomic/organisms/ItemGrid'
+import GlassSection from '../molecules/GlassSection'
+import SearchBar from '../molecules/SearchBar'
+import MetaLineKPI from '../molecules/MetaLineKPI'
+import StatTriplet from '../molecules/StatTriplet'
+import ItemGrid from '../organisms/ItemGrid'
 import { useState } from 'react'
 
 export default function UniverseExploreTaxon({

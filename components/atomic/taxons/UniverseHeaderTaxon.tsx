@@ -1,6 +1,6 @@
-import GlassSection from '../atomic/molecules/GlassSection'
-import UniverseHeader from '../atomic/organisms/UniverseHeader'
-import HeaderCta from '../atomic/molecules/HeaderCta'
+import GlassSection from '../molecules/GlassSection'
+import UniverseHeader from '../organisms/UniverseHeader'
+import HeaderCta from '../molecules/HeaderCta'
 
 export default function UniverseHeaderTaxon({
   kicker,
