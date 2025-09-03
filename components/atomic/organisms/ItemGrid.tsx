@@ -14,14 +14,15 @@ export type Product = {
   brand: BrandRef | null
 }
 
-export default function ItemGrid({ limit = 48 }: { limit?: number }) {
+export default function ItemGrid({ limit = 48, q }: { limit?: number; q?: string }) {
   const [rows, setRows] = useState<Product[] | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let alive = true
     ;(async () => {
-      const { data, error } = await supabase
+      // base query
+      let query = supabase
         .from('products')
         .select(
           `
@@ -34,10 +35,14 @@ export default function ItemGrid({ limit = 48 }: { limit?: number }) {
         .order('created_at', { ascending: false })
         .limit(limit)
 
+      // optional name search
+      if (q && q.trim()) query = query.ilike('name', `%${q.trim()}%`)
+
+      const { data, error } = await query
       if (error) console.error('[ItemGrid] supabase error:', error)
 
       if (alive) {
-        // 🔧 Normalize: supabase can return related rows as an array; our UI expects a single object.
+        // supabase may return related rows as an array; our UI expects a single object
         const normalized: Product[] = (data || []).map((r: any) => ({
           ...r,
           brand: Array.isArray(r?.brand) ? r.brand[0] ?? null : r?.brand ?? null,
@@ -49,10 +54,11 @@ export default function ItemGrid({ limit = 48 }: { limit?: number }) {
     return () => {
       alive = false
     }
-  }, [limit])
+  }, [limit, q])
 
   const list = useMemo(() => rows || [], [rows])
 
+  // skeleton
   if (loading) {
     return (
       <div
@@ -85,6 +91,7 @@ export default function ItemGrid({ limit = 48 }: { limit?: number }) {
     )
   }
 
+  // empty state (still organism-level, template can swap for a fancier molecule later)
   if (!list.length) {
     return (
       <div
