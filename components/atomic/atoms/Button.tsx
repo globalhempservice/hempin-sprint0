@@ -1,6 +1,6 @@
 // components/atomic/atoms/Button.tsx
 import Link from 'next/link'
-import { tokens } from '../../tokens'
+import { tokens } from '../particles/tokens'
 export function Button({ children, onClick, href, kind='ghost' }:{
   children:any; onClick?:()=>void; href?:string; kind?:'primary'|'ghost'|'text'
 }) {
