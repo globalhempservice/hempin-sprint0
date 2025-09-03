@@ -1,6 +1,7 @@
 // components/atomic/molecules/GlassSection.tsx
 import React from 'react'
-import { tokens } from '../particles/tokens'
+import { tokens, getAccent } from '../particles/tokens'
+import type { AccentKey } from '../particles/tokens'
 
 type Props = {
   children: React.ReactNode
@@ -12,6 +13,8 @@ type Props = {
   description?: string
   /** Tight or roomy padding */
   density?: 'normal' | 'roomy'
+  /** Universe accent to softly tint the background */
+  accent?: AccentKey
   /** Extra style passthrough */
   style?: React.CSSProperties
 }
@@ -22,26 +25,47 @@ export default function GlassSection({
   title,
   description,
   density = 'normal',
+  accent,
   style,
 }: Props) {
   const pad = density === 'roomy' ? tokens.space[10] : tokens.space[6]
+
+  // Resolve accent (if any) into a subtle orb background layer
+  const orbLayer =
+    accent
+      ? tokens.orb(getAccent(accent).a, getAccent(accent).b)
+      : undefined
 
   return (
     <section
       style={{
         position: 'relative',
         borderRadius: tokens.radii.lg,
-        background: tokens.glass,                 // soft glass surface
-        boxShadow: tokens.shadow,                 // subtle elevation
+        background: tokens.glass,     // soft glass surface (no hard borders)
+        boxShadow: tokens.shadow,     // subtle elevation
         padding: pad,
-        // use a very faint stroke substitute via inset shadow (no hard borders)
         outline: 'none',
         overflow: 'hidden',
         ...style,
       }}
     >
+      {/* Accent orb (very subtle, under content) */}
+      {orbLayer && (
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: orbLayer,
+            opacity: 0.35,
+            filter: 'blur(22px)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
       {(kicker || title || description) && (
-        <header style={{ marginBottom: tokens.space[5] }}>
+        <header style={{ position:'relative', zIndex: 1, marginBottom: tokens.space[5] }}>
           {kicker && (
             <div
               style={{
@@ -86,7 +110,7 @@ export default function GlassSection({
         </header>
       )}
 
-      <div>{children}</div>
+      <div style={{ position:'relative', zIndex: 1 }}>{children}</div>
     </section>
   )
 }
