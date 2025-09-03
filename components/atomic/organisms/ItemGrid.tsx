@@ -1,73 +1,182 @@
 // components/atomic/organisms/ItemGrid.tsx
 import Link from 'next/link'
-import CardFrame from '../../atomic/atoms/CardFrame'
-import EmptyState from '../../atomic/molecules/EmptyState'
-import { supabase } from '../../../lib/supabaseClient'
 import { useEffect, useMemo, useState } from 'react'
+import { supabase } from '../../../lib/supabaseClient'
 
-type Product = {
-  id:string; slug:string; name:string; description?:string|null; price_cents?:number|null
-  images?:string[]|null; brand?:{ name:string; slug:string }|null
+type BrandRef = { name: string; slug: string }
+export type Product = {
+  id: string
+  slug: string
+  name: string
+  description?: string | null
+  price_cents?: number | null
+  images?: string[] | null
+  brand: BrandRef | null
 }
 
-export default function ItemGrid({ q }:{ q:string }) {
-  const [rows,setRows] = useState<Product[]|null>(null)
-  const [loading,setLoading] = useState(true)
+export default function ItemGrid({ limit = 48 }: { limit?: number }) {
+  const [rows, setRows] = useState<Product[] | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  useEffect(()=>{ let alive=true;(async()=>{
-    setLoading(true)
-    const { data } = await supabase
-      .from('products')
-      .select('id,slug,name,description,price_cents,images,brand:brands(name,slug)')
-      .eq('approved', true).eq('is_cannabis', false)
-      .order('created_at', { ascending:false }).limit(48)
-    if (alive) { setRows(data||[]); setLoading(false) }
-  })(); return()=>{alive=false}},[])
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select(
+          `
+          id, slug, name, description, price_cents, images,
+          brand:brands ( name, slug )
+        `
+        )
+        .eq('approved', true)
+        .eq('is_cannabis', false)
+        .order('created_at', { ascending: false })
+        .limit(limit)
 
-  const list = useMemo(()=>{
-    if(!rows) return []
-    const s = q.trim().toLowerCase()
-    if(!s) return rows
-    return rows.filter(p =>
-      p.name?.toLowerCase().includes(s) ||
-      (p.brand?.name || '').toLowerCase().includes(s) ||
-      (p.description || '').toLowerCase().includes(s)
-    )
-  },[rows,q])
+      if (error) console.error('[ItemGrid] supabase error:', error)
 
-  if (loading) return (
-    <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:12}}>
-      {Array.from({length:8}).map((_,i)=><CardFrame key={i}><div style={{paddingTop:'70%',background:'rgba(255,255,255,.06)'}}/></CardFrame>)}
-    </div>
-  )
+      if (alive) {
+        // 🔧 Normalize: supabase can return related rows as an array; our UI expects a single object.
+        const normalized: Product[] = (data || []).map((r: any) => ({
+          ...r,
+          brand: Array.isArray(r?.brand) ? r.brand[0] ?? null : r?.brand ?? null,
+        }))
+        setRows(normalized)
+        setLoading(false)
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [limit])
 
-  if (!list.length) return <EmptyState title="No products match your search" hint="Try a different word or reset filters." />
+  const list = useMemo(() => rows || [], [rows])
 
-  return (
-    <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:12}}>
-      {list.map(p => <ProductCard key={p.id} p={p} />)}
-    </div>
-  )
-}
-
-function ProductCard({ p }:{p:Product}) {
-  const img = p.images?.[0] || 'https://images.unsplash.com/photo-1520975794869-6451e67b9631?q=80&w=1200&auto=format&fit=crop'
-  const price = (p.price_cents ?? 0) > 0 ? `€${((p.price_cents||0)/100).toFixed(2)}` : ''
-  return (
-    <Link href={`/products/${p.slug}`} style={{gridColumn:'span 3'}}>
-      <CardFrame>
-        <div style={{position:'relative',paddingTop:'70%',background:'#0e1315'}}>
-          <img src={img} alt="" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
-        </div>
-        <div style={{padding:12}}>
-          <div style={{display:'flex',justifyContent:'space-between',color:'#a4e7d2',fontSize:'.9rem'}}>
-            {p.brand?.slug ? <Link href={`/brands/${p.brand.slug}`} style={{textDecoration:'underline'}} onClick={e=>e.stopPropagation()}>{p.brand?.name}</Link> : <span>—</span>}
-            {price && <span style={{color:'#eafff7',fontWeight:800}}>{price}</span>}
+  if (loading) {
+    return (
+      <div
+        className="grid gap-4"
+        style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))' }}
+      >
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-2xl"
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
+              border: '1px solid rgba(255,255,255,0.06)',
+              height: 300,
+            }}
+          >
+            <div
+              style={{
+                height: 160,
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                background:
+                  'radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,0.06), transparent)',
+              }}
+            />
+            <div style={{ padding: 12, opacity: 0.6 }}>Loading…</div>
           </div>
-          <div style={{fontWeight:800,marginTop:2}}>{p.name}</div>
-          {p.description && <div style={{opacity:.8,marginTop:2,fontSize:'.92rem',maxHeight:'3em',overflow:'hidden'}}>{p.description}</div>}
+        ))}
+      </div>
+    )
+  }
+
+  if (!list.length) {
+    return (
+      <div
+        className="rounded-2xl"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
+          border: '1px solid rgba(255,255,255,0.06)',
+          padding: 20,
+        }}
+      >
+        <div style={{ color: '#cfe9df' }}>
+          No products yet — shelves are filling as submissions get approved.
         </div>
-      </CardFrame>
-    </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="grid gap-4"
+      style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))' }}
+    >
+      {list.map((p) => {
+        const img =
+          (Array.isArray(p.images) ? p.images[0] : undefined) ||
+          '/img/placeholder-product.png'
+        const price =
+          typeof p.price_cents === 'number'
+            ? `$${(p.price_cents / 100).toFixed(0)}`
+            : undefined
+
+        return (
+          <Link
+            key={p.id}
+            href={`/products/${p.slug}`}
+            className="rounded-2xl block overflow-hidden"
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
+              border: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            <div
+              style={{
+                height: 180,
+                display: 'grid',
+                placeItems: 'center',
+                overflow: 'hidden',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                background:
+                  'radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,0.06), transparent)',
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={img}
+                alt=""
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
+            </div>
+            <div style={{ padding: 12 }}>
+              <div
+                style={{
+                  fontWeight: 800,
+                  color: '#eafff7',
+                  lineHeight: 1.2,
+                  marginBottom: 4,
+                }}
+                title={p.name}
+              >
+                {p.name}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#8fbfb0' }}>
+                  {p.brand?.name ?? '—'}
+                </span>
+                {price && (
+                  <span style={{ color: '#bef0dc', fontWeight: 700 }}>
+                    {price}
+                  </span>
+                )}
+              </div>
+            </div>
+          </Link>
+        )
+      })}
+    </div>
   )
 }
