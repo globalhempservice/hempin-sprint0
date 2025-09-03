@@ -22,8 +22,14 @@ export default function Supermarket() {
     <>
       <Head><title>Supermarket — HEMPIN</title></Head>
       <UniverseTemplate
-        background={<BG />}
-        header={<UniverseHeader kicker="Supermarket" title="Shop the hemp multiverse" subtitle="Curated goods from vetted brands. Cannabis items are separate by default." />}
+        accentKey="supermarket"
+        header={
+          <UniverseHeader
+            kicker="Supermarket"
+            title="Shop the hemp multiverse"
+            subtitle="Curated goods from vetted brands. Cannabis items are separate by default."
+          />
+        }
         leadActions={
           <div style={{display:'flex',gap:10,flexWrap:'wrap',alignItems:'center'}}>
             <SearchBar value={q} onChange={setQ} placeholder="Search products or brands…" />
@@ -31,19 +37,18 @@ export default function Supermarket() {
             <Button kind="text" href="#how">How submissions work</Button>
           </div>
         }
-        aboveFold={<StatTriplet
-          a={{label:'Brands',value:totals.brands}}
-          b={{label:'Products',value:totals.products}}
-          c={{label:'Events',value:totals.events}}
-        />}
+        aboveFold={
+          <StatTriplet
+            a={{label:'Brands',value:totals.brands}}
+            b={{label:'Products',value:totals.products}}
+            c={{label:'Events',value:totals.events}}
+          />
+        }
         primaryFeed={<ItemGrid q={q} />}
         secondaryFeed={<FeaturedBrands />}
         howItWorks={<div id="how"><HowNote /></div>}
         ctaStrip={
-          <div style={{
-            display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,
-            background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.08)',borderRadius:16,padding:16
-          }}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
             <div>
               <div style={{border:'1px solid rgba(255,255,255,.12)',borderRadius:999,padding:'.35rem .65rem',fontSize:'.75rem',display:'inline-block'}}>Are you a brand?</div>
               <h4 style={{marginTop:4,fontSize:'1.2rem'}}>List your product on HEMPIN</h4>
@@ -63,21 +68,6 @@ function HowNote() {
     <div>
       <h3 style={{marginBottom:8}}>How it works</h3>
       <p style={{color:'#9bdcc9'}}>The shelves are filling as submissions get approved.</p>
-    </div>
-  )
-}
-
-function BG() {
-  return (
-    <div style={{position:'fixed',inset:0,zIndex:-1,background:'#0b0f12'}}>
-      <div style={{
-        position:'absolute',width:'60vw',height:'60vw',borderRadius:999,filter:'blur(60px)',opacity:.22,mixBlendMode:'screen',
-        left:'-20vw',top:'-10vh',background:'radial-gradient(closest-side,#a64dff,transparent 70%)'
-      }}/>
-      <div style={{
-        position:'absolute',width:'60vw',height:'60vw',borderRadius:999,filter:'blur(60px)',opacity:.22,mixBlendMode:'screen',
-        right:'-15vw',bottom:'-20vh',background:'radial-gradient(closest-side,#ff5ad1,transparent 70%)'
-      }}/>
     </div>
   )
 }
