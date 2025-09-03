@@ -1,12 +1,15 @@
 import GlassSection from '../molecules/GlassSection'
 import FeaturedBrands from '../organisms/FeaturedBrands'
-import FeaturedProducts from '../organisms/FeaturedProducts'
 
-export default function UniverseFeaturedTaxon() {
+type Props = {
+  /** optional padding density to pass to GlassSection */
+  density?: 'normal' | 'roomy'
+}
+
+export default function UniverseFeaturedSection({ density = 'normal' }: Props) {
   return (
-    <GlassSection>
+    <GlassSection title="Featured brands" density={density}>
       <FeaturedBrands />
-      <FeaturedProducts />
     </GlassSection>
   )
 }
