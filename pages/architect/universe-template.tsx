@@ -1,11 +1,17 @@
 // pages/architect/universe-template.tsx
 import { useState } from 'react'
-import UniverseTemplate from '@/components/atomic/templates/UniverseTemplate'
-import { ControlsPanel } from '@/components/architect/ControlsPanel'
-import { defaultUniverseConfig, UniverseConfig } from '@/components/architect/universeConfig'
-import { TokensProvider } from '@/components/atomic/particles/TokensProvider'
 
-import { UniverseHeaderSection, UniverseFeaturedSection, UniverseExploreSection, UniverseLowerSection } from '@/components/atomic/taxons'
+import UniverseTemplate from '../../components/atomic/templates/UniverseTemplate'
+import { ControlsPanel } from '../../components/architect/ControlsPanel'
+import { defaultUniverseConfig, UniverseConfig } from '../../components/architect/universeConfig'
+import { TokensProvider } from '../../components/atomic/particles/TokensProvider'
+
+import {
+  UniverseHeaderSection,
+  UniverseFeaturedSection,
+  UniverseExploreSection,
+  UniverseLowerSection,
+} from '../../components/atomic/taxons'
 
 export default function ArchitectUniverseTemplate() {
   const [cfg, setCfg] = useState<UniverseConfig>(defaultUniverseConfig)
