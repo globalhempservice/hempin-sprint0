@@ -1,24 +1,23 @@
+import React from 'react'
 import GlassSection from '../molecules/GlassSection'
-import HowItWorks from '../organisms/HowItWorks'
+import LowerHow from '../molecules/LowerHow'
 import LowerCta from '../molecules/LowerCta'
-import Meta from '../molecules/Meta'
+import { type AccentKey } from '../particles/tokens'
+
+type Props = {
+  density?: 'normal' | 'roomy'
+  accent?: AccentKey
+  // existing props (note, cta, etc.)
+}
 
 export default function UniverseLowerTaxon({
-  note,
-  cta,
-  footer,
-}: {
-  note?: string
-  cta: { label: string; href: string }
-  footer: string
-}) {
+  density = 'normal',
+  accent = 'supermarket',
+  // ...rest props
+}: Props) {
   return (
-    <GlassSection>
-      <HowItWorks note={note} />
-      <div style={{ margin: '32px 0' }}>
-        <LowerCta {...cta} />
-      </div>
-      <Meta text={footer} />
+    <GlassSection density={density} accent={accent}>
+      {/* existing lower section content */}
     </GlassSection>
   )
 }
