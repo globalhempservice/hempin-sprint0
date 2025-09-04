@@ -58,7 +58,15 @@ export default function UniverseExploreTaxon({
             />
           )}
 
-          {showTriplet && <StatTriplet style={{ marginTop: 8 }} />}
+{showTriplet && (
+  <div style={{ marginTop: 8 }}>
+    <StatTriplet
+      a={{ label: 'Brands',   value: totals.brands }}
+      b={{ label: 'Products', value: totals.products }}
+      c={{ label: 'Events',   value: totals.events }}
+    />
+  </div>
+)}
         </>
       )}
 
