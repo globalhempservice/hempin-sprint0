@@ -32,6 +32,21 @@ export function ControlsPanel({
     </label>
   )
 
+  const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <label
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 8,
+        alignItems: 'center',
+        margin: '6px 0',
+      }}
+    >
+      <span style={{ opacity: 0.85 }}>{label}</span>
+      <span>{children}</span>
+    </label>
+  )
+
   return (
     <aside
       style={{
@@ -87,6 +102,46 @@ export function ControlsPanel({
           checked={cfg.look.showBackground}
           onChange={v => set(s => void (s.look.showBackground = v))}
         />
+      </div>
+
+      {/* Header text overrides */}
+      <div style={{ marginTop: 12 }}>
+        <div style={{ fontWeight: 600, margin: '6px 0' }}>Header text</div>
+
+        <Row label="Kicker">
+          <input
+            value={cfg.content.header.kicker}
+            onChange={e => set(s => void (s.content.header.kicker = e.target.value))}
+          />
+        </Row>
+
+        <Row label="Big title">
+          <input
+            value={cfg.content.header.bigTitle}
+            onChange={e => set(s => void (s.content.header.bigTitle = e.target.value))}
+          />
+        </Row>
+
+        <Row label="Subtitle">
+          <input
+            value={cfg.content.header.subtitle}
+            onChange={e => set(s => void (s.content.header.subtitle = e.target.value))}
+          />
+        </Row>
+
+        <Row label="CTA label">
+          <input
+            value={cfg.content.header.ctaLabel}
+            onChange={e => set(s => void (s.content.header.ctaLabel = e.target.value))}
+          />
+        </Row>
+
+        <Row label="CTA href">
+          <input
+            value={cfg.content.header.ctaHref}
+            onChange={e => set(s => void (s.content.header.ctaHref = e.target.value))}
+          />
+        </Row>
       </div>
 
       <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,.08)', margin: '12px 0' }} />
