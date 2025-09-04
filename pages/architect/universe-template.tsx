@@ -17,8 +17,7 @@ export default function ArchitectUniverseTemplate() {
   const [cfg, setCfg] = useState<UniverseConfig>(defaultUniverseConfig)
   const { accent, density, showBackground } = cfg.look
 
-  // If showBackground = true → let the template render its default orb (pass undefined)
-  // If showBackground = false → override with an empty element so nothing renders
+  
   const bgOverride = showBackground ? undefined : <div aria-hidden />
 
   return (
@@ -28,7 +27,7 @@ export default function ArchitectUniverseTemplate() {
           accentKey={accent}
           background={bgOverride}
 
-          {/* Header taxon */}
+          
           header={
             cfg.taxons.header.enabled ? (
               <UniverseHeaderSection
@@ -45,7 +44,7 @@ export default function ArchitectUniverseTemplate() {
             ) : null
           }
 
-          {/* We render explore summary (KPI/meta/search/etc.) in aboveFold */}
+          
           aboveFold={
             cfg.taxons.explore.enabled ? (
               <UniverseExploreSection
@@ -66,15 +65,14 @@ export default function ArchitectUniverseTemplate() {
             ) : null
           }
 
-          {/* Template requires primaryFeed; we preview the real grid inside Explore,
-              so here we pass a small placeholder to satisfy the slot. */}
+          
           primaryFeed={
             <div style={{ opacity: 0.6, fontSize: 12 }}>
               (Primary feed preview is shown in the Explore section above)
             </div>
           }
 
-          {/* Featured taxon goes into secondaryFeed */}
+        
           secondaryFeed={
             cfg.taxons.featured.enabled ? (
               <UniverseFeaturedSection
@@ -89,7 +87,7 @@ export default function ArchitectUniverseTemplate() {
             ) : null
           }
 
-          {/* Lower taxon */}
+          
           howItWorks={
             cfg.taxons.lower.enabled ? (
               <UniverseLowerSection
@@ -112,7 +110,7 @@ export default function ArchitectUniverseTemplate() {
         />
       </TokensProvider>
 
-      {/* Right-side live controls */}
+      
       <ControlsPanel cfg={cfg} setCfg={setCfg} />
     </div>
   )
