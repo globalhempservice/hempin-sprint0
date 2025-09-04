@@ -4,20 +4,50 @@ import FeatBrandCard from '../molecules/FeatBrandCard'
 import FeatProductCard from '../molecules/FeatProductCard'
 import { type AccentKey } from '../particles/tokens'
 
+type Density = 'normal' | 'roomy'
+
+type Enabled = {
+  featuredA?: boolean     // brands strip/row
+  featuredB?: boolean     // products strip/row
+  featBrandCard?: boolean // show brand cards
+  featProductCard?: boolean // show product cards
+}
+
 type Props = {
-  density?: 'normal' | 'roomy'
+  density?: Density
   accent?: AccentKey
-  // ...whatever else you already accept (data, titles, etc.)
+  enabled?: Enabled
 }
 
 export default function UniverseFeaturedTaxon({
   density = 'normal',
   accent = 'supermarket',
-  // ...rest
+  enabled = {},
 }: Props) {
+  const showA = enabled.featuredA !== false
+  const showB = enabled.featuredB !== false
+  const showBrandCard = enabled.featBrandCard !== false
+  const showProductCard = enabled.featProductCard !== false
+
   return (
     <GlassSection density={density} accent={accent}>
-      {/* existing featured brands/products content */}
+      {showA && showBrandCard && (
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+          {/* Replace with your actual data mapping */}
+          <FeatBrandCard />
+          <FeatBrandCard />
+          <FeatBrandCard />
+        </div>
+      )}
+
+      {showB && showProductCard && (
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {/* Replace with your actual data mapping */}
+          <FeatProductCard />
+          <FeatProductCard />
+          <FeatProductCard />
+        </div>
+      )}
     </GlassSection>
   )
 }
