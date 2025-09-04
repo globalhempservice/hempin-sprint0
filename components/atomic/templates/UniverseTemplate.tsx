@@ -1,6 +1,13 @@
 // components/atomic/templates/UniverseTemplate.tsx
-import { ReactNode } from 'react'
+import React, { ReactNode, isValidElement, cloneElement } from 'react'
 import { tokens, type AccentKey, getAccent } from '../../atomic/particles/tokens'
+
+export type HeaderOverrides = {
+  kicker?: string
+  title?: string
+  subtitle?: string
+  cta?: { label: string; href: string }
+}
 
 export type UniverseTemplateProps = {
   // SLOT API
@@ -13,18 +20,26 @@ export type UniverseTemplateProps = {
   ctaStrip?: ReactNode
   footerMeta?: ReactNode
 
+  // OVERRIDES (from architect cfg)
+  /** Send text overrides for the header organism; we’ll clone the node with these props if possible */
+  headerOverrides?: HeaderOverrides
+
   // STYLE / LAYOUT
-  /** Universe accent to tint the background orb (defaults to 'supermarket' to be safe) */
+  /** Universe accent to tint the background orb (defaults to 'supermarket') */
   accentKey?: AccentKey
-  /** Optional custom background element; if omitted we render a soft orb BG */
+  /** Whether to render the soft orb background (default true) */
+  showBackground?: boolean
+  /** Optional custom background element; if omitted we render a soft orb BG (when showBackground is true) */
   background?: ReactNode
   /** Content max width in px (default 1100) */
   maxWidth?: number
-  /** Extra padding around content (default 20) */
+  /** Density preset that maps to padding (overrides pad if set) */
+  density?: 'normal' | 'roomy'
+  /** Extra padding around content (default 20) — ignored if density is provided */
   pad?: number
 }
 
-/** Internal glass section wrapper (no hard borders) */
+
 function Section({ children, pad = 0 }: { children: ReactNode; pad?: number }) {
   return (
     <section
@@ -41,7 +56,7 @@ function Section({ children, pad = 0 }: { children: ReactNode; pad?: number }) {
   )
 }
 
-/** Default soft animated orb background (fixed, subtle, no heavy GPU cost) */
+
 function DefaultBackground({ accentKey = 'supermarket' as AccentKey }) {
   const acc = getAccent(accentKey)
   return (
@@ -56,7 +71,6 @@ function DefaultBackground({ accentKey = 'supermarket' as AccentKey }) {
           radial-gradient(1200px 600px at 0% -10%, ${acc.a}1f, transparent 50%),
           radial-gradient(1200px 600px at 100% 110%, ${acc.b}19, transparent 50%)
         `,
-        // very light motion
         animation: 'universe-orb 26s linear infinite',
       }}
     >
@@ -74,6 +88,7 @@ function DefaultBackground({ accentKey = 'supermarket' as AccentKey }) {
 export default function UniverseTemplate(p: UniverseTemplateProps) {
   const {
     header,
+    headerOverrides,
     leadActions,
     aboveFold,
     primaryFeed,
@@ -81,11 +96,24 @@ export default function UniverseTemplate(p: UniverseTemplateProps) {
     howItWorks,
     ctaStrip,
     footerMeta,
+
     background,
     accentKey = 'supermarket',
+    showBackground = true,
+
+    density,
+    pad: padProp = 20,
     maxWidth = 1100,
-    pad = 20,
   } = p
+
+  
+  const pad = density === 'roomy' ? tokens.space[10] : density === 'normal' ? tokens.space[6] : padProp
+
+  
+  const headerNode =
+    headerOverrides && isValidElement(header)
+      ? cloneElement(header as any, { ...headerOverrides })
+      : header
 
   return (
     <div
@@ -96,10 +124,10 @@ export default function UniverseTemplate(p: UniverseTemplateProps) {
         position: 'relative',
       }}
     >
-      {/* Background layer */}
-      {background ?? <DefaultBackground accentKey={accentKey} />}
+     
+      {showBackground && (background ?? <DefaultBackground accentKey={accentKey} />)}
 
-      {/* Content container */}
+     
       <div
         style={{
           position: 'relative',
@@ -109,32 +137,28 @@ export default function UniverseTemplate(p: UniverseTemplateProps) {
           padding: pad,
         }}
       >
-        {/* Header zone */}
-        <Section>{header}</Section>
+       
+        <Section>{headerNode}</Section>
 
-        {/* LeadActions (search, filters, reset) */}
+       
         {leadActions && <Section>{leadActions}</Section>}
 
-        {/* Above-fold (KPIs, stat triplet, meta line…) */}
+        
         {aboveFold && <Section>{aboveFold}</Section>}
 
-        {/* Primary feed (the big grid / list) */}
+       
         <Section>{primaryFeed}</Section>
 
-        {/* Secondary feed (featured brands / featured products strip) */}
+       
         {secondaryFeed && <Section>{secondaryFeed}</Section>}
 
-        {/* How it works (optional) */}
+       
         {howItWorks && <Section pad={12}>{howItWorks}</Section>}
 
-        {/* CTA strip (optional) */}
-        {ctaStrip && (
-          <Section pad={12}>
-            {ctaStrip}
-          </Section>
-        )}
+        
+        {ctaStrip && <Section pad={12}>{ctaStrip}</Section>}
 
-        {/* Footer meta (optional) */}
+       
         {footerMeta && <footer style={{ margin: '18px 0' }}>{footerMeta}</footer>}
       </div>
     </div>
