@@ -4,33 +4,35 @@ import LowerHow from '../molecules/LowerHow'
 import LowerCta from '../molecules/LowerCta'
 import { type AccentKey } from '../particles/tokens'
 
-type Density = 'normal' | 'roomy'
-
-type Enabled = {
-  howItWorks?: boolean
-  lowerCta?: boolean
-  lowerHow?: boolean      // reserved (if you later split components)
-  lowerCtaStrip?: boolean // reserved
-}
+type Cta = { label: string; href: string }
 
 type Props = {
-  density?: Density
+  density?: 'normal' | 'roomy'
   accent?: AccentKey
-  enabled?: Enabled
+  showHow?: boolean
+  showCta?: boolean
+  cta?: Cta
 }
 
 export default function UniverseLowerTaxon({
   density = 'normal',
   accent = 'supermarket',
-  enabled = {},
+  showHow = true,
+  showCta = true,
+  cta,
 }: Props) {
-  const showHow = enabled.howItWorks !== false
-  const showCta = enabled.lowerCta !== false
-
   return (
     <GlassSection density={density} accent={accent}>
       {showHow && <LowerHow />}
-      {showCta && <div style={{ marginTop: 12 }}><LowerCta /></div>}
+
+      {showCta && (
+        <div style={{ marginTop: 12 }}>
+          <LowerCta
+            label={cta?.label ?? 'Learn more'}
+            href={cta?.href ?? '#'}
+          />
+        </div>
+      )}
     </GlassSection>
   )
 }
