@@ -13,15 +13,18 @@ import {
   UniverseLowerSection,
 } from '../../components/atomic/taxons'
 
+type Busy = 'idle' | 'saving' | 'loading'
+
 export default function ArchitectUniverseTemplate() {
   const [cfg, setCfg] = useState<UniverseConfig>(defaultUniverseConfig)
-  const [busy, setBusy] = useState<'idle' | 'saving' | 'loading'>('idle')
+  const [busy, setBusy] = useState<Busy>('idle')
   const [msg, setMsg] = useState<string>('')
 
   const { accent, density, showBackground } = cfg.look
+  // If background is disabled, pass a trivial node so Template doesn’t render its default BG.
   const bgOverride = showBackground ? undefined : <div aria-hidden />
 
-  
+  // Use accent as the config key for now (switch to slug later if you like)
   const configId = accent
 
   async function saveConfig() {
@@ -64,80 +67,49 @@ export default function ArchitectUniverseTemplate() {
         <UniverseTemplate
           accentKey={accent}
           background={bgOverride}
-
-          
+          /* Header taxon */
           header={
             <UniverseHeaderSection
               accent={accent}
               density={density}
-              enabled={{
-                universeHeader: true,
-                headerCta: true,
-                bigTitle: true,
-                kicker: true,
-                headerCtaStrip: true,
-              }}
+              kicker="Shop the hemp multiverse"
+              title="Curated goods from vetted brands."
+              subtitle="Cannabis items are separate by default."
+              cta={{ label: 'Register your brand', href: '#' }}
             />
           }
-
-          
+          /* Explore taxon renders the above-the-fold strip + preview content */
           aboveFold={
             cfg.showExplore ? (
               <UniverseExploreSection
                 totals={cfg.totals}
                 density={density}
                 accent={accent}
-                enabled={{
-                  leadAction: true,
-                  aboveFold: true,
-                  primaryFeed: true,
-                  searchBar: true,
-                  metaKpi: true,
-                  statTriplet: true,
-                  meta: true,
-                  feedProductCard: true,
-                }}
               />
             ) : null
           }
-
-          
+          /* Primary feed placeholder (we preview it inside Explore above) */
           primaryFeed={
             <div style={{ opacity: 0.6, fontSize: 12 }}>
               (Primary feed preview is shown in the Explore section above)
             </div>
           }
-
-          
+          /* Featured strip taxon */
           secondaryFeed={
             cfg.showFeatured ? (
               <UniverseFeaturedSection
                 density={density}
-                enabled={{
-                  featuredA: true,
-                  featuredB: true,
-                  featBrandCard: true,
-                  featProductCard: true,
-                }}
               />
             ) : null
           }
-
-          
+          /* Lower/how-it-works taxon */
           howItWorks={
             cfg.showLower ? (
               <UniverseLowerSection
                 density={density}
-                enabled={{
-                  howItWorks: true,
-                  lowerCta: true,
-                  lowerHow: true,
-                  lowerCtaStrip: true,
-                }}
               />
             ) : null
           }
-
           footerMeta={
             <div style={{ color: '#9ac8b7' }}>
               HEMPIN — {accent} • density: {density}
@@ -146,7 +118,7 @@ export default function ArchitectUniverseTemplate() {
         />
       </TokensProvider>
 
-      
+      {/* Right-side: Controls + Save/Load */}
       <div>
         <ControlsPanel cfg={cfg} setCfg={setCfg} />
 
