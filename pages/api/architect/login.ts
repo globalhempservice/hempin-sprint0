@@ -1,5 +1,4 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import cookie from 'cookie'
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -11,13 +10,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(401).json({ ok: false, error: 'Invalid password' })
   }
 
-  res.setHeader('Set-Cookie', cookie.serialize('architect_session', '1', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 8, // 8 hours
-  }))
+  // Build cookie string without external deps
+  const parts = [
+    'architect_session=1',
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Lax',
+    `Max-Age=${60 * 60 * 8}`,                 // 8 hours
+  ]
+  if (process.env.NODE_ENV === 'production') parts.push('Secure')
+  res.setHeader('Set-Cookie', parts.join('; '))
 
   return res.status(200).json({ ok: true })
 }
