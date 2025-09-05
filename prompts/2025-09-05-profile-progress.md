@@ -1,11 +1,11 @@
 **Context:**
-Project: HEMP’IN SSOT (apps/directory)
+Project: HEMP’IN STAGING
 Stack: Next.js + Supabase + Tailwind
 Baseline: baseline-2025-09-05; preserve auth + routes; theme consistent
 
 **Task:**
 - Type: Fix
-- Details: Profile completion % should recompute live as fields change and save.
+- Details: Profile stuck on loading, should load and be pleasant to the eye 
 - Constraints: No new deps; Supabase only; no route changes; keep styles.
 
 **Scope:**
