@@ -1,3 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* your custom styles can follow */
 :root{ --brand-1:#6B5CF6; --brand-2:#38E2B5; --bg:#0e0e12; }
 
 .orb{
