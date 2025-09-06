@@ -1,40 +1,52 @@
-
+// pages/index.tsx
+import Head from 'next/head'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+
+// Lazy-load the orb so first paint is instant
+const Orb = dynamic(() => import('../components/Orb'), { ssr: false })
 
 export default function Home() {
   return (
-    <main className="container space-y-6">
-      <header className="space-y-3">
-        <h1 className="text-3xl md:text-4xl font-bold">HEMP’IN – Global hemp brand directory & pop‑up</h1>
-        <p className="text-sm opacity-80">Bangkok Edition • Directory goes live Nov 1, 2025 • Samples due Oct 25, 2025</p>
-      </header>
+    <>
+      <Head>
+        <title>Hempin — Enter</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </Head>
 
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="card space-y-3">
-          <h2 className="text-xl font-semibold">Sell on HEMP’IN</h2>
-          <p>Get a brand page and product pages, join the Bangkok pop‑up, and be discovered.</p>
-          <div className="space-x-2">
-            <Link href="/account">
-              <span className="btn btn-primary">Sign in</span>
+      <main className="min-h-screen overflow-hidden relative flex items-center justify-center">
+        {/* Background */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--bg),_#050507_60%)]" />
+        {/* Subtle animated grain */}
+        <div className="pointer-events-none absolute inset-0 opacity-10 mix-blend-overlay bg-noise" />
+
+        {/* Orb behind content */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Orb />
+        </div>
+
+        {/* Copy + actions */}
+        <section className="relative z-10 text-center space-y-6 px-6">
+          <h1 className="text-3xl md:text-5xl font-semibold tracking-tight">
+            Welcome, <span className="text-brand-2">Hempin</span> traveler.
+          </h1>
+          <p className="opacity-80 max-w-xl mx-auto">
+            This is your portal. One profile to explore the hemp universe.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            {/* Reuse your existing /account for auth (magic link) */}
+            <Link href="/account" className="btn btn-primary">
+              Login / Sign up
             </Link>
-            <Link href="/account/brand">
-              <span className="btn btn-outline">My Brand setup</span>
+            <Link href="/learn-more" className="btn btn-outline">
+              What is Hempin?
             </Link>
           </div>
-        </div>
-        <div className="card space-y-3">
-          <h2 className="text-xl font-semibold">Browse brands</h2>
-          <p>Categories: Fashion, Beauty, Homeware, Food & Drinks, Wellness, Innovation.</p>
-          <div className="space-x-2">
-            <Link href="/directory"><span className="btn btn-outline">Directory</span></Link>
-            <Link href="/admin"><span className="btn btn-outline">Admin</span></Link>
-          </div>
-        </div>
-      </div>
 
-      <footer className="opacity-70 text-xs">
-        © 2025 HEMP’IN • Global Hemp Service
-      </footer>
-    </main>
+          <p className="text-xs opacity-60 pt-6">HEMPIN — 2025</p>
+        </section>
+      </main>
+    </>
   )
 }
