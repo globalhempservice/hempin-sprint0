@@ -1,0 +1,17 @@
+:root{ --brand-1:#6B5CF6; --brand-2:#38E2B5; --bg:#0e0e12; }
+
+.orb{
+  width:min(56vh,520px); height:min(56vh,520px); border-radius:50%;
+  filter:blur(14px) saturate(120%);
+  background:
+    radial-gradient(35% 35% at 35% 35%, rgba(255,255,255,0.25), transparent 60%),
+    radial-gradient(closest-side, rgba(255,255,255,0.12), transparent),
+    radial-gradient(circle at 70% 40%, var(--brand-2), transparent 40%),
+    radial-gradient(circle at 30% 65%, var(--brand-1), transparent 45%),
+    radial-gradient(80% 80% at 50% 50%, rgba(255,255,255,0.08), rgba(0,0,0,0.3));
+  box-shadow:
+    0 0 120px 40px rgba(107,92,246,0.35),
+    inset 0 0 80px rgba(255,255,255,0.08);
+  transition:transform 600ms cubic-bezier(.2,.9,.2,1);
+  will-change:transform;
+}
