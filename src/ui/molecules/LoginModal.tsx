@@ -1,105 +1,64 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 
 type LoginModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
+  defaultOpen?: boolean;
 };
 
-export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
-  // Mount state (for unmount) and enter animation state
-  const [mounted, setMounted] = useState(false);
-  const [enter, setEnter] = useState(false);
+export default function LoginModal({ defaultOpen = false }: LoginModalProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   useEffect(() => {
-    if (isOpen) {
-      setMounted(true);
-      // next frame -> trigger enter transition
-      const id = requestAnimationFrame(() => setEnter(true));
-      return () => cancelAnimationFrame(id);
-    } else {
-      // play exit transition then unmount
-      setEnter(false);
-      const t = setTimeout(() => setMounted(false), 180);
-      return () => clearTimeout(t);
-    }
-  }, [isOpen]);
-
-  // Close on Esc
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isOpen, onClose]);
-
-  if (!mounted) return null;
+    setIsOpen(defaultOpen);
+  }, [defaultOpen]);
 
   return (
-    <div
-      className={[
-        'fixed inset-0 z-50 grid place-items-center transition-colors',
-        enter ? 'bg-black/60 backdrop-blur-[2px]' : 'bg-black/0 backdrop-blur-0',
-      ].join(' ')}
-      onClick={onClose}
-      aria-modal="true"
-      role="dialog"
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className={[
-          'w-[92vw] max-w-md rounded-xl border border-white/10 bg-zinc-900/90 p-5 shadow-2xl',
-          'transform-gpu transition-all duration-200',
-          enter ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-1',
-        ].join(' ')}
+    <>
+      {/* Trigger could be elsewhere too */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="inline-flex items-center justify-center rounded-md border border-white/15 bg-white/10 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-white/15 transition"
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Welcome</h2>
-          <button
-            onClick={onClose}
-            className="rounded-md px-2 py-1 text-sm text-zinc-400 hover:bg-white/10"
-          >
-            ✕
-          </button>
+        Login / Sign up
+      </button>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60">
+          <div className="w-full max-w-md rounded-xl bg-zinc-900/95 border border-white/10 p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold mb-3">Welcome to HEMPIN</h2>
+
+            {/* Primary action */}
+            <a
+              href="/account"
+              className="block w-full text-center rounded-md bg-white/10 hover:bg-white/15 border border-white/15 py-2.5 mb-3"
+            >
+              Continue as guest
+            </a>
+
+            <div className="space-y-2 opacity-60 pointer-events-none">
+              <div className="rounded-md border border-white/10 py-2.5 text-center">
+                Sign in with Google <span className="text-xs">(coming soon)</span>
+              </div>
+              <div className="rounded-md border border-white/10 py-2.5 text-center">
+                Sign in with Apple <span className="text-xs">(coming soon)</span>
+              </div>
+              <div className="rounded-md border border-white/10 py-2.5 text-center">
+                Sign in with Wallet <span className="text-xs">(coming soon)</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="mt-4 text-xs opacity-60 hover:opacity-100"
+            >
+              Close
+            </button>
+          </div>
         </div>
-
-        <p className="mb-4 text-sm text-zinc-400">
-          Explore as a guest or sign in (providers coming soon).
-        </p>
-
-        {/* Primary: Guest */}
-        <Link
-          href="/profile?guest=true"
-          className="mb-2 block w-full rounded-md border border-emerald-300/20 bg-emerald-400/10 px-4 py-2 text-center text-sm text-emerald-200 hover:bg-emerald-400/15"
-          onClick={onClose}
-        >
-          Continue as Guest
-        </Link>
-
-        {/* Coming-soon providers */}
-        <div className="grid gap-2">
-          <button
-            disabled
-            className="w-full rounded-md border border-white/15 bg-white/10 px-4 py-2 text-sm text-white opacity-60"
-            title="Email magic link — coming soon"
-          >
-            Continue with Email (soon)
-          </button>
-          <button
-            disabled
-            className="w-full rounded-md border border-white/15 bg-white/10 px-4 py-2 text-sm text-white opacity-60"
-            title="Google — coming soon"
-          >
-            Continue with Google (soon)
-          </button>
-        </div>
-
-        <p className="mt-4 text-[11px] leading-5 text-zinc-500">
-          By continuing, you agree to our Terms and acknowledge the Privacy Policy.
-        </p>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
