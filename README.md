@@ -7,13 +7,13 @@ This is the **Single Source of Truth** for our build, roadmap, and ecosystem.
 
 ## 🚀 Quick Links
 - [Roadmap](./docs/Roadmap.md)
-- [Sprint Goals](./Sprints.md)
-- [Universes](./Universes.md)
-- [Gamification](./Gamification.md)
-- [Crypto & Blockchain](./Blockchain.md)
-- [Events](./Events.md)
-- [Design System](./DesignSystem.md)
-- [Tech Setup](./TechSetup.md)
+- [Sprint Goals](./docs/Sprints.md)
+- [Universes](./docs/Universes.md)
+- [Gamification](./docs/Gamification.md)
+- [Crypto & Blockchain](./docs/Blockchain.md)
+- [Events](./docs/Events.md)
+- [Design System](./docs/DesignSystem.md)
+- [Tech Setup](./docs/TechSetup.md)
 
 ---
 
