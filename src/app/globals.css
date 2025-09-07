@@ -3,67 +3,42 @@
 @tailwind components;
 @tailwind utilities;
 
-/* App primitives */
+/* ------------------------------------------------------------------ */
+/* App primitives                                                      */
+/* ------------------------------------------------------------------ */
 :root {
   --bg: #0b0b0d;
   --text: #e5e7eb; /* zinc-200 */
 }
 
-html, body {
-  height: 100%;
-}
+html, body { height: 100%; }
 
 body {
   background-color: var(--bg);
   color: var(--text);
 }
 
-/* === Orb motion (safe + subtle) === */
-@keyframes orbFloat {
-  0%, 100% { transform: translateY(0) }
-  50% { transform: translateY(8px) }
-}
-
-@keyframes orbPulse {
-  0%, 100% { filter: blur(38px) brightness(1); }
-  50% { filter: blur(46px) brightness(1.08); }
-}
-
-@keyframes orbFloatSlow {
-  0%   { transform: translate3d(0,  0, 0) scale(1);   }
-  50%  { transform: translate3d(0,  6px, 0)  scale(0.99); }
-  100% { transform: translate3d(0,  0, 0) scale(1);   }
-}
-/* Existing orb keyframes OK to keep… */
-
-@keyframes burst {
-  0%   { opacity: 0; transform: scale(0.35); }
-  10%  { opacity: 0.45; }
-  100% { opacity: 0; transform: scale(2.2); }
-}
-
-/* --- Orb breathing / float (kept if already present) --- */
+/* ------------------------------------------------------------------ */
+/* Orb breathing (hero background orb)                                 */
+/* ------------------------------------------------------------------ */
 @keyframes orb {
   0%   { transform: translateY(-4px) scale(1); }
   50%  { transform: translateY( 4px) scale(1.015); }
   100% { transform: translateY(-4px) scale(1); }
 }
+
 @keyframes orb-slow {
   0%   { transform: translateY(3px) scale(1); }
   50%  { transform: translateY(-3px) scale(0.985); }
   100% { transform: translateY(3px) scale(1); }
 }
+
 .animate-orb      { animation: orb 7.5s ease-in-out infinite; }
 .animate-orb-slow { animation: orb-slow 10s ease-in-out infinite; }
 
-/* --- Burst used on CTA click (already added earlier) --- */
-@keyframes burst {
-  0%   { opacity: 0; transform: scale(0.35); }
-  10%  { opacity: 0.45; }
-  100% { opacity: 0; transform: scale(2.2); }
-}
-
-/* --- Ripple waves (CTA hover) --- */
+/* ------------------------------------------------------------------ */
+/* CTA effects: ripple (hover) & burst (click)                         */
+/* ------------------------------------------------------------------ */
 @keyframes ripple {
   0%   { transform: scale(0.6); opacity: .35; }
   70%  { opacity: .12; }
@@ -80,18 +55,44 @@ body {
   mix-blend-mode: screen;
 }
 
-/* Respect reduced motion: disable fancy animations */
-@media (prefers-reduced-motion: reduce) {
-  .animate-orb, .animate-orb-slow, .ripple { animation: none !important; }
+@keyframes burst {
+  0%   { opacity: 0;   transform: scale(0.35); }
+  10%  { opacity: 0.45;}
+  100% { opacity: 0;   transform: scale(2.2); }
 }
 
+/* ------------------------------------------------------------------ */
+/* Extra utilities used by Profile (server-safe)                       */
+/* ------------------------------------------------------------------ */
+@layer utilities {
+  @keyframes float-x {
+    0%, 100% { transform: translateX(-6px); }
+    50%      { transform: translateX(6px); }
+  }
+  @keyframes float-y {
+    0%, 100% { transform: translateY(-4px); }
+    50%      { transform: translateY(6px); }
+  }
+  @keyframes pulse-soft {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.02); }
+  }
 
+  .animate-float-x     { animation: float-x 12s ease-in-out infinite; }
+  .animate-float-y     { animation: float-y 10s ease-in-out infinite; }
+  .animate-pulse-soft  { animation: pulse-soft 6s ease-in-out infinite; }
+}
 
-.animate-orb      { animation: orbFloat 9s ease-in-out infinite; }
-.animate-orb-slow { animation: orbFloatSlow 13s ease-in-out infinite; }
-
-/* Accessibility: stop motion if user prefers reduced motion */
+/* ------------------------------------------------------------------ */
+/* Accessibility: honor reduced motion                                 */
+/* ------------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
   .animate-orb,
-  .animate-orb-slow { animation: none !important; }
+  .animate-orb-slow,
+  .ripple,
+  .animate-float-x,
+  .animate-float-y,
+  .animate-pulse-soft {
+    animation: none !important;
+  }
 }
