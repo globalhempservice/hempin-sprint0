@@ -17,3 +17,29 @@ body {
   background-color: var(--bg);
   color: var(--text);
 }
+
+/* === Orb motion (safe + subtle) === */
+@keyframes orbFloat {
+  0%, 100% { transform: translateY(0) }
+  50% { transform: translateY(8px) }
+}
+
+@keyframes orbPulse {
+  0%, 100% { filter: blur(38px) brightness(1); }
+  50% { filter: blur(46px) brightness(1.08); }
+}
+
+@keyframes orbFloatSlow {
+  0%   { transform: translate3d(0,  0, 0) scale(1);   }
+  50%  { transform: translate3d(0,  6px, 0)  scale(0.99); }
+  100% { transform: translate3d(0,  0, 0) scale(1);   }
+}
+
+.animate-orb      { animation: orbFloat 9s ease-in-out infinite; }
+.animate-orb-slow { animation: orbFloatSlow 13s ease-in-out infinite; }
+
+/* Accessibility: stop motion if user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-orb,
+  .animate-orb-slow { animation: none !important; }
+}
