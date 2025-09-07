@@ -1,0 +1,3 @@
+Bangkok 2025
+Paris 2026
+FUTURE
