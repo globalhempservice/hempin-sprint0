@@ -31,11 +31,11 @@ export default function LoginModal({ defaultOpen = false }: LoginModalProps) {
 
             {/* Primary action */}
             <a
-              href="/account"
-              className="block w-full text-center rounded-md bg-white/10 hover:bg-white/15 border border-white/15 py-2.5 mb-3"
-            >
-              Continue as guest
-            </a>
+  href="/profile?guest=true"
+  className="block w-full text-center rounded-md bg-white/10 hover:bg-white/15 border border-white/15 py-2.5 mb-3"
+>
+  Continue as Guest
+</a>
 
             <div className="space-y-2 opacity-60 pointer-events-none">
               <div className="rounded-md border border-white/10 py-2.5 text-center">
