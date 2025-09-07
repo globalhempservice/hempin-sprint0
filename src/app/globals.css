@@ -34,6 +34,58 @@ body {
   50%  { transform: translate3d(0,  6px, 0)  scale(0.99); }
   100% { transform: translate3d(0,  0, 0) scale(1);   }
 }
+/* Existing orb keyframes OK to keep… */
+
+@keyframes burst {
+  0%   { opacity: 0; transform: scale(0.35); }
+  10%  { opacity: 0.45; }
+  100% { opacity: 0; transform: scale(2.2); }
+}
+
+/* --- Orb breathing / float (kept if already present) --- */
+@keyframes orb {
+  0%   { transform: translateY(-4px) scale(1); }
+  50%  { transform: translateY( 4px) scale(1.015); }
+  100% { transform: translateY(-4px) scale(1); }
+}
+@keyframes orb-slow {
+  0%   { transform: translateY(3px) scale(1); }
+  50%  { transform: translateY(-3px) scale(0.985); }
+  100% { transform: translateY(3px) scale(1); }
+}
+.animate-orb      { animation: orb 7.5s ease-in-out infinite; }
+.animate-orb-slow { animation: orb-slow 10s ease-in-out infinite; }
+
+/* --- Burst used on CTA click (already added earlier) --- */
+@keyframes burst {
+  0%   { opacity: 0; transform: scale(0.35); }
+  10%  { opacity: 0.45; }
+  100% { opacity: 0; transform: scale(2.2); }
+}
+
+/* --- Ripple waves (CTA hover) --- */
+@keyframes ripple {
+  0%   { transform: scale(0.6); opacity: .35; }
+  70%  { opacity: .12; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+.ripple {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  border-radius: 9999px;
+  background: radial-gradient(closest-side, rgba(92,252,180,.45), rgba(92,252,180,0) 70%);
+  filter: blur(24px);
+  animation: ripple 1600ms ease-out infinite;
+  mix-blend-mode: screen;
+}
+
+/* Respect reduced motion: disable fancy animations */
+@media (prefers-reduced-motion: reduce) {
+  .animate-orb, .animate-orb-slow, .ripple { animation: none !important; }
+}
+
+
 
 .animate-orb      { animation: orbFloat 9s ease-in-out infinite; }
 .animate-orb-slow { animation: orbFloatSlow 13s ease-in-out infinite; }
