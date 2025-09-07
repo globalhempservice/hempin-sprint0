@@ -1,17 +1,14 @@
-# 🏃 Sprint Tracker
+# 🎮 Gamification
 
-### Sprint 0 – Foundations
-Goal: Have a staging environment running with auth + orb.
-Deliverables:
-- Orb landing page
-- Netlify deploy pipeline
-- Supabase auth
-- Base Tailwind theme
+## XP Actions
+- Complete profile → +10 XP
+- Fill fields → +20 XP
+- Join org → +50 XP
+- Buy pop-up slot → +100 XP
 
-### Sprint 1 – Profile + Console
-Goal: Gamified profile + admin basics.
-Deliverables:
-- Profile XP
-- Badges placeholder
-- Org roles
-- Admin console
+## Badges
+- 🌿 Hemp Explorer → completed profile
+- 🏭 Factory Node → registered processing unit
+- 🎓 Researcher → linked a publication
+- 🌍 Showroom Star → joined Bangkok 2025
+- ♻️ Carbon Pioneer → registered for WETAS
