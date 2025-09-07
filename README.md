@@ -6,7 +6,7 @@ This is the **Single Source of Truth** for our build, roadmap, and ecosystem.
 ---
 
 ## 🚀 Quick Links
-- [Roadmap](./Roadmap.md)
+- [Roadmap](./docs/Roadmap.md)
 - [Sprint Goals](./Sprints.md)
 - [Universes](./Universes.md)
 - [Gamification](./Gamification.md)
