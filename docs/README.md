@@ -1,12 +1,25 @@
-# HEMP’IN Docs
+# 🌌 HEMP’IN Wiki
 
-Welcome to the living documentation for the HEMP’IN website rebuild.
+Welcome to the Hempin.org master wiki.  
+This is the **Single Source of Truth** for our build, roadmap, and ecosystem.
 
-## Contents
-- [Sprint 1 — Onboarding & Admin](./SPRINT1_ONBOARDING_ADMIN.md)
-- [Sprint 2 — Shop & Payments (PayPal)](./SPRINT2_SHOP.md)
+---
 
-## How to use this folder
-- Keep sprint plans, specs, runbooks, and SQL here.
-- Use one PR per sprint doc to keep review history clean.
-- Link staging/prod checks and seed SQL under each sprint.
+## 🚀 Quick Links
+- [Roadmap](./Roadmap.md)
+- [Sprint Goals](./Sprints.md)
+- [Universes](./Universes.md)
+- [Gamification](./Gamification.md)
+- [Crypto & Blockchain](./Blockchain.md)
+- [Events](./Events.md)
+- [Design System](./DesignSystem.md)
+- [Tech Setup](./TechSetup.md)
+
+---
+
+## ✅ Principles
+- Never break login/auth.
+- Profile = hub; universes = modular.
+- Gamify everything (XP, badges, unlocks).
+- Build light, deploy often.
+- Crypto/Web3 is future-proof, not launch blocker.
