@@ -44,6 +44,23 @@ function buildShow(
   };
 }
 
+// helper: build a *full* orbitTilts from a partial patch
+function buildOrbitTilts(
+  base?: SystemConfig['orbitTilts'],
+  patch?: Partial<NonNullable<SystemConfig['orbitTilts']>>
+): NonNullable<SystemConfig['orbitTilts']> {
+  const safeBase =
+    base ??
+    defaultConfig.orbitTilts ?? // prefer defaults from cosmos
+    ({ 1: 0, 2: 0, 3: 0 } as const);
+
+  return {
+    1: (patch && patch[1] !== undefined ? patch[1] : safeBase[1]) as number,
+    2: (patch && patch[2] !== undefined ? patch[2] : safeBase[2]) as number,
+    3: (patch && patch[3] !== undefined ? patch[3] : safeBase[3]) as number,
+  };
+}
+
 // deep merge specialized for SystemConfig (so nested fields persist)
 function mergeConfig(base: SystemConfig, patch?: Partial<SystemConfig>): SystemConfig {
   if (!patch) return base;
@@ -59,13 +76,16 @@ function mergeConfig(base: SystemConfig, patch?: Partial<SystemConfig>): SystemC
     speeds: merge(base.speeds, patch.speeds),
 
     // per-orbit tilts (optional on type; normalize safely)
-    orbitTilts: merge(
-      base.orbitTilts ?? ({} as NonNullable<SystemConfig['orbitTilts']>),
-      patch.orbitTilts
-    ),
+    orbitTilts: buildOrbitTilts(base.orbitTilts, patch.orbitTilts as any),
 
-    // Hardened: always normalize `show` with buildShow
-    show: buildShow(base.show, patch.show),
+    // show deep-merge
+    show: (() => {
+      const nextShow = merge(base.show, patch.show);
+      return {
+        ...nextShow,
+        orbits: merge(base.show.orbits, patch.show?.orbits),
+      };
+    })(),
   };
 }
 
@@ -76,7 +96,7 @@ export const useArchitect = create<ArchState>((set, get) => ({
   setConfig: (patch) =>
     set({ config: mergeConfig(get().config, patch) }),
 
-  // Make the passed `show` value *complete* so the type matches
+  // make `show` complete before merging
   setShow: (patch) =>
     set({
       config: mergeConfig(get().config, {
@@ -84,27 +104,26 @@ export const useArchitect = create<ArchState>((set, get) => ({
       }),
     }),
 
-  // Visibility toggle now constructs a full `show` object
   setOrbitVisibility: (orbit, visible) =>
     set({
       config: mergeConfig(get().config, {
-        show: buildShow(get().config.show, {
-          orbits: { ...get().config.show.orbits, [orbit]: visible },
-        }),
+        show: buildShow(get().config.show, { orbits: { [orbit]: visible } as any }),
       }),
     }),
 
-  // set multiple tilts at once
+  // set multiple tilts at once — normalize to full shape
   setOrbitTilts: (patch) =>
     set({
-      config: mergeConfig(get().config, { orbitTilts: patch }),
+      config: mergeConfig(get().config, {
+        orbitTilts: buildOrbitTilts(get().config.orbitTilts, patch),
+      }),
     }),
 
-  // set a single orbit's tilt
+  // set a single orbit's tilt — normalize to full shape
   setOrbitTilt: (orbit, tiltDeg) =>
     set({
       config: mergeConfig(get().config, {
-        orbitTilts: { ...((get().config.orbitTilts ?? {}) as Record<1 | 2 | 3, number>), [orbit]: tiltDeg },
+        orbitTilts: buildOrbitTilts(get().config.orbitTilts, { [orbit]: tiltDeg } as any),
       }),
     }),
 
