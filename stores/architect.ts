@@ -11,7 +11,7 @@ type ArchState = {
   setShow: (patch: Partial<SystemConfig['show']>) => void;
   setOrbitVisibility: (orbit: 1 | 2 | 3, visible: boolean) => void;
 
-  // NEW: per-orbit tilt helpers
+  // per-orbit tilt helpers
   setOrbitTilts: (patch: Partial<NonNullable<SystemConfig['orbitTilts']>>) => void;
   setOrbitTilt: (orbit: 1 | 2 | 3, tiltDeg: number) => void;
 
@@ -28,6 +28,22 @@ function merge<T extends Record<string, any>>(base: T, patch?: Partial<T>): T {
   return { ...base, ...patch };
 }
 
+// helper: build a *full* `show` object from a partial patch
+function buildShow(
+  base: SystemConfig['show'],
+  patch?: Partial<SystemConfig['show']>
+): SystemConfig['show'] {
+  if (!patch) return base;
+  return {
+    ...base,
+    ...patch,
+    orbits: {
+      ...base.orbits,
+      ...(patch.orbits ?? {}),
+    },
+  };
+}
+
 // deep merge specialized for SystemConfig (so nested fields persist)
 function mergeConfig(base: SystemConfig, patch?: Partial<SystemConfig>): SystemConfig {
   if (!patch) return base;
@@ -42,9 +58,10 @@ function mergeConfig(base: SystemConfig, patch?: Partial<SystemConfig>): SystemC
     radii: merge(base.radii, patch.radii),
     speeds: merge(base.speeds, patch.speeds),
 
-    // NEW: per-orbit tilts (optional on type; normalize with {} to be safe)
+    // per-orbit tilts (optional on type; normalize safely)
     orbitTilts: merge(base.orbitTilts ?? ({} as NonNullable<SystemConfig['orbitTilts']>), patch.orbitTilts),
 
+    // show: still deep-merged here so direct callers can pass either full or partial
     show: (() => {
       const nextShow = merge(base.show, patch.show);
       return {
@@ -62,9 +79,12 @@ export const useArchitect = create<ArchState>((set, get) => ({
   setConfig: (patch) =>
     set({ config: mergeConfig(get().config, patch) }),
 
+  // ✅ Make the passed `show` value *complete* so the type matches
   setShow: (patch) =>
     set({
-      config: mergeConfig(get().config, { show: patch }),
+      config: mergeConfig(get().config, {
+        show: buildShow(get().config.show, patch),
+      }),
     }),
 
   setOrbitVisibility: (orbit, visible) =>
@@ -74,13 +94,13 @@ export const useArchitect = create<ArchState>((set, get) => ({
       }),
     }),
 
-  // NEW: set multiple tilts at once
+  // set multiple tilts at once
   setOrbitTilts: (patch) =>
     set({
       config: mergeConfig(get().config, { orbitTilts: patch }),
     }),
 
-  // NEW: set a single orbit's tilt
+  // set a single orbit's tilt
   setOrbitTilt: (orbit, tiltDeg) =>
     set({
       config: mergeConfig(get().config, {
