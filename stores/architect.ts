@@ -59,16 +59,13 @@ function mergeConfig(base: SystemConfig, patch?: Partial<SystemConfig>): SystemC
     speeds: merge(base.speeds, patch.speeds),
 
     // per-orbit tilts (optional on type; normalize safely)
-    orbitTilts: merge(base.orbitTilts ?? ({} as NonNullable<SystemConfig['orbitTilts']>), patch.orbitTilts),
+    orbitTilts: merge(
+      base.orbitTilts ?? ({} as NonNullable<SystemConfig['orbitTilts']>),
+      patch.orbitTilts
+    ),
 
-    // show: still deep-merged here so direct callers can pass either full or partial
-    show: (() => {
-      const nextShow = merge(base.show, patch.show);
-      return {
-        ...nextShow,
-        orbits: merge(base.show.orbits, patch.show?.orbits),
-      };
-    })(),
+    // Hardened: always normalize `show` with buildShow
+    show: buildShow(base.show, patch.show),
   };
 }
 
@@ -79,7 +76,7 @@ export const useArchitect = create<ArchState>((set, get) => ({
   setConfig: (patch) =>
     set({ config: mergeConfig(get().config, patch) }),
 
-  // ✅ Make the passed `show` value *complete* so the type matches
+  // Make the passed `show` value *complete* so the type matches
   setShow: (patch) =>
     set({
       config: mergeConfig(get().config, {
@@ -87,10 +84,13 @@ export const useArchitect = create<ArchState>((set, get) => ({
       }),
     }),
 
+  // Visibility toggle now constructs a full `show` object
   setOrbitVisibility: (orbit, visible) =>
     set({
       config: mergeConfig(get().config, {
-        show: { orbits: { [orbit]: visible } as any },
+        show: buildShow(get().config.show, {
+          orbits: { ...get().config.show.orbits, [orbit]: visible },
+        }),
       }),
     }),
 
@@ -104,7 +104,7 @@ export const useArchitect = create<ArchState>((set, get) => ({
   setOrbitTilt: (orbit, tiltDeg) =>
     set({
       config: mergeConfig(get().config, {
-        orbitTilts: { [orbit]: tiltDeg } as any,
+        orbitTilts: { ...((get().config.orbitTilts ?? {}) as Record<1 | 2 | 3, number>), [orbit]: tiltDeg },
       }),
     }),
 
