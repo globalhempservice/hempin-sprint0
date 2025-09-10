@@ -13,12 +13,20 @@ export default function ControlDock() {
       "
       aria-label="Architect Controls"
     >
-      {/* Sticky header (no collapse button here; handled by the page) */}
-      <div className="sticky top-0 z-10 bg-black/40 backdrop-blur-md border-b border-white/10 px-4 py-3">
-        <h2 className="text-sm font-semibold tracking-tight">Architect Controls</h2>
+      {/* Sticky header stays above floating page buttons */}
+      <div className="sticky top-0 z-20 bg-black/50 backdrop-blur-md border-b border-white/10 px-4 py-3">
+        <h2 className="text-sm font-semibold tracking-tight text-white">     </h2>
       </div>
 
-      <div className="p-4 space-y-6 overflow-y-auto">
+      {/* Scrollable content area */}
+      <div
+        className="
+          grow min-h-0 overflow-y-auto
+          p-4 space-y-6
+        "
+        // make sure the last controls aren’t hidden behind the floating “Hide panel” button on mobile
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 72px)' }}
+      >
         {/* Canvas size */}
         <Section title="Canvas size">
           <SliderRow
@@ -54,7 +62,6 @@ export default function ControlDock() {
               min={20}
               max={200}
               onChange={(v) => setConfig({ speeds: { ...config.speeds, [k]: v } })}
-              suffix="s"
             />
           ))}
         </Section>
@@ -70,9 +77,9 @@ export default function ControlDock() {
           />
         </Section>
 
-        {/* Orbits visibility */}
+        {/* Orbits visibility — compact 2-col */}
         <Section title="Show orbits">
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
             {([1, 2, 3] as const).map((k) => (
               <ToggleRow
                 key={k}
@@ -91,9 +98,9 @@ export default function ControlDock() {
           </div>
         </Section>
 
-        {/* General show toggles */}
+        {/* General show toggles — compact 2-col */}
         <Section title="Show elements">
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
             {(['nebula', 'rings', 'labels', 'moons', 'tooltips'] as const).map((key) => (
               <ToggleRow
                 key={key}
@@ -125,13 +132,7 @@ export default function ControlDock() {
 
 /* ── UI bits ─────────────────────────────────────────────────────────────── */
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
       <div className="text-[11px] uppercase tracking-wide opacity-60">{title}</div>
@@ -157,7 +158,7 @@ function SliderRow({
   suffix?: string;
 }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
       {label && <span className="w-5 text-xs opacity-60">{label}</span>}
       <input
         type="range"
@@ -165,7 +166,7 @@ function SliderRow({
         max={max}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-lime-400/90"
+        className="w-full accent-lime-400/90 h-1.5"
       />
       <span className="text-xs opacity-70 tabular-nums">
         {value}
@@ -185,14 +186,14 @@ function ToggleRow({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="group flex items-center gap-3">
+    <label className="group flex items-center gap-2">
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         className="accent-lime-400/90"
       />
-      <span className="text-sm">{label}</span>
+      <span className="text-[13px] leading-5">{label}</span>
     </label>
   );
 }
