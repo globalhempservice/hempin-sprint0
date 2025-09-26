@@ -1,89 +1,70 @@
-// components/EmailCTA.tsx
 import * as React from 'react';
 
 type Role = 'WORK' | 'LIFE';
 
-export default function EmailCTA({ role = 'LIFE' }: { role?: Role }) {
+export default function EmailCTA({ role = 'LIFE' as Role }) {
   const [email, setEmail] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [done, setDone] = React.useState<null | { ok: boolean; dedupe?: boolean }>(null);
-  const [error, setError] = React.useState<string | null>(null);
+  const [status, setStatus] = React.useState<'idle'|'loading'|'ok'|'error'>('idle');
+  const [message, setMessage] = React.useState<string>('');
 
-  async function onSubmit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setDone(null);
+    setStatus('loading');
+    setMessage('');
 
-    const source =
-      typeof window !== 'undefined'
-        ? `${window.location.host || 'hempin.org'}`
-        : 'hempin.org';
+    const payload = {
+      email: email.trim().toLowerCase(),
+      role,
+      source: 'hempin.org:cta-footer'
+    };
+
+    console.log('[EmailCTA] submitting', payload); // <-- watch Network/Console
 
     try {
       const res = await fetch('/api/lead', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), role, source }),
+        headers: { 'content-type': 'application/json', 'cache-control': 'no-cache' },
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (!res.ok || !json.ok) {
-        throw new Error(json?.error || `HTTP ${res.status}`);
+        setStatus('error');
+        setMessage(json?.error || 'Something went wrong. Please try again.');
+        return;
       }
-      setDone({ ok: true, dedupe: !!json.dedupe });
+      setStatus('ok');
+      setMessage('Thanks — we’ll be in touch.');
       setEmail('');
     } catch (err: any) {
-      setError(err?.message || 'Something went wrong');
-      setDone({ ok: false });
-    } finally {
-      setLoading(false);
+      setStatus('error');
+      setMessage(err?.message || 'Network error.');
     }
   }
 
-  // simple honeypot
-  const [company, setCompany] = React.useState('');
-  const honeyField = (
-    <input
-      type="text"
-      name="company"
-      value={company}
-      onChange={(e) => setCompany(e.target.value)}
-      className="hidden"
-      tabIndex={-1}
-      autoComplete="off"
-    />
-  );
-
   return (
-    <form onSubmit={onSubmit} className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
-      {honeyField}
-      <label htmlFor="email" className="sr-only">Email</label>
+    <form onSubmit={submit} className="flex gap-2">
+      {/* DO NOT include any hidden honeypot field in the JSON */}
       <input
-        id="email"
-        name="email"
         type="email"
         required
-        autoComplete="email"
-        inputMode="email"
-        placeholder="your@email.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="w-full rounded-lg bg-white/5 px-4 py-3 text-sm text-white placeholder-white/50 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/60"
+        placeholder="your@email.com"
+        className="w-full rounded-md bg-white/5 px-3 py-2 ring-1 ring-white/10 outline-none focus:ring-2 focus:ring-emerald-400"
+        autoComplete="email"
       />
       <button
         type="submit"
-        disabled={loading}
-        className="rounded-lg bg-emerald-500/90 px-5 py-3 text-sm font-semibold text-black hover:bg-emerald-400 disabled:opacity-60"
+        disabled={status === 'loading'}
+        className="shrink-0 rounded-md px-4 py-2 ring-1 ring-emerald-400/50 bg-emerald-500/20 hover:bg-emerald-500/25"
       >
-        {loading ? 'Sending…' : role === 'WORK' ? 'Join WORK' : 'Join LIFE'}
+        {status === 'loading' ? 'Sending…' : 'Join'}
       </button>
-
-      {done?.ok && (
-        <p className="text-xs text-emerald-300">
-          Thanks — we’ll be in touch{done.dedupe ? ' (you were already on the list)' : ''}.
-        </p>
+      {message && (
+        <div className={`ml-2 text-sm ${status === 'error' ? 'text-red-300' : 'text-emerald-300'}`}>
+          {message}
+        </div>
       )}
-      {error && <p className="text-xs text-red-300">{error}</p>}
     </form>
   );
 }
