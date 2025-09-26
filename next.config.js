@@ -1,7 +1,7 @@
+cat > next.config.js <<'JS'
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    reactStrictMode: true,
-    trailingSlash: false,
-    poweredByHeader: false,
-  };
-  module.exports = nextConfig;
+  reactStrictMode: true
+};
+module.exports = nextConfig;
+JS

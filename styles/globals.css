@@ -1,3 +1,11 @@
+/* styles/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ...your custom styles below... */
+
+
 :root{
     --bg:#05060a;
     --panel:#0c0f15;
