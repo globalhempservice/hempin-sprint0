@@ -8,19 +8,24 @@ import ToolsSection from '@/components/home/ToolsSection';
 import RoadmapSection from '@/components/home/RoadmapSection';
 import CTASection from '@/components/home/CTASection';
 import Footer from '@/components/home/Footer';
+import EmailCTA from '@/components/EmailCTA'; // ← add this
 
 export default function Home() {
   return (
     <>
       <Head>
         <title>Hempin — an operating system for a living world</title>
-        <meta name="description" content="Hempin is the navigator of the hemp universe — WORK & LIFE, powered by science, design, and regenerative economics." />
+        <meta
+          name="description"
+          content="Hempin is the navigator of the hemp universe — WORK & LIFE, powered by science, design, and regenerative economics."
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       <div className="page">
         <SiteHeader />
-        <main>
+        {/* pad bottom so sticky CTA doesn't overlap content on mobile */}
+        <main className="pb-24 md:pb-0">
           <Hero />
           <CosmosSection />
           <DimensionSection />
@@ -30,6 +35,13 @@ export default function Home() {
           <CTASection />
         </main>
         <Footer />
+      </div>
+
+      {/* Sticky bottom CTA (mobile only) */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/80 backdrop-blur md:hidden">
+        <div className="mx-auto max-w-screen-sm px-4 py-3">
+          <EmailCTA role="LIFE" />
+        </div>
       </div>
     </>
   );
