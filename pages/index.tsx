@@ -40,7 +40,7 @@ export default function Home() {
       {/* Sticky bottom CTA (mobile only) */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/80 backdrop-blur md:hidden">
         <div className="mx-auto max-w-screen-sm px-4 py-3">
-          <EmailCTA role="LIFE" />
+          <EmailCTA defaultRole="LIFE" />
         </div>
       </div>
     </>

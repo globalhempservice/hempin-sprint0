@@ -1,8 +1,10 @@
 import * as React from 'react';
 
-export default function EmailCTA() {
+type Props = { defaultRole?: 'LIFE' | 'WORK' };
+
+export default function EmailCTA({ defaultRole = 'LIFE' }: Props) {
   const [email, setEmail] = React.useState('');
-  const [role, setRole] = React.useState<'LIFE' | 'WORK'>('LIFE');
+  const [role, setRole] = React.useState<'LIFE' | 'WORK'>(defaultRole);
   const [status, setStatus] = React.useState<null | 'ok' | 'error' | 'loading'>(null);
   const [msg, setMsg] = React.useState<string>('');
 
@@ -16,10 +18,10 @@ export default function EmailCTA() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ email, role, source: 'hempin.org', company: '' }), // honeypot empty
+        body: JSON.stringify({ email, role, source: 'hempin.org', company: '' }),
       });
-
       const json = await res.json();
+
       if (!res.ok || !json.ok) {
         setStatus('error');
         setMsg(json?.error || 'Failed to submit');
@@ -49,7 +51,7 @@ export default function EmailCTA() {
         <option value="LIFE">I’m curious</option>
         <option value="WORK">I’m building</option>
       </select>
-      {/* Honeypot (hidden) */}
+      {/* Honeypot */}
       <input
         type="text"
         name="company"
