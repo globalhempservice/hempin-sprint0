@@ -2,7 +2,7 @@ import Head from 'next/head';
 import SiteHeader from '@/components/home/SiteHeader';
 import Hero from '@/components/home/Hero';
 import CosmosSection from '@/components/home/CosmosSection';
-import DimensionsSection from '@/components/home/DimensionsSection';
+import DimensionSection from '@/components/home/DimensionSection';
 import DatabaseSection from '@/components/home/DatabaseSection';
 import ToolsSection from '@/components/home/ToolsSection';
 import RoadmapSection from '@/components/home/RoadmapSection';
@@ -23,7 +23,7 @@ export default function Home() {
         <main>
           <Hero />
           <CosmosSection />
-          <DimensionsSection />
+          <DimensionSection />
           <DatabaseSection />
           <ToolsSection />
           <RoadmapSection />
