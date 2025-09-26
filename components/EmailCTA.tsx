@@ -1,69 +1,67 @@
-'use client';
 import * as React from 'react';
 
-type Props = { role: 'WORK' | 'LIFE'; className?: string };
-
-export default function EmailCTA({ role, className }: Props) {
+export default function EmailCTA() {
   const [email, setEmail] = React.useState('');
-  const [busy, setBusy]   = React.useState(false);
-  const [done, setDone]   = React.useState<null | { ok:boolean; msg:string }>(null);
+  const [role, setRole] = React.useState<'LIFE' | 'WORK'>('LIFE');
+  const [status, setStatus] = React.useState<null | 'ok' | 'error' | 'loading'>(null);
+  const [msg, setMsg] = React.useState<string>('');
 
-  async function submit(e: React.FormEvent) {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setBusy(true); setDone(null);
+    setStatus('loading');
+    setMsg('');
+
     try {
       const res = await fetch('/api/lead', {
         method: 'POST',
-        headers: { 'Content-Type':'application/json' },
-        body: JSON.stringify({ email, role, source: 'hempin.org/home' , company: '' /* honeypot */ }),
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ email, role, source: 'hempin.org', company: '' }), // honeypot empty
       });
+
       const json = await res.json();
-      if (json.ok) {
-        setDone({ ok:true, msg: role === 'WORK'
-          ? "Thanks! We'll reach out with WORK access as we onboard partners."
-          : "Thanks! You’re on the LIFE list — we’ll ping you when it opens." });
-        setEmail('');
-      } else {
-        setDone({ ok:false, msg: json.error || 'Something went wrong.' });
+      if (!res.ok || !json.ok) {
+        setStatus('error');
+        setMsg(json?.error || 'Failed to submit');
+        return;
       }
-    } catch {
-      setDone({ ok:false, msg:'Network error. Please try again.' });
-    } finally {
-      setBusy(false);
+      setStatus('ok');
+      setMsg('Thanks — we’ll be in touch soon!');
+      setEmail('');
+    } catch (err: any) {
+      setStatus('error');
+      setMsg(err?.message || 'Network error');
     }
-  }
+  };
 
   return (
-    <form onSubmit={submit} className={className}>
-      {/* Honeypot */}
+    <form onSubmit={submit} className="cta-form">
+      <label className="sr-only" htmlFor="cta-email">Email</label>
       <input
-        type="text" name="company" tabIndex={-1} autoComplete="off"
-        className="hidden" aria-hidden="true"
-        onChange={() => { /* bots only */ }}
+        id="cta-email"
+        type="email"
+        required
+        placeholder="you@example.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
       />
-      <div className="flex gap-2">
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e)=>setEmail(e.target.value)}
-          placeholder={role === 'WORK' ? 'work@email.com' : 'you@email.com'}
-          className="w-full rounded-md bg-white/10 px-4 py-3 text-white placeholder-white/40 ring-1 ring-white/15 outline-none focus:ring-2 focus:ring-emerald-400"
-        />
-        <button
-          type="submit"
-          disabled={busy}
-          className="shrink-0 rounded-md bg-emerald-500/90 px-5 py-3 font-medium text-black hover:bg-emerald-400 disabled:opacity-50"
-        >
-          {busy ? 'Sending…' : (role === 'WORK' ? 'Request access' : 'Get updates')}
-        </button>
-      </div>
-      {done && (
-        <p className={`mt-2 text-sm ${done.ok ? 'text-emerald-300' : 'text-red-300'}`}>{done.msg}</p>
-      )}
-      <p className="mt-2 text-xs text-white/50">
-        By submitting, you agree to receive occasional emails from Hempin. Unsubscribe anytime.
-      </p>
+      <select value={role} onChange={(e) => setRole(e.target.value as any)}>
+        <option value="LIFE">I’m curious</option>
+        <option value="WORK">I’m building</option>
+      </select>
+      {/* Honeypot (hidden) */}
+      <input
+        type="text"
+        name="company"
+        tabIndex={-1}
+        autoComplete="off"
+        style={{ position: 'absolute', left: '-10000px', height: 0, width: 0 }}
+        aria-hidden="true"
+      />
+      <button type="submit" disabled={status === 'loading'}>
+        {status === 'loading' ? 'Sending…' : 'Join the journey'}
+      </button>
+      {status && <p className={status === 'error' ? 'text-red-400' : 'text-emerald-400'}>{msg}</p>}
     </form>
   );
 }
