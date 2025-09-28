@@ -288,3 +288,35 @@ main{flex:1 0 auto}
   .btn.thruster, .btn.thruster::after { transition: none; }
   .hero-constellation { animation: none; opacity: .45; }
 }
+
+/* ——— Hero v2 spacing & constellation ——— */
+.hero-stack { 
+  display: grid; 
+  row-gap: clamp(14px, 3.5vw, 22px); 
+  padding-top: clamp(72px, 12vw, 136px);
+  padding-bottom: clamp(56px, 8vw, 96px);
+}
+
+.hero .hero-highlight{
+  display:inline-block;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #e8f2ff;
+  backdrop-filter: blur(2px);
+}
+
+.constellation.orion{
+  margin: clamp(8px, 2vw, 16px) auto;
+  width: min(92vw, 820px);
+  opacity: .85;
+  filter: drop-shadow(0 0 12px rgba(96,165,250,.15));
+}
+.constellation.orion svg{ width: 100%; height: auto; display:block; }
+
+/* Prefer reduced motion: no shimmering positions later if we add them */
+@media (prefers-reduced-motion: reduce){
+  .constellation.orion { filter: none; }
+}
