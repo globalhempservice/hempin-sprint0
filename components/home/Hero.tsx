@@ -47,7 +47,7 @@ export default function Hero() {
         </p>
 
         <div className="cta-row" style={{ marginTop: 24 }}>
-          <a href="#cta" className="btn primary thruster" style={{ position: 'relative', zIndex: 3 }}>
+          <a href="#cta" className="btn primary thruster">
             Join the launch list
           </a>
         </div>
