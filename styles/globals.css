@@ -47,15 +47,16 @@ main{flex:1 0 auto}
 .site-header .nav a{opacity:.9}
 .site-header .nav .btn{margin-left:6px}
 
-/* Clip the glow to the hero and remove the cyan source so it can't "repeat" down-page */
+/* hero: clip overflow so background glow cannot bleed down the page */
 .hero{position:relative;padding:120px 0 84px;overflow:hidden}
 .hero h1{font-size:clamp(32px,6vw,64px);line-height:1.05;margin:8px 0 8px}
 .hero .cta-row{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+
+/* emerald-only glow (cyan removed) */
 .hero-glow{
   position:absolute;
   inset:-30% -10% auto -10%;
   height:420px;
-  /* cyan radial removed; emerald-only to avoid blue band */
   background: radial-gradient(600px 280px at 40% 0%, rgba(110,231,183,.35), transparent 60%);
   filter:blur(40px);
   pointer-events:none;
@@ -125,27 +126,14 @@ main{flex:1 0 auto}
   height: 9px;
   margin-left: 6px;
   border-radius: 50%;
-  background: linear-gradient(
-    120deg,
-    var(--accent),
-    var(--accent-2),
-    #f472b6 /* aurora-magenta */
-  );
+  background: linear-gradient(120deg, var(--accent), var(--accent-2), #f472b6);
   background-size: 200% 200%;
   animation: auroraPulse 2.2s ease-in-out infinite;
 }
 
 @keyframes auroraPulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.7;
-    background-position: 0% 50%;
-  }
-  50% {
-    transform: scale(1.6);
-    opacity: 1;
-    background-position: 100% 50%;
-  }
+  0%, 100% { transform: scale(1); opacity: 0.7; background-position: 0% 50%; }
+  50%      { transform: scale(1.6); opacity: 1; background-position: 100% 50%; }
 }
 
 /* =======================================================================
@@ -165,11 +153,7 @@ main{flex:1 0 auto}
 }
 
 /* Common look for star layers */
-.starfield {
-  position: absolute;
-  inset: 0;
-  opacity: 0.9;
-}
+.starfield { position: absolute; inset: 0; opacity: 0.9; }
 
 /* Layer A — smaller, denser stars, slow drift */
 .starfield.layer-a {
@@ -192,20 +176,16 @@ main{flex:1 0 auto}
 }
 
 /* Aurora blobs — soft floating color fog, subtle */
-.aurora {
-  position: absolute; filter: blur(40px); opacity: 0.35; mix-blend-mode: screen;
-}
+.aurora { position: absolute; filter: blur(40px); opacity: 0.35; mix-blend-mode: screen; }
 .aurora.blob-1 {
-  width: 60vmax; height: 40vmax;
-  left: -10vmax; top: -8vmax;
+  width: 60vmax; height: 40vmax; left: -10vmax; top: -8vmax;
   background:
     radial-gradient(closest-side, rgba(110,231,183,.35), transparent 60%),
     radial-gradient(closest-side, rgba(96,165,250,.32), transparent 60%);
   animation: floatAurora 36s ease-in-out infinite;
 }
 .aurora.blob-2 {
-  width: 50vmax; height: 36vmax;
-  right: -12vmax; bottom: -10vmax;
+  width: 50vmax; height: 36vmax; right: -12vmax; bottom: -10vmax;
   background:
     radial-gradient(closest-side, rgba(96,165,250,.30), transparent 60%),
     radial-gradient(closest-side, rgba(244,114,182,.28), transparent 60%);
@@ -213,23 +193,11 @@ main{flex:1 0 auto}
 }
 
 /* Keyframes */
-@keyframes driftA {
-  0%   { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-120px, -120px, 0); }
-}
-@keyframes driftB {
-  0%   { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(160px, -100px, 0); }
-}
-@keyframes floatAurora {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50%      { transform: translate3d(0, -10px, 0) scale(1.03); }
-}
+@keyframes driftA { 0% {transform: translate3d(0,0,0);} 100% {transform: translate3d(-120px,-120px,0);} }
+@keyframes driftB { 0% {transform: translate3d(0,0,0);} 100% {transform: translate3d(160px,-100px,0);} }
+@keyframes floatAurora { 0%,100% {transform: translate3d(0,0,0) scale(1);} 50% {transform: translate3d(0,-10px,0) scale(1.03);} }
 
-/* Respect reduced motion */
+/* Respect reduced motion — keep on one line to avoid brace mistakes */
 @media (prefers-reduced-motion: reduce) {
-  .starfield.layer-a,
-  .starfield.layer-b,
-  .aurora.blob-1,
-  .aurora.blob-2 {
-    animation: none !
+  .starfield.layer-a, .starfield.layer-b, .aurora.blob-1, .aurora.blob-2 { animation: none !important; transform: none !important; }
+}
