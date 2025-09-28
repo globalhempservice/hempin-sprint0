@@ -8,7 +8,7 @@ import ToolsSection from '@/components/home/ToolsSection';
 import RoadmapSection from '@/components/home/RoadmapSection';
 import CTASection from '@/components/home/CTASection';
 import Footer from '@/components/home/Footer';
-import EmailCTA from '@/components/EmailCTA'; // ← add this
+import EmailCTA from '@/components/EmailCTA'; 
 
 export default function Home() {
   return (
