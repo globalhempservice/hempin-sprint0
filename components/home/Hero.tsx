@@ -1,129 +1,174 @@
-// components/home/Hero.tsx
 export default function Hero() {
-  return (
-    <section className="hero" style={{ paddingTop: 96 }}>
-      <div className="container center" style={{ position: 'relative' }}>
-        {/* product name (exact casing) */}
-        <p className="eyebrow" style={{ letterSpacing: '0.18em' }}>inOS</p>
+  // Orion points in a tidy 200×160 viewBox (roughly proportioned to reference),
+  // names kept for readability if you want to label later.
+  const stars = {
+    Betelgeuse: { x: 40,  y: 25 },  // left shoulder
+    Bellatrix:  { x: 115, y: 20 },  // right shoulder
+    Saiph:      { x: 50,  y: 140 }, // left foot
+    Rigel:      { x: 130, y: 150 }, // right foot
+    // Belt (left→right)
+    Alnitak:    { x: 72,  y: 90 },
+    Alnilam:    { x: 92,  y: 92 },
+    Mintaka:    { x: 112, y: 88 },
+    // Right arm (club)
+    Club1:      { x: 155, y: 90 },
+    Club2:      { x: 165, y: 115 },
+  };
 
-        {/* headline */}
+  // Helper to render a star with a soft colorful glow
+  const Star = ({ x, y, r = 3 }: { x: number; y: number; r?: number }) => (
+    <>
+      <circle cx={x} cy={y} r={r * 3.2} fill="url(#starGlow)" opacity="0.35" />
+      <circle cx={x} cy={y} r={r * 1.4} fill="url(#starCore)" />
+      <circle cx={x} cy={y} r={r} fill="white" opacity="0.9" />
+    </>
+  );
+
+  return (
+    <section className="hero">
+      <div className="container center">
+        <p className="eyebrow" style={{ letterSpacing: '0.22em' }}>inOS</p>
+
         <h1>An operating system for a living world</h1>
 
-        {/* key sentence — no em-dash after "industry" */}
-        <div
-          className="hemp-panel"
+        {/* Key line — highlighted pill */}
+        <p
+          className="pill"
           style={{
-            margin: '14px auto 10px',
-            maxWidth: 900,
+            display: 'inline-block',
+            marginTop: 12,
+            marginBottom: 10,
             padding: '10px 16px',
-            background: 'rgba(255,255,255,0.06)',
-            borderColor: 'rgba(255,255,255,0.10)',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: 12,
           }}
         >
-          <strong style={{ fontWeight: 600 }}>
-            Hemp’in translates the hemp universe into practical tools for people and industry
-          </strong>
-        </div>
+          Hemp’in translates the hemp universe into practical tools for people and industry
+        </p>
 
-        {/* supporting line */}
-        <p className="muted" style={{ maxWidth: 820, margin: '10px auto 0' }}>
+        {/* Support line */}
+        <p className="lede" style={{ marginTop: 12 }}>
           connecting science, markets, places, and culture through WORK and LIFE dimensions.
         </p>
 
-        {/* Orion — subtle, colorful, in the background */}
-        <div
-          aria-hidden
-          className="hero-constellation"
-          style={{
-            position: 'relative',
-            height: 340,
-            marginTop: 24,
-            marginBottom: 14,
-          }}
-        >
-          <svg
-            viewBox="0 0 900 480"
-            width="100%"
-            height="100%"
-            style={{
-              opacity: 0.42,
-              filter: 'blur(0.2px)',
-            }}
-          >
-            <defs>
-              {/* soft star glow */}
-              <radialGradient id="starGlow" r="1">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
-                <stop offset="45%" stopColor="rgba(180,225,255,0.65)" />
-                <stop offset="100%" stopColor="rgba(180,225,255,0)" />
-              </radialGradient>
-              {/* line gradient (emerald → cyan → magenta) */}
-              <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="rgba(110,231,183,0.9)" />
-                <stop offset="55%" stopColor="rgba(96,165,250,0.85)" />
-                <stop offset="100%" stopColor="rgba(244,114,182,0.9)" />
-              </linearGradient>
-            </defs>
-
-            {/* Orion (stylized) — kept roomy & centered */}
-            <g stroke="url(#lineGrad)" strokeWidth="2" fill="none">
-              {/* outer poly lines (belt + body + right arm) */}
-              <polyline points="140,285 290,270 450,290 720,325" opacity="0.85" />
-              <polyline points="290,270 360,430 530,470" opacity="0.6" />
-              <polyline points="720,325 750,380" opacity="0.75" />
-              <polyline points="140,285 220,450 530,470" opacity="0.5" />
-            </g>
-
-            {/* belt (three stars in the middle) */}
-            <g>
-              {[350, 390, 430].map((x, i) => (
-                <circle key={i} cx={x} cy={365} r="10" fill="url(#starGlow)"/>
-              ))}
-            </g>
-
-            {/* major stars / joints */}
-            <g>
-              {/* left shoulder, head-ish, right shoulder cluster */}
-              <circle cx="140" cy="285" r="12" fill="url(#starGlow)"/>
-              <circle cx="290" cy="270" r="12" fill="url(#starGlow)"/>
-              <circle cx="450" cy="290" r="12" fill="url(#starGlow)"/>
-              <circle cx="720" cy="325" r="12" fill="url(#starGlow)"/>
-              <circle cx="750" cy="380" r="11" fill="url(#starGlow)"/>
-
-              {/* body / legs */}
-              <circle cx="220" cy="450" r="11" fill="url(#starGlow)"/>
-              <circle cx="360" cy="430" r="11" fill="url(#starGlow)"/>
-              <circle cx="530" cy="470" r="12" fill="url(#starGlow)"/>
-            </g>
-          </svg>
-
-          {/* gentle color fog behind Orion */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              filter: 'blur(38px)',
-              opacity: 0.22,
-              mixBlendMode: 'screen',
-              background:
-                'radial-gradient(600px 260px at 18% 40%, rgba(110,231,183,.45), transparent 60%), radial-gradient(520px 240px at 82% 52%, rgba(244,114,182,.42), transparent 60%)',
-            }}
-          />
-        </div>
-
-        {/* single CTA */}
-        <div className="cta-row" style={{ marginTop: 4 }}>
+        {/* Primary CTA only */}
+        <div className="cta-row" style={{ marginTop: 24 }}>
           <a href="#cta" className="btn primary">Join the launch list</a>
         </div>
       </div>
 
-      {/* keep existing emerald-only hero glow, but very soft */}
+      {/* Orion — large, subtle, behind the CTA */}
       <div
-        className="hero-glow"
+        className="hero-orion"
         aria-hidden
-        style={{ opacity: 0.35 }}
-      />
+        style={{
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          bottom: '9vh',             // lift constellation so CTA sits above the fold
+          width: 'min(900px, 92vw)', // responsive width cap
+          opacity: 0.55,
+          pointerEvents: 'none',
+          filter: 'drop-shadow(0 0 28px rgba(96,165,250,.18))',
+        }}
+      >
+        <svg viewBox="0 0 200 160" width="100%" height="auto">
+          <defs>
+            {/* aurora stroke for lines */}
+            <linearGradient id="auroraStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%"   stopColor="rgba(110,231,183,.85)" />
+              <stop offset="55%"  stopColor="rgba(96,165,250,.85)" />
+              <stop offset="100%" stopColor="rgba(244,114,182,.85)" />
+            </linearGradient>
+            {/* star glow & core */}
+            <radialGradient id="starGlow">
+              <stop offset="0%"  stopColor="rgba(255,255,255,0.85)" />
+              <stop offset="35%" stopColor="rgba(96,165,250,0.55)" />
+              <stop offset="100%" stopColor="rgba(96,165,250,0.00)" />
+            </radialGradient>
+            <radialGradient id="starCore">
+              <stop offset="0%"  stopColor="#E6FDF7" />
+              <stop offset="100%" stopColor="#B7E9FF" />
+            </radialGradient>
+            {/* soft outer glow for lines */}
+            <filter id="lineGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1.4" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {/* Trapezium & limbs (main figure) */}
+          <polyline
+            points={`
+              ${stars.Betelgeuse.x},${stars.Betelgeuse.y}
+              ${stars.Alnilam.x},${stars.Alnilam.y}
+              ${stars.Bellatrix.x},${stars.Bellatrix.y}
+            `}
+            fill="none"
+            stroke="url(#auroraStroke)"
+            strokeWidth="1.2"
+            filter="url(#lineGlow)"
+            opacity="0.8"
+          />
+          <polyline
+            points={`
+              ${stars.Saiph.x},${stars.Saiph.y}
+              ${stars.Betelgeuse.x},${stars.Betelgeuse.y}
+              ${stars.Rigel.x},${stars.Rigel.y}
+              ${stars.Saiph.x},${stars.Saiph.y}
+            `}
+            fill="none"
+            stroke="url(#auroraStroke)"
+            strokeWidth="1.2"
+            filter="url(#lineGlow)"
+            opacity="0.8"
+          />
+          {/* Shoulder to club */}
+          <polyline
+            points={`
+              ${stars.Bellatrix.x},${stars.Bellatrix.y}
+              ${stars.Club1.x},${stars.Club1.y}
+              ${stars.Club2.x},${stars.Club2.y}
+            `}
+            fill="none"
+            stroke="url(#auroraStroke)"
+            strokeWidth="1.2"
+            filter="url(#lineGlow)"
+            opacity="0.8"
+          />
+          {/* Belt */}
+          <polyline
+            points={`
+              ${stars.Alnitak.x},${stars.Alnitak.y}
+              ${stars.Alnilam.x},${stars.Alnilam.y}
+              ${stars.Mintaka.x},${stars.Mintaka.y}
+            `}
+            fill="none"
+            stroke="url(#auroraStroke)"
+            strokeWidth="1.4"
+            filter="url(#lineGlow)"
+            opacity="0.9"
+          />
+
+          {/* Stars */}
+          <Star {...stars.Betelgeuse} r={3.2} />
+          <Star {...stars.Bellatrix}  r={2.8} />
+          <Star {...stars.Saiph}      r={2.6} />
+          <Star {...stars.Rigel}      r={3.4} />
+          <Star {...stars.Alnitak}    r={2.4} />
+          <Star {...stars.Alnilam}    r={2.8} />
+          <Star {...stars.Mintaka}    r={2.4} />
+          <Star {...stars.Club1}      r={2.1} />
+          <Star {...stars.Club2}      r={2.1} />
+        </svg>
+      </div>
+
+      {/* Keep the soft emerald glow confined to the hero */}
+      <div className="hero-glow" aria-hidden />
     </section>
   );
 }
