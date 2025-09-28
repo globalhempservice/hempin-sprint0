@@ -8,7 +8,8 @@ import ToolsSection from '@/components/home/ToolsSection';
 import RoadmapSection from '@/components/home/RoadmapSection';
 import CTASection from '@/components/home/CTASection';
 import Footer from '@/components/home/Footer';
-import EmailCTA from '@/components/EmailCTA'; 
+import EmailCTA from '@/components/EmailCTA';
+import OrbitalDivider from '@/components/home/OrbitalDivider';
 
 export default function Home() {
   return (
@@ -22,18 +23,32 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="page">
+      {/* app-shell ensures content renders above starfield/aurora background */}
+      <div className="page app-shell">
         <SiteHeader />
+
         {/* pad bottom so sticky CTA doesn't overlap content on mobile */}
         <main className="pb-24 md:pb-0">
           <Hero />
+
+          <OrbitalDivider label="cosmos" />
           <CosmosSection />
+
+          <OrbitalDivider label="dimensions" />
           <DimensionSection />
+
+          <OrbitalDivider label="database" />
           <DatabaseSection />
+
+          <OrbitalDivider label="tools" />
           <ToolsSection />
+
+          <OrbitalDivider label="roadmap" />
           <RoadmapSection />
+
           <CTASection />
         </main>
+
         <Footer />
       </div>
 
