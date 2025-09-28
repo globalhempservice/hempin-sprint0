@@ -1,14 +1,14 @@
 import { useEffect, useRef } from 'react';
 
 type GalaxyProps = {
-  size?: number;      // CSS pixels (DPR-scaled internally)
-  stars?: number;     // number of stars
-  arms?: number;      // spiral arms
-  speed?: number;     // radians/sec (use positive; we rotate CW internally)
-  opacity?: number;   // global alpha
-  seed?: number;      // RNG seed
-  tiltDeg?: number;   // visual tilt of the disc
-  ellipticity?: number; // 0.5..1 squashes the disc
+  size?: number;
+  stars?: number;
+  arms?: number;
+  speed?: number;
+  opacity?: number;
+  seed?: number;
+  tiltDeg?: number;
+  ellipticity?: number;
 };
 
 export default function Galaxy({
@@ -46,32 +46,26 @@ export default function Galaxy({
     let s = Math.max(1, Math.floor(seed)) % 2147483647;
     const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
 
-    // Spiral model  r = a * e^(bθ)
-    const a = 2.0;
-    const b = 0.20;
+    // Spiral model constants (declare BEFORE any usage)
+    const SPIRAL_A = 2.0;
+    const SPIRAL_B = 0.20;
 
-    // Precompute stars (varied sizes & palette)
+    // ----- Stars -----
     type Star = {
-      x: number; y: number;        // base galactic coords
-      r: number;                   // radius (px at dpr 1)
-      hue: number;                 // color
-      tw: number;                  // twinkle phase
-      rad: number;                 // distance to center
-      halo: number;                // glow multiplier
+      x: number; y: number;
+      r: number; hue: number; tw: number; rad: number; halo: number;
     };
     const starsBuf: Star[] = [];
-
     for (let i = 0; i < stars; i++) {
       const arm = i % arms;
       const t = (i / stars) * (Math.PI * 6.2) + arm * ((Math.PI * 2) / arms);
-      const radius = a * Math.exp(b * t) + (rnd() - 0.5) * 7;         // jitter
-      const theta  = t + (rnd() - 0.5) * 0.28;                         // wiggle
+      const radius = SPIRAL_A * Math.exp(SPIRAL_B * t) + (rnd() - 0.5) * 7;
+      const theta  = t + (rnd() - 0.5) * 0.28;
 
       const x = radius * Math.cos(theta);
       const y = radius * Math.sin(theta);
 
       const nearCore = Math.max(0, 1 - (radius / (size * 0.45)));
-      // more size variety (tiny dust → big stars)
       const base = rnd();
       const rPix = (base < 0.75 ? 0.6 + base * 1.2 : 1.2 + base * 2.3) + nearCore * 1.4;
       const hue = 150 + (theta * 36 + arm * 22 + rnd() * 12) % 200;
@@ -80,14 +74,14 @@ export default function Galaxy({
       starsBuf.push({ x, y, r: rPix * dpr, hue, tw: rnd() * Math.PI * 2, rad: Math.hypot(x, y), halo });
     }
 
-    // Nebula “clouds” (color volume along arms)
+    // ----- Nebula clouds -----
     type Cloud = { x: number; y: number; rx: number; ry: number; hue: number; a: number };
     const clouds: Cloud[] = [];
     const cloudCount = 16;
     for (let i = 0; i < cloudCount; i++) {
       const arm = i % arms;
       const t = (i / cloudCount) * (Math.PI * 6) + arm * ((Math.PI * 2) / arms);
-      const radius = (a * Math.exp(b * t)) * (0.85 + rnd() * 0.28);
+      const radius = (SPIRAL_A * Math.exp(SPIRAL_B * t)) * (0.85 + rnd() * 0.28);
       const theta  = t + (rnd() - 0.5) * 0.25;
 
       const x = radius * Math.cos(theta);
@@ -101,7 +95,7 @@ export default function Galaxy({
       clouds.push({ x, y, rx, ry, hue, a });
     }
 
-    // Background dust specks (super faint)
+    // ----- Dust -----
     const dust: {x:number;y:number;r:number;a:number}[] = Array.from({length: 250}, () => ({
       x: (rnd() * size - size/2),
       y: (rnd() * size - size/2),
@@ -109,7 +103,7 @@ export default function Galaxy({
       a: 0.03 + rnd() * 0.05
     }));
 
-    // Shooting star
+    // ----- Shooting star -----
     type Meteor = { x:number; y:number; vx:number; vy:number; life:number };
     let meteor: Meteor | null = null;
     let nextMeteorAt = performance.now() + 12000 + rnd() * 8000;
@@ -126,18 +120,15 @@ export default function Galaxy({
 
     const tilt = (tiltDeg * Math.PI) / 180;
     const ct = Math.cos(tilt), st = Math.sin(tilt);
-
-    // helper: apply disc ellipticity + tilt and shift to screen
     const toScreen = (gx: number, gy: number) => {
-      const ex = gx;                 // squash Y for elliptic disc
+      const ex = gx;
       const ey = gy * ellipticity;
-      const tx = ex * ct - ey * st;  // tilt rotate
+      const tx = ex * ct - ey * st;
       const ty = ex * st + ey * ct;
       return [CX + tx * dpr, CY + ty * dpr] as const;
     };
 
     let tPrev = performance.now();
-
     const draw = (now: number) => {
       const dt = Math.min(0.05, (now - tPrev) / 1000);
       tPrev = now;
@@ -151,7 +142,7 @@ export default function Galaxy({
       ctx.fillStyle = vig;
       ctx.fillRect(0, 0, W, H);
 
-      // core bloom (thicker aura)
+      // core bloom
       const core = ctx.createRadialGradient(CX, CY, 0, CX, CY, RMAX * 0.58);
       core.addColorStop(0.00, 'rgba(255,255,255,0.18)');
       core.addColorStop(0.35, 'rgba(110,231,183,0.14)');
@@ -161,10 +152,10 @@ export default function Galaxy({
       ctx.fillStyle = core;
       ctx.fillRect(0, 0, W, H);
 
-      // CW rotation (toward center feeling); inner spins faster
+      // CW rotation; inner faster
       const baseAngle = reduceMotion ? 0 : now * -0.001 * speed;
 
-      // nebula clouds
+      // clouds
       ctx.globalAlpha = opacity * 0.9;
       for (const c of clouds) {
         const diff = 1 + (0.10 * (1 - Math.hypot(c.x, c.y) / (RMAX / dpr)));
@@ -187,7 +178,7 @@ export default function Galaxy({
         ctx.restore();
       }
 
-      // dust layer
+      // dust
       ctx.globalAlpha = opacity * 0.55;
       ctx.fillStyle = 'white';
       for (const d of dust) {
@@ -205,11 +196,9 @@ export default function Galaxy({
         const ay = s.x * Math.sin(baseAngle * diff) + s.y * Math.cos(baseAngle * diff);
         const [px, py] = toScreen(ax, ay);
 
-        // subtle twinkle
         const tw = 0.86 + 0.18 * Math.sin((now * 0.0011) + s.tw);
         const coreR = Math.max(0.6, s.r * 0.55) * tw;
 
-        // glow
         const g = ctx.createRadialGradient(px, py, 0, px, py, s.r * (3.6 + s.halo));
         g.addColorStop(0.00, `hsla(${s.hue}, 96%, 92%, ${0.92 * tw})`);
         g.addColorStop(0.20, `hsla(${s.hue}, 96%, 70%, ${0.46 * tw})`);
@@ -217,12 +206,11 @@ export default function Galaxy({
         ctx.fillStyle = g;
         ctx.beginPath(); ctx.arc(px, py, s.r * (3.6 + s.halo), 0, Math.PI * 2); ctx.fill();
 
-        // crisp core
         ctx.fillStyle = 'rgba(255,255,255,0.94)';
         ctx.beginPath(); ctx.arc(px, py, coreR, 0, Math.PI * 2); ctx.fill();
       }
 
-      // shooting star
+      // meteor
       if (!reduceMotion) {
         if (!meteor && now > nextMeteorAt) {
           spawnMeteor();
