@@ -1,77 +1,129 @@
+// components/home/Hero.tsx
 export default function Hero() {
   return (
-    <section className="hero">
-      <div className="container center hero-stack">
-        <p className="eyebrow">inOS</p>
+    <section className="hero" style={{ paddingTop: 96 }}>
+      <div className="container center" style={{ position: 'relative' }}>
+        {/* product name (exact casing) */}
+        <p className="eyebrow" style={{ letterSpacing: '0.18em' }}>inOS</p>
 
+        {/* headline */}
         <h1>An operating system for a living world</h1>
 
-        {/* Key line highlighted as a soft capsule */}
-        <p className="hero-highlight">
-          Hemp’in translates the hemp universe into practical tools for people and industry
-        </p>
+        {/* key sentence — no em-dash after "industry" */}
+        <div
+          className="hemp-panel"
+          style={{
+            margin: '14px auto 10px',
+            maxWidth: 900,
+            padding: '10px 16px',
+            background: 'rgba(255,255,255,0.06)',
+            borderColor: 'rgba(255,255,255,0.10)',
+          }}
+        >
+          <strong style={{ fontWeight: 600 }}>
+            Hemp’in translates the hemp universe into practical tools for people and industry
+          </strong>
+        </div>
 
-        <p className="lede">
+        {/* supporting line */}
+        <p className="muted" style={{ maxWidth: 820, margin: '10px auto 0' }}>
           connecting science, markets, places, and culture through WORK and LIFE dimensions.
         </p>
 
-        {/* Orion constellation (decorative) */}
-        <div className="constellation orion" aria-hidden>
-          <svg viewBox="0 0 800 420" role="img" focusable="false">
+        {/* Orion — subtle, colorful, in the background */}
+        <div
+          aria-hidden
+          className="hero-constellation"
+          style={{
+            position: 'relative',
+            height: 340,
+            marginTop: 24,
+            marginBottom: 14,
+          }}
+        >
+          <svg
+            viewBox="0 0 900 480"
+            width="100%"
+            height="100%"
+            style={{
+              opacity: 0.42,
+              filter: 'blur(0.2px)',
+            }}
+          >
             <defs>
-              <radialGradient id="star" r="60%">
+              {/* soft star glow */}
+              <radialGradient id="starGlow" r="1">
                 <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
-                <stop offset="60%" stopColor="rgba(255,255,255,0.35)" />
-                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                <stop offset="45%" stopColor="rgba(180,225,255,0.65)" />
+                <stop offset="100%" stopColor="rgba(180,225,255,0)" />
               </radialGradient>
+              {/* line gradient (emerald → cyan → magenta) */}
+              <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="rgba(110,231,183,0.9)" />
+                <stop offset="55%" stopColor="rgba(96,165,250,0.85)" />
+                <stop offset="100%" stopColor="rgba(244,114,182,0.9)" />
+              </linearGradient>
             </defs>
 
-            {/* Lines (Orion simplified: shoulders, belt, feet, club) */}
-            <g stroke="rgba(180,200,255,0.65)" strokeWidth="2" strokeLinecap="round">
-              {/* Left shoulder (Betelgeuse) to right shoulder (Bellatrix) */}
-              <line x1="220" y1="70" x2="400" y2="50" />
-              {/* Right shoulder to club base */}
-              <line x1="400" y1="50" x2="700" y2="90" />
-              {/* Torso left shoulder to left foot (Saiph) */}
-              <line x1="220" y1="70" x2="300" y2="270" />
-              {/* Torso right shoulder to right foot (Rigel) */}
-              <line x1="400" y1="50" x2="520" y2="350" />
-              {/* Belt three stars */}
-              <line x1="330" y1="205" x2="380" y2="195" />
-              <line x1="380" y1="195" x2="430" y2="185" />
-              {/* Hip to hip */}
-              <line x1="300" y1="270" x2="520" y2="350" />
-              {/* Short forearm to shield/club tip */}
-              <line x1="700" y1="90" x2="740" y2="160" />
+            {/* Orion (stylized) — kept roomy & centered */}
+            <g stroke="url(#lineGrad)" strokeWidth="2" fill="none">
+              {/* outer poly lines (belt + body + right arm) */}
+              <polyline points="140,285 290,270 450,290 720,325" opacity="0.85" />
+              <polyline points="290,270 360,430 530,470" opacity="0.6" />
+              <polyline points="720,325 750,380" opacity="0.75" />
+              <polyline points="140,285 220,450 530,470" opacity="0.5" />
             </g>
 
-            {/* Stars */}
-            {[
-              { x: 220, y: 70 },  // Betelgeuse (left shoulder)
-              { x: 400, y: 50 },  // Bellatrix (right shoulder)
-              { x: 300, y: 270 }, // Saiph (left foot)
-              { x: 520, y: 350 }, // Rigel (right foot)
-              { x: 330, y: 205 }, // Alnitak (belt 1)
-              { x: 380, y: 195 }, // Alnilam (belt 2)
-              { x: 430, y: 185 }, // Mintaka (belt 3)
-              { x: 700, y: 90 },  // club base
-              { x: 740, y: 160 }, // club tip
-            ].map((s, i) => (
-              <g key={i}>
-                <circle cx={s.x} cy={s.y} r="3.5" fill="white" />
-                <circle cx={s.x} cy={s.y} r="14" fill="url(#star)" />
-              </g>
-            ))}
+            {/* belt (three stars in the middle) */}
+            <g>
+              {[350, 390, 430].map((x, i) => (
+                <circle key={i} cx={x} cy={365} r="10" fill="url(#starGlow)"/>
+              ))}
+            </g>
+
+            {/* major stars / joints */}
+            <g>
+              {/* left shoulder, head-ish, right shoulder cluster */}
+              <circle cx="140" cy="285" r="12" fill="url(#starGlow)"/>
+              <circle cx="290" cy="270" r="12" fill="url(#starGlow)"/>
+              <circle cx="450" cy="290" r="12" fill="url(#starGlow)"/>
+              <circle cx="720" cy="325" r="12" fill="url(#starGlow)"/>
+              <circle cx="750" cy="380" r="11" fill="url(#starGlow)"/>
+
+              {/* body / legs */}
+              <circle cx="220" cy="450" r="11" fill="url(#starGlow)"/>
+              <circle cx="360" cy="430" r="11" fill="url(#starGlow)"/>
+              <circle cx="530" cy="470" r="12" fill="url(#starGlow)"/>
+            </g>
           </svg>
+
+          {/* gentle color fog behind Orion */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              filter: 'blur(38px)',
+              opacity: 0.22,
+              mixBlendMode: 'screen',
+              background:
+                'radial-gradient(600px 260px at 18% 40%, rgba(110,231,183,.45), transparent 60%), radial-gradient(520px 240px at 82% 52%, rgba(244,114,182,.42), transparent 60%)',
+            }}
+          />
         </div>
 
-        <div className="cta-row">
+        {/* single CTA */}
+        <div className="cta-row" style={{ marginTop: 4 }}>
           <a href="#cta" className="btn primary">Join the launch list</a>
         </div>
       </div>
 
-      {/* keep the subtle hero glow, clipped by .hero overflow */}
-      <div className="hero-glow" aria-hidden />
+      {/* keep existing emerald-only hero glow, but very soft */}
+      <div
+        className="hero-glow"
+        aria-hidden
+        style={{ opacity: 0.35 }}
+      />
     </section>
   );
 }
