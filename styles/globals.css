@@ -201,3 +201,10 @@ main{flex:1 0 auto}
 @media (prefers-reduced-motion: reduce) {
   .starfield.layer-a, .starfield.layer-b, .aurora.blob-1, .aurora.blob-2 { animation: none !important; transform: none !important; }
 }
+
+/* ---- Hot fix: disable all aurora blobs everywhere ---- */
+.aurora,
+.aurora.blob-1,
+.aurora.blob-2 {
+  display: none !important;
+}
