@@ -138,3 +138,92 @@ main{flex:1 0 auto}
     background-position: 100% 50%;
   }
 }
+
+/* =======================================================================
+   Phase 2: Motion backdrop (CSS-only, mobile-first, battery-friendly)
+   ======================================================================= */
+
+/* Ensure app content sits above background layers */
+.app-shell { position: relative; z-index: 1; }
+
+/* Root container for background layers */
+.starfield-root {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  contain: layout paint size;
+}
+
+/* Common look for star layers */
+.starfield {
+  position: absolute;
+  inset: 0;
+  opacity: 0.9;
+}
+
+/* Layer A — smaller, denser stars, slow drift */
+.starfield.layer-a {
+  background-image:
+    radial-gradient(1px 1px at 25px 40px, rgba(255,255,255,0.55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 130px 90px, rgba(255,255,255,0.45) 50%, transparent 51%),
+    radial-gradient(1px 1px at 80px 170px, rgba(255,255,255,0.5) 50%, transparent 51%);
+  background-size: 200px 200px, 260px 260px, 300px 300px;
+  animation: driftA 160s linear infinite;
+}
+
+/* Layer B — larger, sparser stars, different parallax */
+.starfield.layer-b {
+  background-image:
+    radial-gradient(1.5px 1.5px at 60px 20px, rgba(255,255,255,0.35) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 10px 120px, rgba(255,255,255,0.28) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 150px 200px, rgba(255,255,255,0.3) 50%, transparent 51%);
+  background-size: 320px 320px, 360px 360px, 420px 420px;
+  animation: driftB 220s linear infinite;
+}
+
+/* Aurora blobs — soft floating color fog, subtle */
+.aurora {
+  position: absolute; filter: blur(40px); opacity: 0.35; mix-blend-mode: screen;
+}
+.aurora.blob-1 {
+  width: 60vmax; height: 40vmax;
+  left: -10vmax; top: -8vmax;
+  background:
+    radial-gradient(closest-side, rgba(110,231,183,.35), transparent 60%),
+    radial-gradient(closest-side, rgba(96,165,250,.32), transparent 60%);
+  animation: floatAurora 36s ease-in-out infinite;
+}
+.aurora.blob-2 {
+  width: 50vmax; height: 36vmax;
+  right: -12vmax; bottom: -10vmax;
+  background:
+    radial-gradient(closest-side, rgba(96,165,250,.30), transparent 60%),
+    radial-gradient(closest-side, rgba(244,114,182,.28), transparent 60%);
+  animation: floatAurora 42s ease-in-out infinite reverse;
+}
+
+/* Keyframes */
+@keyframes driftA {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-120px, -120px, 0); }
+}
+@keyframes driftB {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(160px, -100px, 0); }
+}
+@keyframes floatAurora {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(0, -10px, 0) scale(1.03); }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .starfield.layer-a,
+  .starfield.layer-b,
+  .aurora.blob-1,
+  .aurora.blob-2 {
+    animation: none !important;
+    transform: none !important;
+  }
+}
