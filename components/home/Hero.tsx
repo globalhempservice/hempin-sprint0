@@ -7,7 +7,6 @@ export default function Hero() {
         <h1>An operating system for a living world</h1>
 
         <p className="lede">
-          Hempin translates the hemp universe into practical tools for people and industry —
           connecting science, markets, places, and culture through WORK and LIFE dimensions.
         </p>
 
