@@ -80,19 +80,14 @@ export default function DimensionSection() {
         </div>
 
         {/* CTA */}
-        <div className="cta-row" style={{ marginTop: 20 }}>
-          {typeof EmailCTA === 'function' ? (
-            <EmailCTA
-              role={mode.toLowerCase()}
-              headline="Be the first to know about the Hemp’in mobile app release"
-              ctaLabel="Join the launch list"
-            />
-          ) : (
-            <a href="#cta" className="btn primary thruster">
-              Be the first to know about the Hemp’in mobile app release
-            </a>
-          )}
-        </div>
+       
+<div className="cta-row" style={{ marginTop: 20 }}>
+  <div className="muted" style={{ marginBottom: 10 }}>
+    Be the first to know about the Hemp’in mobile app release.
+  </div>
+  <EmailCTA role={mode.toLowerCase()} />
+</div>
+
       </div>
     </section>
   );
