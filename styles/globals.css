@@ -713,3 +713,132 @@ main{flex:1 0 auto}
   .dim-panel{ transition: none; }
   .dim-gate{ animation: none !important; opacity: 0 !important; }
 }
+
+/* =========================
+   Dimensions — Switch & Warp
+   ========================= */
+   .dim-section { position: relative; overflow: hidden; }
+
+   .dim-toggle{
+     margin: 18px auto 8px;
+     display: grid;
+     grid-template-columns: 1fr auto 1fr;
+     gap: 12px;
+     align-items: center;
+     max-width: 680px;
+   }
+   
+   .dim-tab{
+     padding: 10px 12px;
+     border-radius: 12px;
+     border: 1px solid rgba(255,255,255,.10);
+     background: rgba(255,255,255,.04);
+     font-weight: 700;
+     letter-spacing: .02em;
+     transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+   }
+   .dim-tab.is-active{
+     box-shadow: 0 0 0 1px rgba(110,231,183,.28) inset, 0 0 22px rgba(96,165,250,.18);
+     border-color: rgba(255,255,255,.16);
+   }
+   .dim-tab:disabled{ opacity:.7; cursor: default; }
+   
+   .dim-switch{
+     --w: 120px; --h: 42px;
+     width: var(--w); height: var(--h);
+     border-radius: 999px;
+     position: relative;
+     border: 1px solid rgba(255,255,255,.14);
+     background: linear-gradient(90deg, rgba(110,231,183,.15), rgba(96,165,250,.15));
+     overflow: hidden;
+   }
+   .dim-switch .nub{
+     position: absolute; top: 4px;
+     width: calc(var(--h) - 8px); height: calc(var(--h) - 8px);
+     border-radius: 50%;
+     background: linear-gradient(120deg, #fff, #bfe9ff);
+     box-shadow: 0 4px 10px rgba(0,0,0,.35);
+     transform: translateX(4px);
+     transition: transform .32s cubic-bezier(.22,.85,.25,1.1);
+   }
+   .dim-switch.work .nub{ transform: translateX(calc(var(--w) - var(--h) + 4px)); }
+   .dim-switch .glow{
+     position: absolute; inset: -30% -10%;
+     background: radial-gradient(40% 60% at 50% 20%, rgba(110,231,183,.26), transparent 70%),
+                 radial-gradient(40% 60% at 50% 80%, rgba(96,165,250,.22), transparent 70%);
+     filter: blur(12px);
+     opacity: .65;
+     transition: opacity .32s ease;
+   }
+   .dim-switch.warping .glow{ opacity: 1; }
+   
+   .dim-quip{ margin: 8px auto 14px; }
+   
+   .dim-stage{
+     position: relative;
+     margin-top: 6px;
+     min-height: 340px;
+   }
+   .dim-panel{
+     position: absolute;
+     inset: 0;
+     opacity: 0;
+     transform: translateY(8px) scale(.985);
+     transition: opacity .34s ease, transform .34s ease, filter .34s ease;
+     filter: saturate(.9) brightness(.98);
+   }
+   .dim-panel.in{
+     opacity: 1;
+     transform: translateY(0) scale(1);
+     filter: none;
+     pointer-events: auto;
+   }
+   .dim-panel.out{ pointer-events: none; }
+   
+   /* -------- Warp overlay (cone + star streaks) -------- */
+   .warp-overlay{
+     pointer-events: none;
+     position: absolute;
+     inset: 0;
+     opacity: 0;
+     transition: opacity .12s ease;
+     z-index: 0;
+   }
+   .warp-overlay.on{ opacity: 1; }
+   
+   .warp-cone{
+     position: absolute; left: 50%; top: 50%;
+     width: 120vmax; height: 120vmax;
+     transform: translate(-50%, -50%) rotate(12deg);
+     background:
+       radial-gradient(closest-side, rgba(255,255,255,.25), rgba(110,231,183,.12) 40%, rgba(96,165,250,.08) 60%, transparent 62%),
+       radial-gradient(farthest-side, rgba(96,165,250,.18), transparent 60%);
+     mix-blend-mode: screen;
+     filter: blur(18px);
+     opacity: .0;
+     animation: warpCone 0.9s ease forwards;
+   }
+   @keyframes warpCone{
+     0%   { transform: translate(-50%,-50%) scale(.85) rotate(12deg); opacity: .0; }
+     45%  { transform: translate(-50%,-50%) scale(1.04) rotate(12deg); opacity: .9; }
+     100% { transform: translate(-50%,-50%) scale(1.15) rotate(12deg); opacity: .0; }
+   }
+   
+   .warp-stars{
+     position: absolute; inset: 0;
+     background:
+       repeating-linear-gradient(90deg, rgba(255,255,255,.32), rgba(255,255,255,.0) 6px),
+       repeating-linear-gradient(0deg, rgba(96,165,250,.25), rgba(96,165,250,.0) 8px);
+     background-size: 180px 1px, 1px 180px;
+     opacity: .0;
+     filter: blur(0.6px);
+     animation: warpStreaks .9s cubic-bezier(.2,.6,.2,1);
+   }
+   @keyframes warpStreaks{
+     0%   { opacity: .0; transform: scaleX(.7) scaleY(.7) translateZ(0); }
+     25%  { opacity: .55; }
+     60%  { opacity: .45; }
+     100% { opacity: .0; transform: scaleX(1.25) scaleY(1.25) translateZ(0); }
+   }
+   
+   /* Tiny “UI” bits already defined earlier – reuse your .ui-* styles */
