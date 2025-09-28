@@ -23,15 +23,12 @@ type Props = {
 export default function GalaxyControls({
   open, onClose, state, setState, onRandomize, onReset
 }: Props) {
-
-  // Close panel on Escape
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // helpers that *don’t* show numbers — just tactile faders
   const fader = (label: string, min: number, max: number, step: number, key: keyof GalaxyState) => (
     <label className="hud-row">
       <span className="hud-label">{label}</span>
@@ -69,7 +66,11 @@ export default function GalaxyControls({
   return (
     <>
       {open && <div className="hud-backdrop" onClick={onClose} aria-hidden />}
-      <aside className={`hud-panel ${open ? 'open' : ''}`} role="dialog" aria-label="Galaxy controls">
+      <aside
+        className={`hud-panel ${open ? 'open' : ''}`}
+        role="dialog"
+        aria-label="Galaxy controls"
+      >
         <div className="hud-head">
           <span className="hud-title">Galaxy controls</span>
           <button className="hud-x" onClick={onClose} aria-label="Close">×</button>

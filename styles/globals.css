@@ -492,3 +492,86 @@ main{flex:1 0 auto}
 @media (max-width: 819px) {
   .hud-fab { display: none; }
 }
+
+/* ---- Section height + centered galaxy ---- */
+.cosmos-section{
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  place-items: start center;
+  padding-top: clamp(56px, 10vh, 120px);
+  padding-bottom: clamp(48px, 10vh, 120px);
+  overflow: hidden;
+}
+.cosmos-section .container{ position: relative; z-index: 2; }
+
+.galaxy-layer{
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  pointer-events: none; z-index: 1;
+}
+.galaxy-layer .galaxy-canvas{ display:block; filter: drop-shadow(0 0 22px rgba(96,165,250,.15)); }
+
+/* ---- Easter-egg FAB centered above title (desktop only) ---- */
+.hud-fab--cosmos{
+  position: absolute;
+  left: 50%;
+  top: clamp(16px, 6vh, 56px);
+  transform: translateX(-50%);
+  z-index: 55; /* above header (50) */
+}
+@media (max-width: 819px){ .hud-fab--cosmos{ display:none; } }
+
+/* ---- True accordion layout (vertical, centered) ---- */
+.cosmos-accordion{
+  display:flex; flex-direction:column; align-items:center;
+  gap:12px; margin:22px auto 0; width:100%; max-width: 620px;
+}
+
+.card.planet{ padding:0; width:100%; border-radius:14px; overflow:hidden; }
+
+.planet-summary{
+  -webkit-tap-highlight-color: transparent;
+  appearance:none; width:100%;
+  display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px;
+  padding:14px 16px; background:transparent; border:0; color:inherit; text-align:left; cursor:pointer;
+}
+.planet-title{ font-weight:700; letter-spacing:.01em; }
+.chevron{ opacity:.9; transition: transform .18s ease, opacity .18s ease; }
+.card.planet.is-open .chevron{ transform: rotate(180deg); }
+
+.planet-content{
+  padding:0 16px;
+  max-height:0; opacity:0; overflow:hidden;
+  transition:max-height .26s ease, opacity .18s ease, padding-bottom .26s ease;
+}
+.card.planet.is-open .planet-content{
+  max-height:160px; opacity:1; padding-bottom:14px;
+}
+.card.planet.is-open{
+  box-shadow: 0 0 0 1px rgba(110,231,183,.35) inset, 0 0 34px rgba(96,165,250,.16);
+  border-color: rgba(255,255,255,.16);
+}
+
+/* ---- Controls drawer: smaller, always clickable, above header ---- */
+.hud-backdrop{ position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 59; }
+
+.hud-panel{
+  position: fixed;
+  top: 64px;            /* clear sticky header */
+  right: 16px;
+  height: calc(100svh - 80px);
+  width: min(340px, 92vw);
+  background: rgba(8,10,14,.86);
+  border: 1px solid rgba(255,255,255,.08);
+  border-right: none;
+  box-shadow: -10px 0 40px rgba(0,0,0,.4);
+  backdrop-filter: blur(10px);
+  transform: translateX(calc(100% + 16px));
+  transition: transform .22s ease;
+  z-index: 60;
+  overflow: auto;
+  border-radius: 12px 0 0 12px;
+}
+.hud-panel.open{ transform: translateX(0); }
+.hud-head{ position: sticky; top: 0; background: inherit; backdrop-filter: inherit; }

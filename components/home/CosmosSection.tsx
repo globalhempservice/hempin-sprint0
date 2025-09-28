@@ -13,52 +13,52 @@ const DEFAULTS: GalaxyState = {
   meteors: true,
 };
 
+const PLANETS = [
+  { title: 'Market',    text: 'Discover hemp products and materials across industries.' },
+  { title: 'Fund',      text: 'Back regenerative projects, campaigns, and infrastructure.' },
+  { title: 'Knowledge', text: 'Access science, craft, and shared cultural intelligence.' },
+  { title: 'Place',     text: 'Explore maps of farms, showrooms, labs, and venues.' },
+  { title: 'Event',     text: 'Join expos, festivals, and gatherings worldwide.' },
+  { title: 'Directory', text: 'Find the actors: brands, innovators, farmers, researchers.' },
+] as const;
+
 export default function CosmosSection() {
-  // responsive: only show controls on tablet/desktop
-  const [isDesktop, setIsDesktop] = useState<boolean>(false);
+  // desktop/tablet gate for controls
+  const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 820px)');
-    const set = () => setIsDesktop(mq.matches);
-    set();
-    mq.addEventListener?.('change', set);
-    return () => mq.removeEventListener?.('change', set);
+    const apply = () => setIsDesktop(mq.matches);
+    apply();
+    mq.addEventListener?.('change', apply);
+    return () => mq.removeEventListener?.('change', apply);
   }, []);
 
-  // responsive galaxy size so it stays visible & centered
-  const [galaxySize, setGalaxySize] = useState<number>(820);
+  // full-viewport sizing for galaxy so it never hides under section edges
+  const [galaxySize, setGalaxySize] = useState(820);
   useEffect(() => {
     const calc = () => {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      // occupy up to ~70% of the shorter side; clamp for big screens
-      const s = Math.min(Math.max(Math.min(vw, vh) * 0.7, 560), 980);
-      setGalaxySize(Math.round(s));
+      const s = Math.min(window.innerWidth, window.innerHeight) * 0.8; // larger than before
+      setGalaxySize(Math.round(Math.max(560, Math.min(s, 1100))));
     };
     calc();
     window.addEventListener('resize', calc, { passive: true });
     return () => window.removeEventListener('resize', calc);
   }, []);
 
-  const [open, setOpen] = useState(false);
+  // galaxy state (persisted)
+  const [openPanel, setOpenPanel] = useState(false);
   const [gs, setGs] = useState<GalaxyState>(() => {
     try {
       const raw = localStorage.getItem('hempin.galaxy');
       return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS;
-    } catch {
-      return DEFAULTS;
-    }
+    } catch { return DEFAULTS; }
   });
-
-  const setState = (next: Partial<GalaxyState>) => {
+  const setState = (next: Partial<GalaxyState>) =>
     setGs(prev => {
       const v = { ...prev, ...next };
       try { localStorage.setItem('hempin.galaxy', JSON.stringify(v)); } catch {}
       return v;
     });
-  };
-
-  const randomize = () => setState({ seed: Math.floor(Math.random() * 1e9) });
-  const reset = () => setState(DEFAULTS);
 
   const galaxyProps = useMemo(() => ({
     size: galaxySize,
@@ -72,20 +72,24 @@ export default function CosmosSection() {
     meteors: gs.meteors,
   }), [galaxySize, gs]);
 
+  // accordion state
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const toggle = (i: number) => setOpenIndex(prev => (prev === i ? null : i));
+
   return (
     <section id="cosmos" className="section cosmos-section">
-      {/* Satellite FAB — tablet/desktop only */}
+      {/* Easter-egg satellite (desktop only) */}
       {isDesktop && (
         <button
-          className="hud-fab"
+          className="hud-fab hud-fab--cosmos"
           aria-label="Tweak galaxy"
-          onClick={() => setOpen(true)}
+          onClick={() => setOpenPanel(true)}
         >
           <span className="satellite" />
         </button>
       )}
 
-      {/* Background galaxy layer */}
+      {/* Centered background galaxy */}
       <div className="galaxy-layer">
         <Galaxy {...galaxyProps} />
       </div>
@@ -101,35 +105,36 @@ export default function CosmosSection() {
           navigable cosmos, alive with possibility.
         </p>
 
-        <div className="cards mt-10 cosmos-cards">
-          {[
-            { title: 'Market',    text: 'Discover hemp products and materials across industries.' },
-            { title: 'Fund',      text: 'Back regenerative projects, campaigns, and infrastructure.' },
-            { title: 'Knowledge', text: 'Access science, craft, and shared cultural intelligence.' },
-            { title: 'Place',     text: 'Explore maps of farms, showrooms, labs, and venues.' },
-            { title: 'Event',     text: 'Join expos, festivals, and gatherings worldwide.' },
-            { title: 'Directory', text: 'Find the actors: brands, innovators, farmers, researchers.' },
-          ].map(({ title, text }) => (
-            <details key={title} className="card planet">
-              <summary>
-                <h3>{title}</h3>
-                <span className="caret" aria-hidden />
-              </summary>
-              <p>{text}</p>
-            </details>
-          ))}
+        {/* Vertical, centered accordion */}
+        <div className="cosmos-accordion">
+          {PLANETS.map(({ title, text }, i) => {
+            const isOpen = openIndex === i;
+            return (
+              <div key={title} className={`card planet ${isOpen ? 'is-open' : ''}`} aria-expanded={isOpen}>
+                <button className="planet-summary" onClick={() => toggle(i)}>
+                  <span className="planet-title">{title}</span>
+                  <svg className="chevron" width="16" height="16" viewBox="0 0 24 24" aria-hidden>
+                    <path fill="currentColor" d="M12 15.5l-6-6h12l-6 6z" />
+                  </svg>
+                </button>
+                <div className="planet-content">
+                  <p>{text}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Controls panel — tablet/desktop only */}
+      {/* Drawer (desktop only) */}
       {isDesktop && (
         <GalaxyControls
-          open={open}
-          onClose={() => setOpen(false)}
+          open={openPanel}
+          onClose={() => setOpenPanel(false)}
           state={gs}
           setState={setState}
-          onRandomize={randomize}
-          onReset={reset}
+          onRandomize={() => setState({ seed: Math.floor(Math.random() * 1e9) })}
+          onReset={() => setState(DEFAULTS)}
         />
       )}
     </section>
