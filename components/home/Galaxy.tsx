@@ -96,7 +96,7 @@ export default function Galaxy({
     }
 
     // ----- Dust -----
-    const dust: {x:number;y:number;r:number;a:number}[] = Array.from({length: 250}, () => ({
+    const dust: {x:number;y:number;r:number;a:number}[] = Array.from({length: 330}, () => ({
       x: (rnd() * size - size/2),
       y: (rnd() * size - size/2),
       r: (0.3 + rnd() * 0.9) * dpr,
@@ -143,10 +143,10 @@ export default function Galaxy({
       ctx.fillRect(0, 0, W, H);
 
       // core bloom
-      const core = ctx.createRadialGradient(CX, CY, 0, CX, CY, RMAX * 0.58);
-      core.addColorStop(0.00, 'rgba(255,255,255,0.18)');
-      core.addColorStop(0.35, 'rgba(110,231,183,0.14)');
-      core.addColorStop(0.85, 'rgba(96,165,250,0.04)');
+      const core = ctx.createRadialGradient(CX, CY, 0, CX, CY, RMAX * 0.52);
+      core.addColorStop(0.00, 'rgba(255,255,255,0.12)');
+      core.addColorStop(0.35, 'rgba(110,231,183,0.10)');
+      core.addColorStop(0.85, 'rgba(96,165,250,0.03)');
       core.addColorStop(1.00, 'rgba(0,0,0,0)');
       ctx.globalCompositeOperation = 'lighter';
       ctx.fillStyle = core;
