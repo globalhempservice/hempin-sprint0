@@ -216,3 +216,75 @@ main{flex:1 0 auto}
 @media (prefers-reduced-motion: reduce) {
   .orbital-path.is-animated { animation: none !important; }
 }
+
+/* =========================
+   Phase 4: Hero micro-anim
+   ========================= */
+
+/* highlight sentence in lede */
+.tagline-strong{
+  background-image: linear-gradient(90deg, rgba(110,231,183,.28), rgba(96,165,250,.22));
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  padding: 0 .25rem;
+  border-radius: 6px;
+}
+
+/* CTA “thruster” effect — gradient rim + soft exhaust */
+.btn.thruster{
+  position: relative;
+  isolation: isolate;
+  border: 1px solid transparent;
+  background: linear-gradient(90deg,var(--accent),var(--accent-2)) border-box;
+  -webkit-mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude; /* shows only the border gradient */
+  transition: transform .18s ease, box-shadow .2s ease, filter .2s ease;
+}
+.btn.thruster::after{
+  content:"";
+  position:absolute; inset:-8px;
+  border-radius:14px;
+  background: radial-gradient(40% 60% at 50% 120%, rgba(110,231,183,.28), transparent 70%),
+              radial-gradient(35% 55% at 60% -10%, rgba(96,165,250,.22), transparent 65%);
+  filter: blur(12px);
+  opacity: 0;
+  z-index:-1;
+  transition: opacity .22s ease, transform .22s ease;
+}
+.btn.thruster:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(110,231,183,.25), 0 0 28px rgba(96,165,250,.20);
+}
+.btn.thruster:hover::after{
+  opacity: 1;
+  transform: translateY(2px) scale(1.02);
+}
+.btn.thruster:active{
+  transform: translateY(0);
+  filter: brightness(.98);
+}
+
+/* constellation backdrop */
+.hero-constellation{
+  position: absolute;
+  left: 50%;
+  top: 84px;
+  transform: translateX(-50%);
+  width: min(900px, 92vw);
+  opacity: .0;                 /* fade in */
+  animation: constellationIn .9s ease forwards .2s;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes constellationIn{
+  from{ opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to  { opacity: .55; transform: translateX(-50%) translateY(0); }
+}
+
+/* respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .btn.thruster, .btn.thruster::after { transition: none; }
+  .hero-constellation { animation: none; opacity: .45; }
+}
