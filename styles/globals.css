@@ -193,3 +193,63 @@ main{flex:1 0 auto}
   .btn.thruster,.btn.thruster::before{ transition:none }
   .hero-constellation{ animation:none; opacity:.45 }
 }
+
+/* ===== Display title for section headers (desktop smaller than hero) ===== */
+.display-title{
+  font-weight: 700;
+  line-height: 1.08;
+  font-size: clamp(28px, 4.2vw, 42px);
+  letter-spacing: .01em;
+}
+
+/* ===== Galaxy layer positioning ===== */
+.galaxy-layer{
+  position: relative;
+  height: 0;
+  pointer-events: none;
+}
+.galaxy-wrap{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: -40px;                /* lift behind the title paragraph */
+  width: 100%;
+  max-width: 1100px;
+  opacity: .9;
+  filter: drop-shadow(0 0 24px rgba(96,165,250,.14));
+  z-index: 0;
+}
+.galaxy-canvas{
+  display:block;
+  margin: 0 auto;
+  width: min(92vw, 760px);
+  height: auto;
+  opacity: .85;
+}
+
+/* Respect reduced motion: freeze galaxy (handled in component), soften glow */
+@media (prefers-reduced-motion: reduce){
+  .galaxy-wrap{ filter: none; opacity: .7; }
+}
+
+/* ===== “planets” (cards) micro-interactions ===== */
+.cosmos-cards .planet{
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  will-change: transform, box-shadow;
+}
+.cosmos-cards .planet:hover{
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 0 0 2px rgba(96,165,250,.22), 0 20px 40px rgba(0,0,0,.35);
+  border-color: rgba(96,165,250,.35);
+}
+.cosmos-cards .planet:focus-within{
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(110,231,183,.28), 0 8px 20px rgba(0,0,0,.3);
+  border-color: rgba(110,231,183,.35);
+}
+/* mobile tap “wiggle” */
+@media (hover:none){
+  .cosmos-cards .planet:active{
+    transform: translateY(-1px);
+  }
+}
