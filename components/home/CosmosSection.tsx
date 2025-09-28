@@ -2,10 +2,19 @@ import Galaxy from '@/components/home/Galaxy';
 
 export default function CosmosSection() {
   return (
-    <section id="cosmos" className="section">
+    <section id="cosmos" className="section cosmos-section">
       {/* Background galaxy layer */}
       <div className="galaxy-layer">
-        <Galaxy size={760} stars={1100} arms={4} speed={0.10} opacity={0.48} />
+        <Galaxy
+          size={820}
+          stars={1500}
+          arms={4}
+          speed={0.08}
+          opacity={0.52}
+          seed={20241024}
+          tiltDeg={22}
+          ellipticity={0.68}
+        />
       </div>
 
       <div className="container center">
@@ -20,30 +29,21 @@ export default function CosmosSection() {
         </p>
 
         <div className="cards mt-10 cosmos-cards">
-          <div className="card planet">
-            <h3>Market</h3>
-            <p>Discover hemp products and materials across industries.</p>
-          </div>
-          <div className="card planet">
-            <h3>Fund</h3>
-            <p>Back regenerative projects, campaigns, and infrastructure.</p>
-          </div>
-          <div className="card planet">
-            <h3>Knowledge</h3>
-            <p>Access science, craft, and shared cultural intelligence.</p>
-          </div>
-          <div className="card planet">
-            <h3>Place</h3>
-            <p>Explore maps of farms, showrooms, labs, and venues.</p>
-          </div>
-          <div className="card planet">
-            <h3>Event</h3>
-            <p>Join expos, festivals, and gatherings worldwide.</p>
-          </div>
-          <div className="card planet">
-            <h3>Directory</h3>
-            <p>Find the actors: brands, innovators, farmers, researchers.</p>
-          </div>
+          {[
+            { title: 'Market',    text: 'Discover hemp products and materials across industries.' },
+            { title: 'Fund',      text: 'Back regenerative projects, campaigns, and infrastructure.' },
+            { title: 'Knowledge', text: 'Access science, craft, and shared cultural intelligence.' },
+            { title: 'Place',     text: 'Explore maps of farms, showrooms, labs, and venues.' },
+            { title: 'Event',     text: 'Join expos, festivals, and gatherings worldwide.' },
+            { title: 'Directory', text: 'Find the actors: brands, innovators, farmers, researchers.' },
+          ].map(({title, text}) => (
+            <details key={title} className="card planet">
+              <summary>
+                <h3>{title}</h3>
+              </summary>
+              <p>{text}</p>
+            </details>
+          ))}
         </div>
       </div>
     </section>
