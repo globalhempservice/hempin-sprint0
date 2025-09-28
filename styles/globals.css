@@ -201,3 +201,18 @@ main{flex:1 0 auto}
 @media (prefers-reduced-motion: reduce) {
   .starfield.layer-a, .starfield.layer-b, .aurora.blob-1, .aurora.blob-2 { animation: none !important; transform: none !important; }
 }
+
+/* Orbital divider styles */
+.orbital-wrap { margin: 28px 0 8px; }
+.orbital-svg { display: block; width: 100%; }
+
+/* Subtle dash drift; disabled via reduced-motion */
+@keyframes orbitDash {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -200; }
+}
+.orbital-path.is-animated { animation: orbitDash 24s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .orbital-path.is-animated { animation: none !important; }
+}
