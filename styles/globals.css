@@ -462,3 +462,33 @@ main{flex:1 0 auto}
   color:#05120e;
 }
 .hud-btn.ghost{ background: transparent; color: var(--text); }
+
+/* Cosmos section should fill the viewport and keep galaxy centered */
+.cosmos-section {
+  position: relative;
+  min-height: 100svh;          /* full screen, safe on mobile browser UI */
+  display: grid;
+  align-items: start;
+  padding-top: clamp(48px, 9vw, 120px);
+  padding-bottom: clamp(48px, 10vw, 120px);
+  overflow: hidden;            /* prevents the galaxy from overlapping next section */
+}
+
+.cosmos-section .container { position: relative; z-index: 2; }
+
+/* Galaxy canvas centered behind content */
+.galaxy-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 1;
+}
+.galaxy-layer .galaxy-canvas { display: block; }
+
+/* Hide the satellite FAB on small screens; keep on tablet/desktop */
+.hud-fab { position: fixed; right: 20px; bottom: 20px; z-index: 30; }
+@media (max-width: 819px) {
+  .hud-fab { display: none; }
+}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Galaxy from '@/components/home/Galaxy';
 import GalaxyControls, { GalaxyState } from '@/components/home/GalaxyControls';
 
@@ -14,13 +14,39 @@ const DEFAULTS: GalaxyState = {
 };
 
 export default function CosmosSection() {
+  // responsive: only show controls on tablet/desktop
+  const [isDesktop, setIsDesktop] = useState<boolean>(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 820px)');
+    const set = () => setIsDesktop(mq.matches);
+    set();
+    mq.addEventListener?.('change', set);
+    return () => mq.removeEventListener?.('change', set);
+  }, []);
+
+  // responsive galaxy size so it stays visible & centered
+  const [galaxySize, setGalaxySize] = useState<number>(820);
+  useEffect(() => {
+    const calc = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      // occupy up to ~70% of the shorter side; clamp for big screens
+      const s = Math.min(Math.max(Math.min(vw, vh) * 0.7, 560), 980);
+      setGalaxySize(Math.round(s));
+    };
+    calc();
+    window.addEventListener('resize', calc, { passive: true });
+    return () => window.removeEventListener('resize', calc);
+  }, []);
+
   const [open, setOpen] = useState(false);
   const [gs, setGs] = useState<GalaxyState>(() => {
-    // restore last user settings if present
     try {
       const raw = localStorage.getItem('hempin.galaxy');
       return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS;
-    } catch { return DEFAULTS; }
+    } catch {
+      return DEFAULTS;
+    }
   });
 
   const setState = (next: Partial<GalaxyState>) => {
@@ -31,17 +57,11 @@ export default function CosmosSection() {
     });
   };
 
-  const randomize = () => {
-    const randSeed = Math.floor(Math.random() * 1e9);
-    setState({ seed: randSeed });
-  };
-
+  const randomize = () => setState({ seed: Math.floor(Math.random() * 1e9) });
   const reset = () => setState(DEFAULTS);
 
-  // Keep heavy rebuilds tidy: when stars or seed change, Galaxy will recompute buffers,
-  // but the other props are super cheap and animate instantly.
   const galaxyProps = useMemo(() => ({
-    size: 820,
+    size: galaxySize,
     arms: gs.arms,
     stars: gs.stars,
     speed: gs.speed,
@@ -49,20 +69,21 @@ export default function CosmosSection() {
     seed: gs.seed,
     tiltDeg: gs.tiltDeg,
     ellipticity: gs.ellipticity,
-    // expose meteors as a prop your Galaxy already respects (if not, ignore)
     meteors: gs.meteors,
-  }), [gs]);
+  }), [galaxySize, gs]);
 
   return (
     <section id="cosmos" className="section cosmos-section">
-      {/* Satellite FAB (only visible while section is in view) */}
-      <button
-        className="hud-fab"
-        aria-label="Tweak galaxy"
-        onClick={() => setOpen(true)}
-      >
-        <span className="satellite" />
-      </button>
+      {/* Satellite FAB — tablet/desktop only */}
+      {isDesktop && (
+        <button
+          className="hud-fab"
+          aria-label="Tweak galaxy"
+          onClick={() => setOpen(true)}
+        >
+          <span className="satellite" />
+        </button>
+      )}
 
       {/* Background galaxy layer */}
       <div className="galaxy-layer">
@@ -88,23 +109,29 @@ export default function CosmosSection() {
             { title: 'Place',     text: 'Explore maps of farms, showrooms, labs, and venues.' },
             { title: 'Event',     text: 'Join expos, festivals, and gatherings worldwide.' },
             { title: 'Directory', text: 'Find the actors: brands, innovators, farmers, researchers.' },
-          ].map(({title, text}) => (
+          ].map(({ title, text }) => (
             <details key={title} className="card planet">
-              <summary><h3>{title}</h3><span className="caret" aria-hidden /></summary>
+              <summary>
+                <h3>{title}</h3>
+                <span className="caret" aria-hidden />
+              </summary>
               <p>{text}</p>
             </details>
           ))}
         </div>
       </div>
 
-      <GalaxyControls
-        open={open}
-        onClose={() => setOpen(false)}
-        state={gs}
-        setState={setState}
-        onRandomize={randomize}
-        onReset={reset}
-      />
+      {/* Controls panel — tablet/desktop only */}
+      {isDesktop && (
+        <GalaxyControls
+          open={open}
+          onClose={() => setOpen(false)}
+          state={gs}
+          setState={setState}
+          onRandomize={randomize}
+          onReset={reset}
+        />
+      )}
     </section>
   );
 }
