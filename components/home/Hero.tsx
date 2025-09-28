@@ -53,16 +53,16 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Orion — centered, under the copy */}
+      {/* Orion — centered, scaled & lifted so it never gets cropped on desktop */}
       <div
         aria-hidden
         style={{
           position: 'absolute',
           left: '50%',
-          top: '62%',
+          top: '56%',                           // lift slightly
           transform: 'translate(-50%, -50%)',
-          width: 'min(1000px, 88vw)',
-          opacity: 0.28,                        // softer for readability
+          width: 'min(920px, 84vw)',            // a touch smaller for clearance
+          opacity: 0.26,                        // softer for readability
           pointerEvents: 'none',
           filter: 'drop-shadow(0 0 24px rgba(96,165,250,.16))',
           zIndex: 1
@@ -126,7 +126,6 @@ export default function Hero() {
         </svg>
       </div>
 
-      {/* Keep the soft emerald glow confined to the hero */}
       <div className="hero-glow" aria-hidden />
     </section>
   );
