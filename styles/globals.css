@@ -274,34 +274,108 @@ main{flex:1 0 auto}
 .galaxy-wrap{ display:flex; justify-content:center; }
 .galaxy-canvas{ width: 100%; height: auto; filter: drop-shadow(0 0 22px rgba(96,165,250,.15)); }
 
-/* --- Planet cards (title-first, expandable) --- */
-.cosmos-cards{ position: relative; z-index: 1; }
+/* Cosmos — layout tweaks */
+.cosmos-section { position: relative; overflow: hidden; }
+.galaxy-layer { position: absolute; inset: 0; display:flex; justify-content:center; pointer-events:none; z-index:0; }
+.galaxy-layer .galaxy-wrap { margin-top: 18px; opacity: .9; }
 
-/* reset details/summary defaults */
-.cosmos-cards .planet { cursor: pointer; position: relative; transition: transform .18s ease, box-shadow .2s ease; }
-.cosmos-cards .planet summary { list-style: none; }
-.cosmos-cards .planet summary::-webkit-details-marker { display: none; }
-
-/* title visible; description collapsed by default */
-.cosmos-cards .planet p { max-height: 0; opacity: 0; overflow: hidden; transition: max-height .22s ease, opacity .22s ease; }
-
-/* hover / focus ring (glow ring + scale) */
-.cosmos-cards .planet:hover,
-.cosmos-cards .planet:focus-within{ transform: translateY(-1px) scale(1.02);
-  box-shadow: 0 0 0 1px rgba(255,255,255,.09), 0 0 18px rgba(110,231,183,.18), 0 0 24px rgba(96,165,250,.16);
+/* Big section title style */
+.display-title{
+  font-size: clamp(28px, 4.4vw, 48px);
+  line-height: 1.08;
+  font-weight: 800;
+  letter-spacing: .01em;
+  margin-bottom: 6px;
 }
 
-/* open state expands text */
-.cosmos-cards .planet[open] p { max-height: 200px; opacity: .95; margin-top: 6px; }
+/* Cards grid stays responsive */
+.cosmos-cards { position: relative; z-index: 1; }
 
-/* mobile tap wiggle  */
-@keyframes tapWiggle { 0%{ transform: translateY(-1px);} 100%{ transform: translateY(0);} }
+/* Planet cards: hover ring + tidy expansion */
+.card.planet{
+  position: relative;
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 0; /* we’ll handle padding inside */
+  overflow: hidden;
+  transition: transform .18s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+@media (hover:hover){
+  .card.planet:hover{
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 0 1px rgba(110,231,183,.25) inset,
+      0 10px 26px rgba(0,0,0,.35),
+      0 0 24px rgba(96,165,250,.18);
+    border-color: rgba(255,255,255,0.12);
+  }
+}
+
+/* Clickable header */
+.planet-summary{
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.planet-title{
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+
+.chevron{
+  opacity: .85;
+  transition: transform .18s ease, opacity .18s ease;
+}
+
+.card.planet[aria-expanded="true"] .chevron,
+.card.planet.is-open .chevron{
+  transform: rotate(180deg);
+}
+
+/* Collapsible content */
+.planet-content{
+  padding: 0 16px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height .28s ease, opacity .22s ease;
+}
+
+.card.planet.is-open .planet-content{
+  padding-bottom: 14px;
+  max-height: 160px; /* plenty for our single paragraph */
+  opacity: 1;
+}
+
+/* Active/open state accent */
+.card.planet.is-open{
+  box-shadow:
+    0 0 0 1px rgba(110,231,183,.35) inset,
+    0 0 34px rgba(96,165,250,.16);
+  border-color: rgba(255,255,255,0.16);
+}
+
+/* Subtle focus ring for keyboard users */
+.planet-summary:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(96,165,250,.55);
+  border-radius: 10px;
+}
+
+/* Mobile neon issue guard (remove accidental focus style bleed) */
 @media (hover:none){
-  .cosmos-cards .planet:active{ animation: tapWiggle .12s ease; }
-}
-
-/* reduced motion: simplify */
-@media (prefers-reduced-motion: reduce){
-  .cosmos-cards .planet,
-  .cosmos-cards .planet p{ transition: none; }
+  .planet-summary:focus { box-shadow: none; }
 }
