@@ -1,21 +1,17 @@
 export default function Hero() {
-  // Orion points in a tidy 200×160 viewBox (roughly proportioned to reference),
-  // names kept for readability if you want to label later.
+  // Orion points in a tidy 200×160 viewBox (approximate to reference)
   const stars = {
-    Betelgeuse: { x: 40,  y: 25 },  // left shoulder
-    Bellatrix:  { x: 115, y: 20 },  // right shoulder
-    Saiph:      { x: 50,  y: 140 }, // left foot
-    Rigel:      { x: 130, y: 150 }, // right foot
-    // Belt (left→right)
+    Betelgeuse: { x: 40,  y: 25 },
+    Bellatrix:  { x: 115, y: 20 },
+    Saiph:      { x: 50,  y: 140 },
+    Rigel:      { x: 130, y: 150 },
     Alnitak:    { x: 72,  y: 90 },
     Alnilam:    { x: 92,  y: 92 },
     Mintaka:    { x: 112, y: 88 },
-    // Right arm (club)
     Club1:      { x: 155, y: 90 },
     Club2:      { x: 165, y: 115 },
   };
 
-  // Helper to render a star with a soft colorful glow
   const Star = ({ x, y, r = 3 }: { x: number; y: number; r?: number }) => (
     <>
       <circle cx={x} cy={y} r={r * 3.2} fill="url(#starGlow)" opacity="0.35" />
@@ -26,12 +22,11 @@ export default function Hero() {
 
   return (
     <section className="hero">
-      <div className="container center">
+      <div className="container center" style={{ position: 'relative', zIndex: 2, paddingTop: 8 }}>
         <p className="eyebrow" style={{ letterSpacing: '0.22em' }}>inOS</p>
 
         <h1>An operating system for a living world</h1>
 
-        {/* Key line — highlighted pill */}
         <p
           className="pill"
           style={{
@@ -41,47 +36,45 @@ export default function Hero() {
             padding: '10px 16px',
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: 12,
+            borderRadius: 12
           }}
         >
           Hemp’in translates the hemp universe into practical tools for people and industry
         </p>
 
-        {/* Support line */}
         <p className="lede" style={{ marginTop: 12 }}>
           connecting science, markets, places, and culture through WORK and LIFE dimensions.
         </p>
 
-        {/* Primary CTA only */}
         <div className="cta-row" style={{ marginTop: 24 }}>
-          <a href="#cta" className="btn primary">Join the launch list</a>
+          <a href="#cta" className="btn primary thruster" style={{ position: 'relative', zIndex: 3 }}>
+            Join the launch list
+          </a>
         </div>
       </div>
 
-      {/* Orion — large, subtle, behind the CTA */}
+      {/* Orion — centered, under the copy */}
       <div
-        className="hero-orion"
         aria-hidden
         style={{
           position: 'absolute',
           left: '50%',
-          transform: 'translateX(-50%)',
-          bottom: '9vh',             // lift constellation so CTA sits above the fold
-          width: 'min(900px, 92vw)', // responsive width cap
-          opacity: 0.55,
+          top: '62%',
+          transform: 'translate(-50%, -50%)',
+          width: 'min(1000px, 88vw)',
+          opacity: 0.28,                        // softer for readability
           pointerEvents: 'none',
-          filter: 'drop-shadow(0 0 28px rgba(96,165,250,.18))',
+          filter: 'drop-shadow(0 0 24px rgba(96,165,250,.16))',
+          zIndex: 1
         }}
       >
         <svg viewBox="0 0 200 160" width="100%" height="auto">
           <defs>
-            {/* aurora stroke for lines */}
             <linearGradient id="auroraStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%"   stopColor="rgba(110,231,183,.85)" />
-              <stop offset="55%"  stopColor="rgba(96,165,250,.85)" />
-              <stop offset="100%" stopColor="rgba(244,114,182,.85)" />
+              <stop offset="0%"   stopColor="rgba(110,231,183,.9)" />
+              <stop offset="55%"  stopColor="rgba(96,165,250,.9)" />
+              <stop offset="100%" stopColor="rgba(244,114,182,.9)" />
             </linearGradient>
-            {/* star glow & core */}
             <radialGradient id="starGlow">
               <stop offset="0%"  stopColor="rgba(255,255,255,0.85)" />
               <stop offset="35%" stopColor="rgba(96,165,250,0.55)" />
@@ -91,7 +84,6 @@ export default function Hero() {
               <stop offset="0%"  stopColor="#E6FDF7" />
               <stop offset="100%" stopColor="#B7E9FF" />
             </radialGradient>
-            {/* soft outer glow for lines */}
             <filter id="lineGlow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="1.4" result="b" />
               <feMerge>
@@ -101,57 +93,24 @@ export default function Hero() {
             </filter>
           </defs>
 
-          {/* Trapezium & limbs (main figure) */}
+          {/* Trapezium & limbs */}
           <polyline
-            points={`
-              ${stars.Betelgeuse.x},${stars.Betelgeuse.y}
-              ${stars.Alnilam.x},${stars.Alnilam.y}
-              ${stars.Bellatrix.x},${stars.Bellatrix.y}
-            `}
-            fill="none"
-            stroke="url(#auroraStroke)"
-            strokeWidth="1.2"
-            filter="url(#lineGlow)"
-            opacity="0.8"
+            points={`${stars.Betelgeuse.x},${stars.Betelgeuse.y} ${stars.Alnilam.x},${stars.Alnilam.y} ${stars.Bellatrix.x},${stars.Bellatrix.y}`}
+            fill="none" stroke="url(#auroraStroke)" strokeWidth="1.2" filter="url(#lineGlow)" opacity="0.85"
           />
           <polyline
-            points={`
-              ${stars.Saiph.x},${stars.Saiph.y}
-              ${stars.Betelgeuse.x},${stars.Betelgeuse.y}
-              ${stars.Rigel.x},${stars.Rigel.y}
-              ${stars.Saiph.x},${stars.Saiph.y}
-            `}
-            fill="none"
-            stroke="url(#auroraStroke)"
-            strokeWidth="1.2"
-            filter="url(#lineGlow)"
-            opacity="0.8"
+            points={`${stars.Saiph.x},${stars.Saiph.y} ${stars.Betelgeuse.x},${stars.Betelgeuse.y} ${stars.Rigel.x},${stars.Rigel.y} ${stars.Saiph.x},${stars.Saiph.y}`}
+            fill="none" stroke="url(#auroraStroke)" strokeWidth="1.2" filter="url(#lineGlow)" opacity="0.85"
           />
           {/* Shoulder to club */}
           <polyline
-            points={`
-              ${stars.Bellatrix.x},${stars.Bellatrix.y}
-              ${stars.Club1.x},${stars.Club1.y}
-              ${stars.Club2.x},${stars.Club2.y}
-            `}
-            fill="none"
-            stroke="url(#auroraStroke)"
-            strokeWidth="1.2"
-            filter="url(#lineGlow)"
-            opacity="0.8"
+            points={`${stars.Bellatrix.x},${stars.Bellatrix.y} ${stars.Club1.x},${stars.Club1.y} ${stars.Club2.x},${stars.Club2.y}`}
+            fill="none" stroke="url(#auroraStroke)" strokeWidth="1.2" filter="url(#lineGlow)" opacity="0.85"
           />
           {/* Belt */}
           <polyline
-            points={`
-              ${stars.Alnitak.x},${stars.Alnitak.y}
-              ${stars.Alnilam.x},${stars.Alnilam.y}
-              ${stars.Mintaka.x},${stars.Mintaka.y}
-            `}
-            fill="none"
-            stroke="url(#auroraStroke)"
-            strokeWidth="1.4"
-            filter="url(#lineGlow)"
-            opacity="0.9"
+            points={`${stars.Alnitak.x},${stars.Alnitak.y} ${stars.Alnilam.x},${stars.Alnilam.y} ${stars.Mintaka.x},${stars.Mintaka.y}`}
+            fill="none" stroke="url(#auroraStroke)" strokeWidth="1.4" filter="url(#lineGlow)" opacity="0.95"
           />
 
           {/* Stars */}
