@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import EmailCTA from '@/components/EmailCTA';
 
 type Mode = 'LIFE' | 'WORK';
@@ -7,20 +7,14 @@ export default function DimensionSection() {
   const [mode, setMode] = useState<Mode>('LIFE');
   const [warping, setWarping] = useState(false);
 
-  // start a warp and swap mode midway through the animation
+  // Start a warp; flip the mode halfway through so the effect covers the change
   const triggerWarp = (next: Mode) => {
     if (warping || next === mode) return;
     setWarping(true);
-    // swap halfway so the warp covers the change
-    setTimeout(() => setMode(next), 320);
+    const flip = window.setTimeout(() => setMode(next), 350);   // halfway
+    const stop = window.setTimeout(() => setWarping(false), 900);
+    return () => { clearTimeout(flip); clearTimeout(stop); };
   };
-
-  // stop warp overlay
-  useEffect(() => {
-    if (!warping) return;
-    const t = setTimeout(() => setWarping(false), 900);
-    return () => clearTimeout(t);
-  }, [warping]);
 
   return (
     <section id="dimensions" className="section dim-section">
@@ -43,8 +37,10 @@ export default function DimensionSection() {
             LIFE
           </button>
 
+          {/* data-mode avoids class churn and keeps CSS simple */}
           <div
-            className={`dim-switch ${mode.toLowerCase()} ${warping ? 'warping' : ''}`}
+            className={`dim-switch ${warping ? 'warping' : ''}`}
+            data-mode={mode.toLowerCase()}
             aria-hidden
           >
             <span className="nub" />
@@ -62,12 +58,11 @@ export default function DimensionSection() {
           </button>
         </div>
 
-        {/* Spaceship outfit line sits between the switch and the previews */}
         <p className="muted dim-quip">
           Switching dimensions is like changing your spaceship outfit — same vessel, new instruments.
         </p>
 
-        {/* Warp overlay (cone + streaks) plays while swapping */}
+        {/* Warp overlay above the stage */}
         <div className={`warp-overlay ${warping ? 'on' : ''}`} aria-hidden>
           <div className="warp-cone" />
           <div className="warp-stars" />
@@ -80,20 +75,18 @@ export default function DimensionSection() {
         </div>
 
         {/* CTA */}
-       
-<div className="cta-row" style={{ marginTop: 20 }}>
-  <div className="muted" style={{ marginBottom: 10 }}>
-    Be the first to know about the Hemp’in mobile app release.
-  </div>
-  <EmailCTA role={mode.toLowerCase()} />
-</div>
-
+        <div className="cta-row" style={{ marginTop: 20 }}>
+          <div className="muted" style={{ marginBottom: 10 }}>
+            Be the first to know about the Hemp’in mobile app release.
+          </div>
+          <EmailCTA role={mode.toLowerCase()} />
+        </div>
       </div>
     </section>
   );
 }
 
-/* ---------------- Mini “app” previews (unchanged visuals) ---------------- */
+/* ---------------- Mini “app” previews ---------------- */
 
 function PanelLife({ active }: { active: boolean }) {
   return (
@@ -148,18 +141,14 @@ function PanelWork({ active }: { active: boolean }) {
   );
 }
 
-/* ------------- tiny building blocks ------------- */
 function Header({ title, rightIcons }: { title: string; rightIcons: string[] }) {
   return (
     <div className="ui-header">
       <div className="brand">{title}</div>
-      <div className="actions">
-        {rightIcons.map((i, idx) => <span key={idx} aria-hidden>{i}</span>)}
-      </div>
+      <div className="actions">{rightIcons.map((i, idx) => <span key={idx} aria-hidden>{i}</span>)}</div>
     </div>
   );
 }
-
 function List({ items, plus }: { items: [string,string,string][]; plus?: boolean }) {
   return (
     <ul className="ui-list">
@@ -173,24 +162,16 @@ function List({ items, plus }: { items: [string,string,string][]; plus?: boolean
     </ul>
   );
 }
-
 function Cards({ labels, variant }: { labels: string[]; variant: 'life'|'work' }) {
-  return (
-    <div className={`ui-cards ${variant}`}>
-      {labels.map(l => <div className="ui-card" key={l}>{l}</div>)}
-    </div>
-  );
+  return <div className={`ui-cards ${variant}`}>{labels.map(l => <div className="ui-card" key={l}>{l}</div>)}</div>;
 }
-
 function Charts() {
   return (
     <div className="ui-charts">
       <div className="bar"><span style={{width:'62%'}} /></div>
       <div className="bar"><span style={{width:'38%'}} /></div>
       <div className="bar"><span style={{width:'78%'}} /></div>
-      <div className="grid">
-        {Array.from({length:8}).map((_,i)=> <div className="cell" key={i} />)}
-      </div>
+      <div className="grid">{Array.from({length:8}).map((_,i)=> <div className="cell" key={i} />)}</div>
     </div>
   );
 }
