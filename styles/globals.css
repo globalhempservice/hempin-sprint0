@@ -960,12 +960,43 @@ main{flex:1 0 auto}
   .tool-tile:hover .phone--tile{ transform:none; }
 }
 
+/* Tools grid: mobile 1×N, tablet/desktop 2×2 */
+.tools-grid{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 10px;
+}
+@media (min-width: 820px){
+  .tools-grid{ grid-template-columns: 1fr 1fr; }
+}
+.card.tool{ padding: 16px; }
+
+/* rounded capsule meters */
+.tool-meters{ display:grid; gap:8px; margin:8px 0 6px; }
+.tool-meters .meter{
+  height: 10px; border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  overflow: hidden;
+}
+.tool-meters .meter span{
+  display:block; height:100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+/* tidy bullets */
+.bullets{ margin: 8px 0 0; padding-left: 18px; }
+.tool-title{ margin-top: 0; }
+
 /* ===== Roadmap (present -> future perspective crawl) ===== */
 .roadmap-section{ position: relative; overflow: hidden; }
 .roadmap-section .container{ position: relative; z-index: 2; }
 
-/* subtle starfield */
-.roadmap-space{ position:absolute; inset:0; pointer-events:none; z-index:0; opacity:.75; }
+/* starfield vibe */
+.roadmap-space{
+  position:absolute; inset:0; pointer-events:none; z-index:0; opacity:.75;
+}
 .roadmap-space .stars{
   position:absolute; inset:-10% -10% -20% -10%;
   background-image:
@@ -978,42 +1009,40 @@ main{flex:1 0 auto}
 }
 .roadmap-space .stars.parallax-b{
   background-size: 320px 320px, 380px 380px, 460px 460px;
-  opacity:.55;
-  animation: roadmapDriftB 220s linear infinite;
+  opacity:.55; animation: roadmapDriftB 220s linear infinite;
 }
 @keyframes roadmapDriftA{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-120px,-80px,0)}}
 @keyframes roadmapDriftB{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(140px,-100px,0)}}
 
-/* vertical lane */
 .star-lane{
-  position:absolute; left:50%; top:8%; bottom:10%;
+  position:absolute; left:50%; top:12%; bottom:10%;
   width:2px; transform:translateX(-50%);
   background: linear-gradient(180deg, rgba(96,165,250,.0), rgba(96,165,250,.35), rgba(110,231,183,.0));
-  box-shadow: 0 0 18px rgba(96,165,250,.28);
-  opacity:.55;
+  box-shadow: 0 0 18px rgba(96,165,250,.28); opacity:.55;
 }
 
 /* perspective track */
 .roadmap-wrap{
-  margin: 16px auto 0;
-  max-width: 900px;
-  padding: 8px 0 120px; /* room for the closest card */
-  perspective: 1000px;
+  margin: 10px auto 0;
+  max-width: 880px;
+  padding: 14px 0 12px;               /* breathing room so title never overlaps */
+  perspective: 900px;
 }
 .roadmap-track{
   position: relative;
   transform-style: preserve-3d;
-  transform: rotateX(14deg) translateY(120px); /* drop stack so “Now” sits lower */
+  transform: rotateX(12deg) translateY(40px); /* push stack down from title */
 }
 
-/* milestones: stack with Y offset, depth via scale (no translateZ) */
+/* stacked cards with depth */
 .milestone{
-  --stepY: 220px;   /* vertical spacing between items (bigger = less overlap) */
-  --scaleDrop: .12; /* shrink per step */
+  --stepY: 120px;     /* vertical separation */
+  --stepZ: 150px;     /* depth separation */
+  --scaleDrop: .1;    /* scale change by depth */
 
   position: relative;
   margin: 0 auto;
-  width: min(760px, 92%);
+  width: min(720px, 92%);
   background: rgba(255,255,255,.045);
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 14px;
@@ -1023,15 +1052,13 @@ main{flex:1 0 auto}
     0 8px 28px rgba(0,0,0,.35);
   backdrop-filter: blur(2px);
 
-  /* depth: push upward by step, shrink a bit */
   transform:
-    translateY(calc(var(--depth) * -1 * var(--stepY)))
+    translate3d(0, calc(var(--depth) * -1 * var(--stepY)), calc(var(--depth) * -1 * var(--stepZ)))
     scale(calc(1 - var(--depth) * var(--scaleDrop)));
   transform-origin: center center;
-
-  /* layer the closest on top */
-  z-index: calc(100 - var(--depth));
 }
+.roadmap-track{ padding-top: 6px; }
+.roadmap-track::after{ content:""; display:block; height: 100px; }
 
 .milestone-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .milestone .chip{
@@ -1042,7 +1069,6 @@ main{flex:1 0 auto}
 }
 .milestone-title{ font-weight:800; letter-spacing:.01em; }
 
-/* hover polish */
 @media (hover:hover){
   .milestone:hover{
     box-shadow:
@@ -1053,11 +1079,11 @@ main{flex:1 0 auto}
   }
 }
 
-/* reduced motion */
+/* Reduced motion: flat list */
 @media (prefers-reduced-motion: reduce){
-  .roadmap-wrap{ perspective: none; padding-bottom: 0; }
+  .roadmap-wrap{ perspective: none; }
   .roadmap-track{ transform: none; }
-  .milestone{ transform: none; z-index: auto; }
+  .milestone{ transform: none; }
   .roadmap-space,.star-lane{ display:none; }
 }
 
@@ -1128,4 +1154,22 @@ main{flex:1 0 auto}
   display: grid;
   gap: 10px;
   justify-items: center;
+}
+
+/* CTA layout helpers (don’t touch EmailCTA internals) */
+.cta-form.stack{
+  max-width: 520px;
+  margin: 0 auto;
+}
+.cta-form.stack form{
+  display: grid;
+  gap: 10px;
+  justify-items: stretch;
+}
+.cta-form.stack input[type="email"],
+.cta-form.stack input[type="text"]{
+  width: 100%;
+}
+.cta-form.stack button{
+  width: 100%;
 }

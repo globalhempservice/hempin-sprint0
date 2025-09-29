@@ -9,19 +9,19 @@ export default function RoadmapSection() {
   return (
     <section id="roadmap" className="section roadmap-section">
       <div className="container">
-        {/* Background space lane */}
+        {/* background stars + center lane */}
         <div className="roadmap-space" aria-hidden>
           <div className="stars parallax-a" />
           <div className="stars parallax-b" />
           <div className="star-lane" />
         </div>
 
-        {/* H2 uses the same size as other sections */}
-        <h2 className="display-title hemp-underline-aurora center">Road ahead</h2>
+        {/* H2 uses same scale as other sections */}
+        <h2 className="display-title center hemp-underline-aurora">Road ahead</h2>
 
-        {/* Perspective crawl */}
+        {/* 3D crawl */}
         <div className="roadmap-wrap" role="list">
-          <div className="roadmap-track roadmap-offset">
+          <div className="roadmap-track">
             {items.map((it, i) => (
               <article
                 key={it.when}
