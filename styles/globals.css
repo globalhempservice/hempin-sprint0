@@ -959,3 +959,126 @@ main{flex:1 0 auto}
 @media (prefers-reduced-motion: reduce){
   .tool-tile:hover .phone--tile{ transform:none; }
 }
+
+/* ===== Roadmap (present -> future perspective crawl) ===== */
+.roadmap-section{ position: relative; overflow: hidden; }
+.roadmap-section .container{ position: relative; z-index: 2; }
+
+/* subtle starfield reused vibe */
+.roadmap-space{
+  position:absolute; inset:0;
+  pointer-events:none; z-index:0;
+  opacity:.75;
+}
+.roadmap-space .stars{
+  position:absolute; inset:-10% -10% -20% -10%;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,.45) 50%, transparent 51%),
+    radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.5) 50%, transparent 51%);
+  background-size: 260px 260px, 320px 320px, 420px 420px;
+  animation: roadmapDriftA 160s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(255,255,255,.2));
+}
+.roadmap-space .stars.parallax-b{
+  background-size: 320px 320px, 380px 380px, 460px 460px;
+  opacity:.55;
+  animation: roadmapDriftB 220s linear infinite;
+}
+@keyframes roadmapDriftA{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-120px,-80px,0)}}
+@keyframes roadmapDriftB{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(140px,-100px,0)}}
+
+/* a vertical “lane” like your orbital divider, but subtle */
+.star-lane{
+  position:absolute; left:50%; top:8%; bottom:10%;
+  width:2px; transform:translateX(-50%);
+  background: linear-gradient(180deg, rgba(96,165,250,.0), rgba(96,165,250,.35), rgba(110,231,183,.0));
+  box-shadow: 0 0 18px rgba(96,165,250,.28);
+  opacity:.55;
+}
+
+/* perspective crawl */
+.roadmap-wrap{
+  margin: 16px auto 0;
+  max-width: 880px;
+  padding: 8px 0 18px;
+  perspective: 900px;
+}
+.roadmap-track{
+  position: relative;
+  transform-style: preserve-3d;
+  /* tilt the whole track away so top looks farther */
+  transform: rotateX(12deg);
+}
+
+/* Each milestone sits on the track with depth-based transforms */
+.milestone{
+  --stepY: 110px;      /* vertical spacing between items (pre-tilt) */
+  --stepZ: 140px;      /* how much farther each item sits */
+  --minScale: .72;     /* farthest scale */
+  --scaleDrop: .08;    /* scale change per depth step */
+
+  position: relative;
+  margin: 0 auto;
+  width: min(720px, 92%);
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.05) inset,
+    0 8px 28px rgba(0,0,0,.35);
+  backdrop-filter: blur(2px);
+
+  /* Depth math: Now (depth=0) closest near bottom, others rise and shrink */
+  transform:
+    translate3d(0, calc(var(--depth) * -1 * var(--stepY)), calc(var(--depth) * -1 * var(--stepZ)))
+    scale(calc(1 - var(--depth) * var(--scaleDrop)));
+  /* anchor around center so scale feels natural */
+  transform-origin: center center;
+
+  /* slight lane alignment toward center */
+  left: 0; right: 0;
+}
+
+/* pull the whole stack down so the closest (Now) is near bottom */
+.roadmap-track::after{
+  content:"";
+  display:block;
+  height: calc(80px + 1px); /* add bottom breathing room */
+}
+.roadmap-track{ padding-top: 30px; }
+
+/* Little time chip + nicer title */
+.milestone-head{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.milestone .chip{
+  font-size:.8rem; letter-spacing:.12em; text-transform:uppercase;
+  padding:6px 10px; border-radius:999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+}
+.milestone-title{
+  font-weight:800; letter-spacing:.01em;
+}
+
+/* Hover focus: light “tractor beam” */
+@media (hover:hover){
+  .milestone:hover{
+    box-shadow:
+      0 0 0 1px rgba(110,231,183,.25) inset,
+      0 10px 36px rgba(0,0,0,.4),
+      0 0 28px rgba(96,165,250,.18);
+    border-color: rgba(255,255,255,.12);
+  }
+}
+
+/* Reduced motion: flatten to a simple vertical list */
+@media (prefers-reduced-motion: reduce){
+  .roadmap-wrap{ perspective: none; }
+  .roadmap-track{ transform: none; }
+  .milestone{ transform: none; }
+  .roadmap-space{ display:none; }
+  .star-lane{ display:none; }
+}
