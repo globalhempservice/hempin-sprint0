@@ -72,7 +72,7 @@ export default function EmailCTA({
         disabled={status === 'loading'}
         className="shrink-0 rounded-md px-4 py-2 ring-1 ring-emerald-400/50 bg-emerald-500/20 hover:bg-emerald-500/25"
       >
-        {status === 'loading' ? 'Sending…' : 'Join'}
+        {status === 'loading' ? 'Sending…' : 'Send'}
       </button>
       {msg && (
         <div
