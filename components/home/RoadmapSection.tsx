@@ -9,36 +9,33 @@ export default function RoadmapSection() {
   return (
     <section id="roadmap" className="section roadmap-section">
       <div className="container">
-        {/* Space lane visuals go behind */}
+        {/* Background space lane */}
         <div className="roadmap-space" aria-hidden>
           <div className="stars parallax-a" />
           <div className="stars parallax-b" />
           <div className="star-lane" />
         </div>
 
-        {/* Title now below visuals */}
-        <h2 className="center hemp-underline-aurora">Road ahead</h2>
+        {/* H2 uses the same size as other sections */}
+        <h2 className="display-title hemp-underline-aurora center">Road ahead</h2>
 
-        {/* 3D crawl */}
+        {/* Perspective crawl */}
         <div className="roadmap-wrap" role="list">
-          <div className="roadmap-track">
-            {items.map((it, i) => {
-              const depth = i; // 0..3
-              return (
-                <article
-                  key={it.when}
-                  role="listitem"
-                  className="milestone"
-                  style={{ ['--depth' as any]: depth }}
-                >
-                  <header className="milestone-head">
-                    <span className="chip">{it.when}</span>
-                    <strong className="milestone-title">{it.title}</strong>
-                  </header>
-                  <p className="muted">{it.detail}</p>
-                </article>
-              );
-            })}
+          <div className="roadmap-track roadmap-offset">
+            {items.map((it, i) => (
+              <article
+                key={it.when}
+                role="listitem"
+                className="milestone"
+                style={{ ['--depth' as any]: i }}
+              >
+                <header className="milestone-head">
+                  <span className="chip">{it.when}</span>
+                  <strong className="milestone-title">{it.title}</strong>
+                </header>
+                <p className="muted">{it.detail}</p>
+              </article>
+            ))}
           </div>
         </div>
       </div>
