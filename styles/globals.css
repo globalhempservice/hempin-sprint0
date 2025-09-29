@@ -1154,3 +1154,108 @@ main{flex:1 0 auto}
     .cta-planet::before,
     .cta-planet::after{ filter:none; box-shadow:none; }
   }
+
+  /* ===== CTA — Planet horizon at the top edge ===== */
+.horizon-cta{
+  position: relative;
+  /* a subtle space-to-atmosphere shift */
+  background:
+    linear-gradient(180deg, rgba(5,6,10,0) 0%, rgba(8,14,16,0.75) 38%, rgba(8,14,16,0.92) 100%);
+  overflow: hidden;
+  padding-top: clamp(70px, 16vh, 180px);
+  padding-bottom: clamp(48px, 10vh, 120px);
+}
+
+/* Big curved “planet” peeking in from above */
+.horizon-cta::before{
+  content:"";
+  position:absolute;
+  left:-12%; right:-12%;
+  top: calc(-70svh + 1px);         /* pulls the ellipse up so only the rim shows */
+  height: 120svh;                  /* huge ellipse for a gentle curve */
+  border-radius: 50%;
+  /* layered radial gradients = oceans + land hints + atmosphere */
+  background:
+    radial-gradient(120% 90% at 50% 86%,
+      rgba(0,0,0,0) 62%,
+      rgba(0,0,0,0.35) 68%,
+      rgba(0,0,0,0.6) 75%,
+      rgba(0,0,0,0) 78%),                          /* night-side fade under rim */
+    radial-gradient(140% 95% at 50% 100%,
+      rgba(35,120,95,0.22) 0%,
+      rgba(26,112,94,0.28) 36%,
+      rgba(28,102,120,0.28) 51%,
+      rgba(20,88,112,0.3) 63%,
+      rgba(12,36,52,0.32) 72%,
+      rgba(0,0,0,0) 78%);                          /* oceans -> deep space */
+  filter: blur(0.8px);
+  z-index: 0;
+}
+
+/* Thin atmospheric rim / sunrise glint */
+.horizon-cta::after{
+  content:"";
+  position:absolute;
+  left:-12%; right:-12%;
+  top: calc( -1px + clamp(12svh, 22svh, 28svh) );
+  height: 5px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg,
+      rgba(110,231,183,.0) 0%,
+      rgba(110,231,183,.55) 18%,
+      rgba(96,165,250,.55) 50%,
+      rgba(110,231,183,.55) 82%,
+      rgba(96,165,250,0) 100%);
+  filter: blur(1.2px);
+  opacity: .9;
+  z-index: 1;
+}
+
+/* Keep content above the horizon effects */
+.horizon-cta .container{ position: relative; z-index: 2; }
+
+/* Match section titles with the rest of the site */
+.horizon-cta .display-title{
+  font-size: clamp(28px, 4.4vw, 48px);
+  line-height: 1.08;
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+
+/* Stack the EmailCTA pieces vertically (button below field) */
+.horizon-cta .cta-form{
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+/* If EmailCTA renders a form with the .cta-form class (your site already uses it),
+   we make a column layout and center it nicely. */
+.horizon-cta .cta-form,
+.horizon-cta .cta-form form{
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Inputs full-width up to a nice max; button fits content */
+.horizon-cta .cta-form input{
+  width: min(820px, 92vw);
+}
+.horizon-cta .cta-form button{
+  min-width: 120px;
+}
+
+/* Little confirmation messages from EmailCTA sit right under the button */
+.horizon-cta .cta-form .muted,
+.horizon-cta .cta-form .success{
+  text-align: center;
+  max-width: 820px;
+}
+
+/* Reduced motion: keep the horizon still */
+@media (prefers-reduced-motion: reduce){
+  .horizon-cta::before,
+  .horizon-cta::after{ filter: none; }
+}
