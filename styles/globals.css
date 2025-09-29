@@ -964,12 +964,8 @@ main{flex:1 0 auto}
 .roadmap-section{ position: relative; overflow: hidden; }
 .roadmap-section .container{ position: relative; z-index: 2; }
 
-/* subtle starfield reused vibe */
-.roadmap-space{
-  position:absolute; inset:0;
-  pointer-events:none; z-index:0;
-  opacity:.75;
-}
+/* subtle starfield */
+.roadmap-space{ position:absolute; inset:0; pointer-events:none; z-index:0; opacity:.75; }
 .roadmap-space .stars{
   position:absolute; inset:-10% -10% -20% -10%;
   background-image:
@@ -988,7 +984,7 @@ main{flex:1 0 auto}
 @keyframes roadmapDriftA{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-120px,-80px,0)}}
 @keyframes roadmapDriftB{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(140px,-100px,0)}}
 
-/* a vertical “lane” like your orbital divider, but subtle */
+/* vertical lane */
 .star-lane{
   position:absolute; left:50%; top:8%; bottom:10%;
   width:2px; transform:translateX(-50%);
@@ -997,30 +993,28 @@ main{flex:1 0 auto}
   opacity:.55;
 }
 
-/* perspective crawl */
+/* perspective track */
 .roadmap-wrap{
   margin: 16px auto 0;
-  max-width: 880px;
-  padding: 8px 0 18px;
-  perspective: 900px;
+  max-width: 900px;
+  padding: 8px 0 26px;
+  perspective: 1000px;
 }
 .roadmap-track{
   position: relative;
   transform-style: preserve-3d;
-  /* tilt the whole track away so top looks farther */
-  transform: rotateX(12deg);
+  transform: rotateX(12deg) translateY(90px); /* drop stack so NOW sits lower */
 }
 
-/* Each milestone sits on the track with depth-based transforms */
+/* milestones with larger step spacing & proper layering */
 .milestone{
-  --stepY: 110px;      /* vertical spacing between items (pre-tilt) */
-  --stepZ: 140px;      /* how much farther each item sits */
-  --minScale: .72;     /* farthest scale */
-  --scaleDrop: .08;    /* scale change per depth step */
+  --stepY: 160px;   /* vertical separation between items (pre-tilt) */
+  --stepZ: 220px;   /* depth per step */
+  --scaleDrop: .12; /* far item shrink */
 
   position: relative;
   margin: 0 auto;
-  width: min(720px, 92%);
+  width: min(760px, 92%);
   background: rgba(255,255,255,.045);
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 14px;
@@ -1030,40 +1024,22 @@ main{flex:1 0 auto}
     0 8px 28px rgba(0,0,0,.35);
   backdrop-filter: blur(2px);
 
-  /* Depth math: Now (depth=0) closest near bottom, others rise and shrink */
   transform:
-    translate3d(0, calc(var(--depth) * -1 * var(--stepY)), calc(var(--depth) * -1 * var(--stepZ)))
+    translate3d(0, calc(var(--depth) * -1 * var(--stepY)),
+                   calc(var(--depth) * -1 * var(--stepZ)))
     scale(calc(1 - var(--depth) * var(--scaleDrop)));
-  /* anchor around center so scale feels natural */
   transform-origin: center center;
-
-  /* slight lane alignment toward center */
-  left: 0; right: 0;
 }
-
-/* pull the whole stack down so the closest (Now) is near bottom */
-.roadmap-track::after{
-  content:"";
-  display:block;
-  height: calc(80px + 1px); /* add bottom breathing room */
-}
-.roadmap-track{ padding-top: 30px; }
-
-/* Little time chip + nicer title */
-.milestone-head{
-  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-}
+.milestone-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .milestone .chip{
   font-size:.8rem; letter-spacing:.12em; text-transform:uppercase;
   padding:6px 10px; border-radius:999px;
   background: rgba(255,255,255,.06);
   border: 1px solid rgba(255,255,255,.12);
 }
-.milestone-title{
-  font-weight:800; letter-spacing:.01em;
-}
+.milestone-title{ font-weight:800; letter-spacing:.01em; }
 
-/* Hover focus: light “tractor beam” */
+/* hover polish */
 @media (hover:hover){
   .milestone:hover{
     box-shadow:
@@ -1074,11 +1050,10 @@ main{flex:1 0 auto}
   }
 }
 
-/* Reduced motion: flatten to a simple vertical list */
+/* reduced motion */
 @media (prefers-reduced-motion: reduce){
   .roadmap-wrap{ perspective: none; }
   .roadmap-track{ transform: none; }
   .milestone{ transform: none; }
-  .roadmap-space{ display:none; }
-  .star-lane{ display:none; }
+  .roadmap-space,.star-lane{ display:none; }
 }
