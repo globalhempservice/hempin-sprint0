@@ -9,7 +9,7 @@ import RoadmapSection from '@/components/home/RoadmapSection';
 import CTASection from '@/components/home/CTASection';
 import Footer from '@/components/home/Footer';
 import EmailCTA from '@/components/EmailCTA';
-import OrbitalDivider from '@/components/home/OrbitalDivider';
+import NebulaDivider from '@/components/dividers/NebulaDivider';
 
 export default function Home() {
   return (
@@ -31,19 +31,19 @@ export default function Home() {
         <main className="pb-24 md:pb-0">
           <Hero />
 
-          <OrbitalDivider label="cosmos" />
+          <NebulaDivider label="cosmos" />
           <CosmosSection />
 
-          <OrbitalDivider label="dimensions" />
+          <NebulaDivider label="dimensions" />
           <DimensionSection />
 
-          <OrbitalDivider label="database" />
+          <NebulaDivider label="database" />
           <DatabaseSection />
 
-          <OrbitalDivider label="tools" />
+          <NebulaDivider label="tools" />
           <ToolsSection />
 
-          <OrbitalDivider label="roadmap" />
+          <NebulaDivider label="roadmap" />
           <RoadmapSection />
 
           <CTASection />

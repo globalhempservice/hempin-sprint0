@@ -479,7 +479,24 @@ main{flex:1 0 auto}
 @keyframes orbitDash{from{stroke-dashoffset:0}to{stroke-dashoffset:-200}}
 .orbital-path.is-animated{animation:orbitDash 24s linear infinite}
 
+/* ===== Nebula Divider ===== */
+.nebula-wrap { margin: 22px 0 8px; }
+.nebula-svg { display: block; width: 100%; height: auto; }
 
+/* gentle lateral drift of the whole SVG content */
+.nebula-svg.is-animated {
+  animation: nebulaDrift var(--nebula-dur, 14s) linear infinite;
+}
+@keyframes nebulaDrift {
+  0%   { transform: translateX(-1%); }
+  50%  { transform: translateX(1%); }
+  100% { transform: translateX(-1%); }
+}
+
+/* motion guard */
+@media (prefers-reduced-motion: reduce){
+  .nebula-svg.is-animated { animation: none !important; transform: none !important; }
+}
 
 
 
