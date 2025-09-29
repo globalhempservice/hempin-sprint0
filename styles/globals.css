@@ -1060,3 +1060,97 @@ main{flex:1 0 auto}
   .milestone{ transform: none; z-index: auto; }
   .roadmap-space,.star-lane{ display:none; }
 }
+
+/* =========================
+   CTA — Planet horizon
+   ========================= */
+   .cta-planet{
+    position: relative;
+    padding: clamp(64px, 12vh, 120px) 0 clamp(56px, 10vh, 110px);
+    overflow: hidden;
+  }
+  
+  /* Big curved “planet” using a huge radial gradient.
+     It sits behind content, rising into frame like a horizon. */
+  .cta-planet::before{
+    content:"";
+    position:absolute; left:50%; bottom:-38vmin; /* adjust curve height here */
+    transform: translateX(-50%);
+    width: 180vmax; height: 180vmax; /* giant circle so edges are soft */
+    border-radius: 50%;
+    background:
+      radial-gradient(120vmax 90vmax at 50% 30%,
+        rgba(99, 179, 237, .10) 0%,
+        rgba(56, 189, 248, .14) 28%,
+        rgba(34, 197, 94 , .18) 50%,
+        rgba(16, 185, 129, .22) 62%,
+        rgba(5, 150, 105 , .26) 74%,
+        rgba(4, 120, 87  , .30) 86%,
+        rgba(2, 44, 34   , .0 ) 92% 100%);
+    filter: blur(8px);
+    box-shadow:
+      0 -40px 120px rgba(110,231,183,.12) inset,
+      0 0 220px rgba(96,165,250,.10) inset;
+    pointer-events:none;
+    z-index:0;
+  }
+  
+  /* Slight atmosphere band near the top edge of the planet */
+  .cta-planet::after{
+    content:"";
+    position:absolute; inset:auto 0 0 0;
+    height: 28vh;
+    background:
+      linear-gradient(180deg,
+        rgba(96,165,250,.10), 
+        rgba(15,23,42,.14) 45%,
+        rgba(5,6,10,.0));
+    mix-blend-mode: screen;
+    pointer-events:none;
+    z-index:0;
+  }
+  
+  /* Ensure content stays above the gradients */
+  .cta-planet .container{ position: relative; z-index: 1; }
+  
+  /* Stack the email field and button vertically without touching EmailCTA logic */
+  .cta-stack form{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    justify-items: center;
+    margin: 10px auto 0;
+    max-width: 820px;
+  }
+  
+  /* Make typical email inputs look centered & wide inside our stack */
+  .cta-stack input[type="email"],
+  .cta-stack input[type="text"]{
+    width: 100%;
+    max-width: 820px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--text);
+  }
+  
+  /* If the EmailCTA renders a submit button, center it below */
+  .cta-stack button[type="submit"]{
+    min-width: 120px;
+    border-radius: 12px;
+  }
+  
+  /* If EmailCTA shows a confirmation/message area, give it breathing room */
+  .cta-stack .message,
+  .cta-stack .success,
+  .cta-stack .error{
+    margin-top: 6px;
+    text-align: center;
+  }
+  
+  /* Reduced motion: no heavy blends (keeps perf snappy on low-end devices) */
+  @media (prefers-reduced-motion: reduce){
+    .cta-planet::before,
+    .cta-planet::after{ filter:none; box-shadow:none; }
+  }
