@@ -713,3 +713,161 @@ main{flex:1 0 auto}
   .dim-panel{ transition: none; }
   .dim-gate{ animation: none !important; opacity: 0 !important; }
 }
+
+/* ===== Database Section ===== */
+.db-section .container { position: relative; }
+
+/* One Graph rail */
+.db-rail { margin: 18px auto 0; max-width: 920px; }
+.db-nodes{
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 10px;
+  padding: 14px 10px;
+  overflow-x: auto;
+}
+.db-nodes::before{
+  content:"";
+  position:absolute; left: 20px; right: 20px; top: 32px;
+  height: 2px;
+  background:
+    repeating-linear-gradient(90deg, rgba(96,165,250,.5) 0 18px, rgba(255,255,255,0) 18px 34px);
+  opacity: .55;
+  animation: dbDash 26s linear infinite;
+}
+@keyframes dbDash{ to { background-position-x: -200px; } }
+
+.db-node{
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+.db-node .dot{
+  width: 12px; height: 12px; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 45%, rgba(110,231,183,.9) 46% 70%, rgba(0,0,0,0) 71%);
+  filter: drop-shadow(0 0 10px rgba(96,165,250,.45));
+  animation: dbPulse 2.4s ease-in-out infinite;
+}
+@keyframes dbPulse{ 0%,100%{ transform: scale(1) } 50%{ transform: scale(1.15) } }
+.db-node .label{ font-weight: 700; }
+
+/* Layout: lifecycle + phone */
+.db-grid{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+@media (min-width: 980px){
+  .db-grid{ grid-template-columns: 1.3fr .9fr; align-items: start; }
+}
+
+/* Lifecycle panel */
+.db-panel{ @apply hemp-panel; }
+.db-head h3{ margin: 0 0 6px; }
+.db-cards{
+  list-style: none; margin: 12px 0 0; padding: 0;
+  display: grid; gap: 10px;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 720px){
+  .db-cards{ grid-template-columns: 1fr 1fr; }
+}
+.db-card{
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+  padding: 10px;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.db-card:hover{
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,.12);
+  box-shadow: 0 10px 24px rgba(0,0,0,.35), 0 0 18px rgba(96,165,250,.15);
+}
+.db-card .glyph{
+  width: 44px; height: 44px; border-radius: 10px;
+  background:
+    radial-gradient(60% 60% at 40% 30%, rgba(110,231,183,.35), transparent 60%),
+    radial-gradient(60% 60% at 70% 70%, rgba(96,165,250,.25), transparent 60%),
+    rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.db-card .text strong{ display:block; }
+.db-card .text span{ display:block; font-size:.95rem; }
+.db-card .chips{ display:flex; gap:6px; }
+.db-card .chip{
+  font-size:.8rem; padding:6px 8px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05);
+}
+
+/* WETAS “phone” teaser */
+.db-phone{ display:flex; justify-content:center; }
+.phone{
+  width: 320px; border-radius: 22px; padding: 12px;
+  background: rgba(8,10,14,.85);
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 20px 40px rgba(0,0,0,.45), 0 0 30px rgba(96,165,250,.12) inset;
+  backdrop-filter: blur(8px);
+}
+.phone-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.phone-head .pill{
+  padding:6px 10px; border-radius:999px;
+  background: rgba(110,231,183,.12);
+  border:1px solid rgba(110,231,183,.28);
+  font-weight:700;
+}
+.phone-head .icons{ opacity:.85; }
+
+.phone-ring{ position: relative; display:grid; place-items:center; margin: 4px 0 6px; }
+.phone-ring svg{ width: 120px; height: 120px; }
+.phone-ring .bg{
+  fill: none; stroke: rgba(255,255,255,.12); stroke-width: 10;
+}
+.phone-ring .fg{
+  fill: none;
+  stroke: url(#dbRingGrad, linear-gradient(90deg, var(--accent), var(--accent-2)));
+  stroke: linear-gradient(90deg, var(--accent), var(--accent-2));
+  stroke-width: 10; stroke-linecap: round;
+  stroke-dasharray: 302; stroke-dashoffset: 78; /* ~74/100 */
+  filter: drop-shadow(0 0 8px rgba(96,165,250,.35));
+}
+.phone-ring .ring-label{ text-align:center; margin-top: 6px; }
+
+.phone-row{ display:flex; gap:10px; margin: 8px 0; }
+.stat{ flex:1; background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:8px; }
+.stat-top{ font-size:.85rem; opacity:.85; }
+.stat-num{ font-weight:800; margin-top:2px; }
+
+.phone-list{ display:grid; gap:8px; }
+.phone-list .item{
+  display:flex; justify-content:space-between; align-items:center;
+  background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+  border-radius:10px; padding:8px 10px;
+}
+.phone-list .badge{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:8px; }
+.phone-list .badge.green{ background:#86efac; }
+.phone-list .badge.blue{ background:#93c5fd; }
+.phone-list .badge.purple{ background:#d8b4fe; }
+
+.phone-cta{
+  display:block; text-align:center; margin-top:10px;
+  border-radius:10px; padding:10px 12px; font-weight:700;
+  border:1px solid rgba(255,255,255,.14);
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color:#05120e;
+}
+
+/* Reduced motion – soften rail and ring glow */
+@media (prefers-reduced-motion: reduce){
+  .db-nodes::before{ animation: none; }
+  .db-node .dot{ animation: none; }
+}
