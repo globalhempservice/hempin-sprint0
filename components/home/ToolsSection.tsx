@@ -4,7 +4,7 @@ export default function ToolsSection() {
   return (
     <section id="tools" className="section alt tools-section">
       <div className="container">
-        <h2 className="center hemp-underline-aurora">Navigation tools</h2>
+        <h2 className="center display-titlehemp-underline-aurora">Navigation tools</h2>
         <p className="muted center" style={{ maxWidth: 720, margin: '8px auto 18px' }}>
           Your spaceship runs on three instruments — energy, identity, and modules. Together they turn the map into motion.
         </p>

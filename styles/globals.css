@@ -997,20 +997,19 @@ main{flex:1 0 auto}
 .roadmap-wrap{
   margin: 16px auto 0;
   max-width: 900px;
-  padding: 8px 0 26px;
+  padding: 8px 0 120px; /* room for the closest card */
   perspective: 1000px;
 }
 .roadmap-track{
   position: relative;
   transform-style: preserve-3d;
-  transform: rotateX(12deg) translateY(90px); /* drop stack so NOW sits lower */
+  transform: rotateX(14deg) translateY(120px); /* drop stack so “Now” sits lower */
 }
 
-/* milestones with larger step spacing & proper layering */
+/* milestones: stack with Y offset, depth via scale (no translateZ) */
 .milestone{
-  --stepY: 160px;   /* vertical separation between items (pre-tilt) */
-  --stepZ: 220px;   /* depth per step */
-  --scaleDrop: .12; /* far item shrink */
+  --stepY: 220px;   /* vertical spacing between items (bigger = less overlap) */
+  --scaleDrop: .12; /* shrink per step */
 
   position: relative;
   margin: 0 auto;
@@ -1024,12 +1023,16 @@ main{flex:1 0 auto}
     0 8px 28px rgba(0,0,0,.35);
   backdrop-filter: blur(2px);
 
+  /* depth: push upward by step, shrink a bit */
   transform:
-    translate3d(0, calc(var(--depth) * -1 * var(--stepY)),
-                   calc(var(--depth) * -1 * var(--stepZ)))
+    translateY(calc(var(--depth) * -1 * var(--stepY)))
     scale(calc(1 - var(--depth) * var(--scaleDrop)));
   transform-origin: center center;
+
+  /* layer the closest on top */
+  z-index: calc(100 - var(--depth));
 }
+
 .milestone-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .milestone .chip{
   font-size:.8rem; letter-spacing:.12em; text-transform:uppercase;
@@ -1052,8 +1055,8 @@ main{flex:1 0 auto}
 
 /* reduced motion */
 @media (prefers-reduced-motion: reduce){
-  .roadmap-wrap{ perspective: none; }
+  .roadmap-wrap{ perspective: none; padding-bottom: 0; }
   .roadmap-track{ transform: none; }
-  .milestone{ transform: none; }
+  .milestone{ transform: none; z-index: auto; }
   .roadmap-space,.star-lane{ display:none; }
 }
