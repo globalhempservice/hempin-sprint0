@@ -1,3 +1,4 @@
+// components/home/CTASection.tsx
 import * as React from 'react';
 import EmailCTA from '@/components/EmailCTA';
 
@@ -10,7 +11,6 @@ export default function CTASection() {
           Be the first to explore LIFE and help us shape WORK.
         </p>
 
-        {/* We don’t change EmailCTA’s behavior — just layout via CSS */}
         <div className="cta-form stack">
           <EmailCTA role="LIFE" source="hempin.org#cta" />
         </div>
