@@ -2,11 +2,11 @@ type Tile = 'nada' | 'wallet' | 'modules' | 'wetas';
 
 export default function ToolsSection() {
   return (
-    <section id="tools" className="section alt tools-section">
+    <section id="tools" className="section tools-section">
       <div className="container">
-        <h2 className="center display-titlehemp-underline-aurora">Navigation tools</h2>
+        <h2 className="center display-title hemp-underline-aurora">Navigation tools</h2>
         <p className="muted center" style={{ maxWidth: 720, margin: '8px auto 18px' }}>
-          Your spaceship runs on three instruments — energy, identity, and modules. Together they turn the map into motion.
+          Your spaceship runs on multiple instruments — exploration, identity, energy and modules. Together they turn your map into motion.
         </p>
 
         <div className="tools-grid">
@@ -14,15 +14,6 @@ export default function ToolsSection() {
           <ToolTile kind="wallet" />
           <ToolTile kind="modules" />
           <ToolTile kind="wetas" />
-        </div>
-
-        {/* Cockpit footer strip */}
-        <div className="hemp-panel tools-strip">
-          <div className="row" style={{ justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <span className="pill">Energy: NADA</span>
-            <span className="pill">Identity: Wallet</span>
-            <span className="pill">Instruments: Modules</span>
-          </div>
         </div>
       </div>
     </section>
@@ -43,11 +34,11 @@ function ToolTile({ kind }: { kind: Tile }) {
         </h3>
         <p className="muted">
           {kind === 'nada' &&
-            'Universal energy earned by exploring, learning, and contributing.'}
+            'Amazing rewards earned by exploring, learning, and contributing to the Hemp community.'}
           {kind === 'wallet' &&
-            'Portable identity, credentials, payments, privacy — all in your pocket.'}
+            'Portable digital identity, safe credentials, universal payments, crypted privacy — all in your pocket.'}
           {kind === 'modules' &&
-            'Swappable control panels for each world — learn, build, grow.'}
+            'Swappable control panels for each universes and stakeholders — learn, build, grow.'}
           {kind === 'wetas' &&
             'Waste-to-Energy Tracking & Assessment: make impact visible and rewarding.'}
         </p>
@@ -83,8 +74,16 @@ function TileNADA() {
 
       <div className="ring">
         <svg viewBox="0 0 120 120" aria-hidden>
+          <defs>
+            {/* SVG gradient so there’s no “blue rectangle” artifact */}
+            <linearGradient id="ringGradNADA" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%"   stopColor="#34d399" />
+              <stop offset="55%"  stopColor="#60a5fa" />
+              <stop offset="100%" stopColor="#f472b6" />
+            </linearGradient>
+          </defs>
           <circle cx="60" cy="60" r="48" className="bg" />
-          <circle cx="60" cy="60" r="48" className="fg fg-nada" />
+          <circle cx="60" cy="60" r="48" className="fg fg-nada" stroke="url(#ringGradNADA)" />
         </svg>
         <div className="ring-label">
           <strong>Level 4 Explorer</strong>
@@ -181,8 +180,16 @@ function TileWETAS() {
 
       <div className="ring">
         <svg viewBox="0 0 120 120" aria-hidden>
+          <defs>
+            {/* SVG gradient so there’s no “blue rectangle” artifact */}
+            <linearGradient id="ringGradWETAS" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%"   stopColor="#34d399" />
+              <stop offset="55%"  stopColor="#60a5fa" />
+              <stop offset="100%" stopColor="#f472b6" />
+            </linearGradient>
+          </defs>
           <circle cx="60" cy="60" r="48" className="bg" />
-          <circle cx="60" cy="60" r="48" className="fg fg-wetas" />
+          <circle cx="60" cy="60" r="48" className="fg fg-wetas" stroke="url(#ringGradWETAS)" />
         </svg>
         <div className="ring-label">
           <strong>Regenerative score</strong>

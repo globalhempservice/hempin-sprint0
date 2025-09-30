@@ -1293,13 +1293,15 @@ main{flex:1 0 auto}
   /* marquee handled above */
 }
 
+
 /* ===== Navigation Tools ===== */
 .tools-grid{
   display:grid; gap:18px; margin-top:14px;
   grid-template-columns: 1fr;
 }
-@media (min-width: 780px){ .tools-grid{ grid-template-columns: 1fr 1fr; } }
-@media (min-width: 1140px){ .tools-grid{ grid-template-columns: 1fr 1fr 1fr; } }
+@media (min-width: 780px){
+  .tools-grid{ grid-template-columns: 1fr 1fr; } /* 2×2 on desktop */
+}
 
 .tool-tile{
   background: rgba(255,255,255,.04);
@@ -1319,7 +1321,7 @@ main{flex:1 0 auto}
 .tile-head h3{ margin:0 0 4px; }
 .tile-head p{ margin:0 0 10px; }
 
-/* phone frame (re-use style family from database teaser) */
+/* phone frame (family style) */
 .phone--tile{
   width: 100%; max-width: 360px; margin: 0 auto;
   background: rgba(8,10,14,.86);
@@ -1334,15 +1336,21 @@ main{flex:1 0 auto}
 }
 
 .phone-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
-.phone-head .pill{ padding:6px 10px; border-radius:999px; background: rgba(110,231,183,.12); border:1px solid rgba(110,231,183,.28); font-weight:700; }
+.phone-head .pill{
+  padding:6px 10px; border-radius:999px;
+  background: rgba(110,231,183,.12); border:1px solid rgba(110,231,183,.28);
+  font-weight:700;
+}
 
 /* Ring meters */
 .ring{ position:relative; display:grid; place-items:center; margin: 4px 0 6px; }
 .ring svg{ width:120px; height:120px; }
 .ring .bg{ fill:none; stroke: rgba(255,255,255,.12); stroke-width:10; }
-.ring .fg{ fill:none; stroke-width:10; stroke-linecap:round; stroke-dasharray:302; filter: drop-shadow(0 0 8px rgba(96,165,250,.35)); }
-.fg-nada { stroke: url(#nadaGrad, linear-gradient(90deg, var(--accent), var(--accent-2))); stroke: #a7f3d0; stroke-dashoffset: 118; }
-.fg-wetas{ stroke: #93c5fd; stroke-dashoffset: 78; }
+.ring .fg{ fill:none; stroke-width:10; stroke-linecap:round; stroke-dasharray:302;
+  filter: drop-shadow(0 0 8px rgba(96,165,250,.35)); }
+/* Only offsets here; stroke is set inline via SVG gradient to avoid the rectangle artifact */
+.fg-nada  { stroke-dashoffset: 118; }
+.fg-wetas { stroke-dashoffset:  78; }
 .ring-label{ text-align:center; margin-top:6px; }
 
 /* small stats + lists */
@@ -1351,18 +1359,32 @@ main{flex:1 0 auto}
 .stat-top{ font-size:.85rem; opacity:.85; }
 .stat-num{ font-weight:800; margin-top:2px; }
 .phone-list{ display:grid; gap:8px; }
-.phone-list .item{ display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:8px 10px; }
+.phone-list .item{
+  display:flex; justify-content:space-between; align-items:center;
+  background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+  border-radius:10px; padding:8px 10px;
+}
 .phone-list .badge{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:8px; }
-.phone-list .badge.green{ background:#86efac } .phone-list .badge.blue{ background:#93c5fd } .phone-list .badge.purple{ background:#d8b4fe }
+.phone-list .badge.green{ background:#86efac }
+.phone-list .badge.blue{  background:#93c5fd }
+.phone-list .badge.purple{background:#d8b4fe }
 
 /* wallet specifics */
 .wallet-balance{ display:flex; gap:12px; justify-content:space-between; margin:6px 0 8px; }
 .wallet-balance .big{ font-weight:800; font-size:1.15rem; }
 .wallet-rows{ display:grid; gap:8px; }
-.wallet-row{ display:flex; align-items:center; justify-content:space-between; background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:8px 10px; }
+.wallet-row{
+  display:flex; align-items:center; justify-content:space-between;
+  background: rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
+  border-radius:10px; padding:8px 10px;
+}
 .tiny-btn{ font-size:.8rem; padding:6px 8px; border-radius:8px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); }
 .wallet-actions{ display:flex; gap:8px; margin-top:8px; }
-.mini-btn{ flex:1; border-radius:10px; border:1px solid rgba(255,255,255,.14); background: linear-gradient(90deg, var(--accent), var(--accent-2)); color:#05120e; padding:8px 10px; font-weight:700; }
+.mini-btn{
+  flex:1; border-radius:10px; border:1px solid rgba(255,255,255,.14);
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color:#05120e; padding:8px 10px; font-weight:700;
+}
 
 /* modules specifics */
 .modules-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:4px; }
@@ -1371,17 +1393,16 @@ main{flex:1 0 auto}
   background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10);
   transition: transform .16s ease, box-shadow .16s ease;
 }
-.mod-card:hover{ transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(110,231,183,.25) inset, 0 8px 18px rgba(0,0,0,.35); }
-
-/* footer strip */
-.tools-strip{ margin-top:16px; display:grid; gap:8px; }
+.mod-card:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(110,231,183,.25) inset, 0 8px 18px rgba(0,0,0,.35);
+}
 
 /* reduced motion */
 @media (prefers-reduced-motion: reduce){
   .tool-tile:hover .phone--tile{ transform:none; }
 }
-
-
+ 
 
 
 
