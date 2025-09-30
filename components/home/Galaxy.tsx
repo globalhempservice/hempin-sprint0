@@ -9,6 +9,8 @@ type GalaxyProps = {
   seed?: number;
   tiltDeg?: number;
   ellipticity?: number;
+  /** NEW: drive meteor shower on/off from controls */
+  meteors?: boolean;
 };
 
 export default function Galaxy({
@@ -20,6 +22,7 @@ export default function Galaxy({
   seed = 1337,
   tiltDeg = 18,
   ellipticity = 0.72,
+  meteors = true,                 // NEW default
 }: GalaxyProps) {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const raf = useRef<number | null>(null);
@@ -46,7 +49,7 @@ export default function Galaxy({
     let s = Math.max(1, Math.floor(seed)) % 2147483647;
     const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
 
-    // Spiral model constants (declare BEFORE any usage)
+    // Spiral model constants
     const SPIRAL_A = 2.0;
     const SPIRAL_B = 0.20;
 
@@ -103,7 +106,7 @@ export default function Galaxy({
       a: 0.03 + rnd() * 0.05
     }));
 
-    // ----- Shooting star -----
+    // ----- Meteor (toggle-controlled) -----
     type Meteor = { x:number; y:number; vx:number; vy:number; life:number };
     let meteor: Meteor | null = null;
     let nextMeteorAt = performance.now() + 12000 + rnd() * 8000;
@@ -210,8 +213,8 @@ export default function Galaxy({
         ctx.beginPath(); ctx.arc(px, py, coreR, 0, Math.PI * 2); ctx.fill();
       }
 
-      // meteor
-      if (!reduceMotion) {
+      // meteor (RESPECTS TOGGLE + reduced motion)
+      if (!reduceMotion && meteors) {
         if (!meteor && now > nextMeteorAt) {
           spawnMeteor();
           nextMeteorAt = now + 12000 + rnd() * 8000;
@@ -242,6 +245,9 @@ export default function Galaxy({
 
           if (meteor.life > 1.8 || meteor.x > W + 50 || meteor.y > H + 50) meteor = null;
         }
+      } else {
+        // toggle off: ensure any active meteor is cleared
+        meteor = null;
       }
 
       ctx.globalCompositeOperation = 'source-over';
@@ -266,7 +272,8 @@ export default function Galaxy({
       if (raf.current) cancelAnimationFrame(raf.current);
       mm.removeEventListener?.('change', onChange);
     };
-  }, [size, stars, arms, speed, opacity, seed, tiltDeg, ellipticity]);
+  // 👉 include meteors so the loop updates immediately when toggled
+  }, [size, stars, arms, speed, opacity, seed, tiltDeg, ellipticity, meteors]);
 
   return (
     <div className="galaxy-wrap" aria-hidden>

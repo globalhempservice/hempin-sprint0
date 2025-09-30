@@ -53,6 +53,9 @@ main{flex:1 0 auto}
 
 
 
+
+
+
 /* ===== Header — centered orb + arc glass ===== */
 .site-header.arc{
   position: sticky;
@@ -218,6 +221,14 @@ main{flex:1 0 auto}
   background: linear-gradient(90deg, var(--accent), var(--accent-2));
   color:#05120e; font-weight: 800; text-decoration: none;
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -446,6 +457,10 @@ main{flex:1 0 auto}
 
 
 
+
+
+
+
 /* ------ Starfield (kept) ------ */
 .app-shell { position: relative; z-index: 1; }
 .starfield-root { position: fixed; inset: 0; z-index: 0; pointer-events: none; contain: layout paint size; }
@@ -473,11 +488,23 @@ main{flex:1 0 auto}
 
 
 
-/* ------ Orbital Divider ------ */
-.orbital-wrap { margin: 28px 0 8px; }
-.orbital-svg { display: block; width: 100%; }
-@keyframes orbitDash{from{stroke-dashoffset:0}to{stroke-dashoffset:-200}}
-.orbital-path.is-animated{animation:orbitDash 24s linear infinite}
+
+
+
+/* ===== Display title for section headers (desktop smaller than hero) ===== */
+.display-title{
+  font-weight: 700;
+  line-height: 1.08;
+  font-size: clamp(28px, 4.2vw, 42px);
+  letter-spacing: .01em;
+}
+
+
+
+
+
+
+
 
 /* ===== Nebula Divider ===== */
 .nebula-wrap { margin: 22px 0 8px; }
@@ -501,46 +528,80 @@ main{flex:1 0 auto}
 
 
 
-/* ===== Display title for section headers (desktop smaller than hero) ===== */
-.display-title{
-  font-weight: 700;
-  line-height: 1.08;
-  font-size: clamp(28px, 4.2vw, 42px);
-  letter-spacing: .01em;
-}
 
 
 
-/* ===== Galaxy layer positioning ===== */
-.galaxy-layer{
+
+
+/* ===== Cosmos — section layout + centered background galaxy ===== */
+.cosmos-section{
   position: relative;
-  height: 0;
-  pointer-events: none;
+  min-height: 100svh;
+  display: grid;
+  place-items: start center;
+  padding-top: clamp(56px, 10vh, 120px);
+  padding-bottom: clamp(48px, 10vh, 120px);
+  overflow: hidden; /* prevents bleed into next section */
 }
+
+/* content goes above the canvas */
+.cosmos-section .container{
+  position: relative;
+  z-index: 2;
+}
+
+/* one canonical galaxy layer */
+.galaxy-layer{
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none; /* clicks go to UI, not canvas */
+  z-index: 1;           /* behind content, above page bg */
+}
+
 .galaxy-wrap{
+  display: block;       /* Galaxy component wraps the canvas in this */
+}
+
+.galaxy-canvas{
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0 22px rgba(96,165,250,.15));
+}
+
+/* Reduced motion: soften the look the component already slows/stops anim */
+@media (prefers-reduced-motion: reduce){
+  .galaxy-canvas{ filter: none; opacity: .85; }
+}
+
+
+/* ===== Cosmos — accordion (unchanged, included here for context) ===== */
+.cosmos-accordion{
+  display:flex; flex-direction:column; align-items:center;
+  gap:12px; margin:22px auto 0; width:100%; max-width: 620px;
+}
+
+/* ===== FAB: center-above-title variant + hover fix ===== */
+.hud-fab--cosmos{
   position: absolute;
   left: 50%;
-  transform: translateX(-50%);
-  top: -40px;                /* lift behind the title paragraph */
-  width: 100%;
-  max-width: 1100px;
-  opacity: .9;
-  filter: drop-shadow(0 0 24px rgba(96,165,250,.14));
-  z-index: 0;
-}
-.galaxy-canvas{
-  display:block;
-  margin: 0 auto;
-  width: min(92vw, 760px);
-  height: auto;
-  opacity: .85;
+  top: clamp(16px, 6vh, 56px);
+  transform: translateX(-50%);     /* baseline centering */
+  z-index: 55;                      /* over header (50) */
+  will-change: transform;
 }
 
-/* Respect reduced motion: freeze galaxy (handled in component), soften glow */
-@media (prefers-reduced-motion: reduce){
-  .galaxy-wrap{ filter: none; opacity: .7; }
+/* keep the lift without losing the centering transform */
+.hud-fab--cosmos:hover{
+  transform: translateX(-50%) translateY(-1px);
 }
 
+/* hide on small screens */
+@media (max-width: 819px){
+  .hud-fab--cosmos{ display:none; }
+}
 
 
 
@@ -564,47 +625,6 @@ main{flex:1 0 auto}
   .cosmos-cards .planet:active{
     transform: translateY(-1px);
   }
-}
-
-
-
-
-/* --- Cosmos: display heading scale --- */
-.display-title{
-  font-size: clamp(28px, 4.5vw, 48px);
-  line-height: 1.15;
-  margin: 6px 0 8px;
-}
-
-
-
-/* --- Galaxy layer positioning --- */
-.cosmos-section{ position: relative; overflow: hidden; }
-.galaxy-layer{
-  position: absolute;
-  inset: -4% -2% auto -2%;
-  top: 40px;                   /* sits under heading */
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.9;               /* overall layer strength; individual canvas uses its own opacity */
-}
-.galaxy-wrap{ display:flex; justify-content:center; }
-.galaxy-canvas{ width: 100%; height: auto; filter: drop-shadow(0 0 22px rgba(96,165,250,.15)); }
-
-
-
-/* Cosmos — layout tweaks */
-.cosmos-section { position: relative; overflow: hidden; }
-.galaxy-layer { position: absolute; inset: 0; display:flex; justify-content:center; pointer-events:none; z-index:0; }
-.galaxy-layer .galaxy-wrap { margin-top: 18px; opacity: .9; }
-
-/* Big section title style */
-.display-title{
-  font-size: clamp(28px, 4.4vw, 48px);
-  line-height: 1.08;
-  font-weight: 800;
-  letter-spacing: .01em;
-  margin-bottom: 6px;
 }
 
 /* Cards grid stays responsive */
@@ -631,7 +651,6 @@ main{flex:1 0 auto}
     border-color: rgba(255,255,255,0.12);
   }
 }
-
 
 
 /* Clickable header */
@@ -702,6 +721,8 @@ main{flex:1 0 auto}
 @media (hover:none){
   .planet-summary:focus { box-shadow: none; }
 }
+
+
 
 
 
@@ -855,35 +876,79 @@ main{flex:1 0 auto}
 }
 @media (max-width: 819px){ .hud-fab--cosmos{ display:none; } }
 
-/* ---- True accordion layout (vertical, centered) ---- */
-.cosmos-accordion{
-  display:flex; flex-direction:column; align-items:center;
-  gap:12px; margin:22px auto 0; width:100%; max-width: 620px;
-}
+/* ---- Cosmos accordion: compact-left label, readable open panel ---- */
+:root { --cosmos-label-w: 10ch; } /* fits “Knowledge” comfortably */
 
-.card.planet{ padding:0; width:100%; border-radius:14px; overflow:hidden; }
+.cosmos-accordion { display:flex; flex-direction:column; align-items:center; gap:12px; margin:22px auto 0; width:100%; max-width: 720px; }
 
+.card.planet { padding:0; width:100%; border-radius:14px; overflow:hidden; }
+
+/* Header grid: [fixed label] [subtitle that disappears when open] [chevron] */
 .planet-summary{
   -webkit-tap-highlight-color: transparent;
   appearance:none; width:100%;
-  display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px;
-  padding:14px 16px; background:transparent; border:0; color:inherit; text-align:left; cursor:pointer;
+  display:grid; grid-template-columns: var(--cosmos-label-w) 1fr auto;
+  align-items:center; gap:12px;
+  padding:14px 16px; background:rgba(255,255,255,0.04);
+  border:0; color:inherit; text-align:left; cursor:pointer;
 }
-.planet-title{ font-weight:700; letter-spacing:.01em; }
+.planet-title{ font-weight:700; letter-spacing:.01em; white-space:nowrap; }
+.planet-subtitle{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:.85; }
 .chevron{ opacity:.9; transition: transform .18s ease, opacity .18s ease; }
 .card.planet.is-open .chevron{ transform: rotate(180deg); }
+/* Hide the hint when open */
+.card.planet.is-open .planet-subtitle{ display:none; }
+
+/* Open state: darker glass so galaxy doesn’t fight the text */
+.card.planet.is-open{
+  background: rgba(8,10,14,.82);
+  border-color: rgba(255,255,255,0.16);
+  box-shadow:
+    0 0 0 1px rgba(110,231,183,.30) inset,
+    0 0 34px rgba(96,165,250,.14);
+}
 
 .planet-content{
-  padding:0 16px;
-  max-height:0; opacity:0; overflow:hidden;
-  transition:max-height .26s ease, opacity .18s ease, padding-bottom .26s ease;
+  padding: 0 16px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:max-height .26s ease, opacity .18s ease, padding-bottom .26s ease, background-color .2s ease;
 }
 .card.planet.is-open .planet-content{
-  max-height:160px; opacity:1; padding-bottom:14px;
+  max-height: 320px; /* enough room for bullets + CTA */
+  padding-bottom: 14px;
+  opacity: 1;
 }
-.card.planet.is-open{
-  box-shadow: 0 0 0 1px rgba(110,231,183,.35) inset, 0 0 34px rgba(96,165,250,.16);
-  border-color: rgba(255,255,255,.16);
+
+/* Bullets + CTA */
+.planet-bullets{
+  margin: 10px 0 10px; padding-left: 18px;
+  display: grid; gap: 6px;
+}
+.planet-cta-row{ margin-top: 6px; display:flex; justify-content:flex-end; }
+.mini-btn{
+  border-radius:10px; border:1px solid rgba(255,255,255,.14);
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color:#05120e; padding:8px 10px; font-weight:700;
+}
+
+/* Hover polish (desktop) */
+@media (hover:hover){
+  .card.planet:hover{
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 0 1px rgba(110,231,183,.22) inset,
+      0 10px 26px rgba(0,0,0,.35),
+      0 0 22px rgba(96,165,250,.16);
+    border-color: rgba(255,255,255,0.12);
+  }
+}
+
+/* Mobile: tighten spacing a hair */
+@media (max-width: 480px){
+  .planet-summary{ gap:10px; padding:12px 14px; }
+  .planet-bullets{ gap:5px; }
 }
 
 /* ---- Controls drawer: smaller, always clickable, above header ---- */
