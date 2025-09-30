@@ -1404,8 +1404,6 @@ main{flex:1 0 auto}
 }
  
 
-
-
 /* ===== Roadmap (present -> future perspective crawl) ===== */
 .roadmap-section{ position: relative; overflow: hidden; }
 .roadmap-section .container{ position: relative; z-index: 2; }
@@ -1439,23 +1437,26 @@ main{flex:1 0 auto}
   opacity:.55;
 }
 
-/* perspective track */
+/* perspective track — adjusted for proper visibility */
 .roadmap-wrap{
   margin: 16px auto 0;
   max-width: 900px;
-  padding: 8px 0 120px; /* room for the closest card */
-  perspective: 1000px;
+  /* more bottom room so the far card never clips */
+  padding: 8px 0 240px;
+  perspective: 1400px;                 /* stronger depth */
 }
 .roadmap-track{
   position: relative;
   transform-style: preserve-3d;
-  transform: rotateX(14deg) translateY(120px); /* drop stack so “Now” sits lower */
+  /* gentler tilt + lower lift so stack stays in view */
+  transform: rotateX(12deg) translateY(80px);
 }
 
-/* milestones: stack with Y offset, depth via scale (no translateZ) */
+/* milestones with translateZ depth instead of big Y shifts */
 .milestone{
-  --stepY: 220px;   /* vertical spacing between items (bigger = less overlap) */
-  --scaleDrop: .12; /* shrink per step */
+  /* depth knobs */
+  --stepZ: -260px;    /* push each future card back into the scene */
+  --scaleDrop: .05;   /* mild scale so text stays readable */
 
   position: relative;
   margin: 0 auto;
@@ -1469,13 +1470,11 @@ main{flex:1 0 auto}
     0 8px 28px rgba(0,0,0,.35);
   backdrop-filter: blur(2px);
 
-  /* depth: push upward by step, shrink a bit */
+  /* depth: translateZ + gentle scale; highest z-index on nearest */
   transform:
-    translateY(calc(var(--depth) * -1 * var(--stepY)))
+    translateZ(calc(var(--depth) * var(--stepZ)))
     scale(calc(1 - var(--depth) * var(--scaleDrop)));
   transform-origin: center center;
-
-  /* layer the closest on top */
   z-index: calc(100 - var(--depth));
 }
 
@@ -1499,16 +1498,13 @@ main{flex:1 0 auto}
   }
 }
 
-/* reduced motion */
+/* reduced motion = flat stack */
 @media (prefers-reduced-motion: reduce){
   .roadmap-wrap{ perspective: none; padding-bottom: 0; }
   .roadmap-track{ transform: none; }
   .milestone{ transform: none; z-index: auto; }
   .roadmap-space,.star-lane{ display:none; }
 }
-
-
-
 
 /* ===== CTA — Aurora glass panel ===== */
 .aurora-cta{
