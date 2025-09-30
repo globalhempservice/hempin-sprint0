@@ -1,37 +1,23 @@
-import { useEffect, useRef, useState } from 'react';
-// If you already export EmailCTA somewhere, import it. Otherwise keep the <a> fallback below.
-import EmailCTA from '@/components/EmailCTA';
+import { useState } from 'react';
 
 type Mode = 'LIFE' | 'WORK';
 
 export default function DimensionSection() {
   const [mode, setMode] = useState<Mode>('LIFE');
-  const [warping, setWarping] = useState(false);
-  const gateRef = useRef<HTMLDivElement|null>(null);
 
   const switchMode = (next: Mode) => {
-    if (next === mode) return;
-    setWarping(true);
-    setMode(next);
+    if (next !== mode) setMode(next);
   };
-
-  // stop the “stargate” sweep after the CSS animation ends
-  useEffect(() => {
-    if (!warping) return;
-    const t = setTimeout(() => setWarping(false), 850);
-    return () => clearTimeout(t);
-  }, [warping]);
 
   return (
     <section id="dimensions" className="section dim-section">
       <div className="container center">
         <h2 className="display-title hemp-underline-aurora">Two dimensions. One identity.</h2>
         <p className="lede">
-          In Hemp’in, you can travel as a citizen of <strong>LIFE</strong> or as a builder in <strong>WORK</strong> — 
-          the same wallet and identity, just a different suit for the journey.
+          In Hemp’in, you can travel as a citizen of <strong>LIFE</strong> or as a builder in <strong>WORK</strong> </p> 
+         <p className="lede"> Use the same wallet and identity, just a different spacesuit for your selected journey.
         </p>
-
-        {/* Toggle */}
+        {/* Toggle (moved below previews) */}
         <div className="dim-toggle" role="tablist" aria-label="Choose dimension">
           <button
             role="tab"
@@ -50,12 +36,14 @@ export default function DimensionSection() {
             WORK
           </button>
 
-          {/* little sliding visor bar */}
+          {/* sliding visor */}
           <span className={`dim-indicator ${mode.toLowerCase()}`} aria-hidden />
         </div>
 
-        {/* Gate effect */}
-        <div ref={gateRef} className={`dim-gate ${warping ? 'warp' : ''}`} aria-hidden />
+         {/* Tagline now BETWEEN panels and switcher */}
+         <p className="muted dim-foot">
+          Switching dimensions is like changing your spaceship outfit — same vessel, new instruments.
+        </p>
 
         {/* Panels */}
         <div className="dim-stage" aria-live="polite">
@@ -63,18 +51,6 @@ export default function DimensionSection() {
           <PanelWork active={mode === 'WORK'} />
         </div>
 
-        {/* CTA routes role into your email capture */}
-        <div className="cta-row" style={{ marginTop: 20 }}>
-          {typeof EmailCTA === 'function' ? (
-            <EmailCTA role={mode.toLowerCase()} />
-          ) : (
-            <a href="#cta" className="btn primary thruster">Join the launch list</a>
-          )}
-        </div>
-
-        <p className="muted dim-foot">
-          Switching dimensions is like changing your spaceship outfit — same vessel, new instruments.
-        </p>
       </div>
     </section>
   );
@@ -89,7 +65,7 @@ function PanelLife({ active }: { active: boolean }) {
       aria-hidden={!active}
       aria-label="LIFE preview"
     >
-      <Header title="Hemp’in Playground" rightIcons={['📬', '⚙️']} />
+      <Header title="Hemp’in Life" rightIcons={['📬', '⚙️']} />
       <div className="dim-grid">
         <aside className="pane">
           <h4>Universes</h4>
@@ -121,7 +97,7 @@ function PanelWork({ active }: { active: boolean }) {
       aria-hidden={!active}
       aria-label="WORK preview"
     >
-      <Header title="Hemp’in Console" rightIcons={['📊', '🔒']} />
+      <Header title="Hemp’in Work" rightIcons={['📊', '🔒']} />
       <div className="dim-grid">
         <aside className="pane">
           <h4>Operations</h4>
@@ -143,7 +119,7 @@ function PanelWork({ active }: { active: boolean }) {
   );
 }
 
-/* ------------- tiny building blocks (pure CSS shapes) ------------- */
+/* ------------- tiny building blocks ------------- */
 
 function Header({ title, rightIcons }: { title: string; rightIcons: string[] }) {
   return (
