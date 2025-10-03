@@ -22,17 +22,7 @@ type PlanetItem = {
 };
 
 const PLANETS: PlanetItem[] = [
-  {
-    title: 'Market',
-    subtitle: 'Find the good stuff',
-    bullets: [
-      'Browse & compare: fibers, hurd, bioplastics, textiles, food, wellness.',
-      'See provenance: farm, process, certifications, regenerative score.',
-      'Buy or sample: request quotes, MOQ info, and supplier contacts.',
-    ],
-    cta: 'Explore the Market',
-    link: 'https://market.hempin.org/',
-  },
+  
   {
     title: 'Fund',
     subtitle: 'Back what matters',
@@ -44,6 +34,19 @@ const PLANETS: PlanetItem[] = [
     cta: 'Browse Campaigns',
     link: 'https://fund.hempin.org/',
   },
+
+  {
+    title: 'Market',
+    subtitle: 'Find the good stuff',
+    bullets: [
+      'Browse & compare: fibers, hurd, bioplastics, textiles, food, wellness.',
+      'See provenance: farm, process, certifications, regenerative score.',
+      'Buy or sample: request quotes, MOQ info, and supplier contacts.',
+    ],
+    cta: 'Explore the Market',
+    link: 'https://market.hempin.org/',
+  },
+
   {
     title: 'Knowledge',
     subtitle: 'Trust the science',
