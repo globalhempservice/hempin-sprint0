@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import Galaxy from '@/components/home/Galaxy';
+import dynamic from 'next/dynamic';
 import GalaxyControls, { GalaxyState } from '@/components/home/GalaxyControls';
+
+// ⬇️ Load Galaxy only when we render it (saves mobile bundle/CPU)
+const Galaxy = dynamic(() => import('@/components/home/Galaxy'), { ssr: false });
 
 const DEFAULTS: GalaxyState = {
   arms: 4,
@@ -22,76 +25,11 @@ type PlanetItem = {
 };
 
 const PLANETS: PlanetItem[] = [
-  {
-    title: 'Market',
-    subtitle: 'Find the good stuff',
-    bullets: [
-      'Browse & compare: fibers, hurd, bioplastics, textiles, food, wellness.',
-      'See provenance: farm, process, certifications, regenerative score.',
-      'Buy or sample: request quotes, MOQ info, and supplier contacts.'
-    ],
-    cta: 'Explore the Market',
-    link: 'https://market.hempin.org/'
-  },
-  {
-    title: 'Fund',
-    subtitle: 'Back what matters',
-    bullets: [
-      'Discover campaigns: cultivation, processing lines, R&D, community builds.',
-      'Transparent use: milestones, on-chain receipts, WETAS credit flows.',
-      'Perks & returns: product drops, yield shares, impact certificates.'
-    ],
-    cta: 'Browse Campaigns',
-    link: 'https://fund.hempin.org/'
-  },
-  {
-    title: 'Knowledge',
-    subtitle: 'Trust the science',
-    bullets: [
-      'Read & remix: papers, protocols, BOMs, case studies.',
-      'Learn by doing: short modules, quizzes, lab notebooks, data exports.',
-      'Cite the source: versioned docs with peer & practitioner reviews.'
-    ],
-    cta: 'Open the Library',
-    link: 'https://knowledge.hempin.org/'
-  },
-  {
-    title: 'Place',
-    subtitle: 'Maps with meaning',
-    bullets: [
-      'See activity: sowing/harvest windows, processing capacity, inventory.',
-      'Plan visits: tours, residencies, demo days, onboarding routes.',
-      'APIs for ops: sensor feeds, weather, soil, logistics overlays.'
-    ],
-    cta: 'Explore the Map',
-    link: 'https://place.hempin.org/'
-  },
-  {
-    title: 'Event',
-    subtitle: 'Gather & launch',
-    bullets: [
-      'Attend or host: call for speakers, vendor tables, maker sessions.',
-      'Hybrid-ready: live streams, replays, interactive labs.',
-      'Earn NADA: quests, quizzes, and contribution bounties on site.'
-    ],
-    cta: 'See Upcoming Events',
-    link: 'https://event.hempin.org/'
-  },
-  {
-    title: 'Directory',
-    subtitle: 'People who build',
-    bullets: [
-      'Find partners: filter by skill, region, capacity, certifications.',
-      'Signal reputation: verified credentials, contributions, WETAS impact.',
-      'Connect securely: wallet-based intros, privacy-respecting profiles.'
-    ],
-    cta: 'Meet the Network',
-    link: 'https://directory.hempin.org/'
-  },
+  /* … your PLANETS array unchanged … */
 ] as const;
 
 export default function CosmosSection() {
-  // desktop gate for controls
+  // desktop gate
   const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 820px)');
@@ -101,9 +39,23 @@ export default function CosmosSection() {
     return () => mq.removeEventListener?.('change', apply);
   }, []);
 
-  // galaxy sizing
+  // respect reduced motion
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const apply = () => setReducedMotion(mq.matches);
+    apply();
+    mq.addEventListener?.('change', apply);
+    return () => mq.removeEventListener?.('change', apply);
+  }, []);
+
+  // only enable galaxy on desktop & when motion is OK
+  const enableGalaxy = isDesktop && !reducedMotion;
+
+  // galaxy sizing (used only when enabled)
   const [galaxySize, setGalaxySize] = useState(820);
   useEffect(() => {
+    if (!enableGalaxy) return;
     const calc = () => {
       const s = Math.min(window.innerWidth, window.innerHeight) * 0.8;
       setGalaxySize(Math.round(Math.max(560, Math.min(s, 1100))));
@@ -111,7 +63,7 @@ export default function CosmosSection() {
     calc();
     window.addEventListener('resize', calc, { passive: true });
     return () => window.removeEventListener('resize', calc);
-  }, []);
+  }, [enableGalaxy]);
 
   // galaxy state (persist)
   const [openPanel, setOpenPanel] = useState(false);
@@ -119,7 +71,9 @@ export default function CosmosSection() {
     try {
       const raw = localStorage.getItem('hempin.galaxy');
       return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : DEFAULTS;
-    } catch { return DEFAULTS; }
+    } catch {
+      return DEFAULTS;
+    }
   });
   const setState = (next: Partial<GalaxyState>) =>
     setGs(prev => {
@@ -128,17 +82,20 @@ export default function CosmosSection() {
       return v;
     });
 
-  const galaxyProps = useMemo(() => ({
-    size: galaxySize,
-    arms: gs.arms,
-    stars: gs.stars,
-    speed: gs.speed,
-    opacity: gs.opacity,
-    seed: gs.seed,
-    tiltDeg: gs.tiltDeg,
-    ellipticity: gs.ellipticity,
-    meteors: gs.meteors,
-  }), [galaxySize, gs]);
+  const galaxyProps = useMemo(
+    () => ({
+      size: galaxySize,
+      arms: gs.arms,
+      stars: gs.stars,
+      speed: gs.speed,
+      opacity: gs.opacity,
+      seed: gs.seed,
+      tiltDeg: gs.tiltDeg,
+      ellipticity: gs.ellipticity,
+      meteors: gs.meteors,
+    }),
+    [galaxySize, gs]
+  );
 
   // accordion
   const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -146,8 +103,8 @@ export default function CosmosSection() {
 
   return (
     <section id="cosmos" className="section cosmos-section">
-      {/* Easter egg FAB (desktop) */}
-      {isDesktop && (
+      {/* FAB only on desktop */}
+      {enableGalaxy && (
         <button
           className="hud-fab hud-fab--cosmos"
           aria-label="Tweak galaxy"
@@ -157,9 +114,9 @@ export default function CosmosSection() {
         </button>
       )}
 
-      {/* Galaxy background */}
-      <div className="galaxy-layer">
-        <Galaxy {...galaxyProps} />
+      {/* Galaxy background (desktop only) or a light fallback on mobile */}
+      <div className={`galaxy-layer ${enableGalaxy ? '' : 'galaxy-fallback'}`}>
+        {enableGalaxy ? <Galaxy {...galaxyProps} /> : null}
       </div>
 
       <div className="container center">
@@ -180,13 +137,8 @@ export default function CosmosSection() {
             return (
               <div key={title} className={`card planet ${isOpen ? 'is-open' : ''}`} aria-expanded={isOpen}>
                 <button className="planet-summary" onClick={() => toggle(i)}>
-                  {/* Fixed-width label column (all sized to “Knowledge”) */}
                   <span className="planet-title" aria-hidden={false}>{title}</span>
-
-                  {/* Subtitle hint only when closed */}
                   <span className="planet-subtitle muted">{subtitle}</span>
-
-                  {/* Chevron */}
                   <svg className="chevron" width="16" height="16" viewBox="0 0 24 24" aria-hidden>
                     <path fill="currentColor" d="M12 15.5l-6-6h12l-6 6z" />
                   </svg>
@@ -206,8 +158,8 @@ export default function CosmosSection() {
         </div>
       </div>
 
-      {/* Controls drawer */}
-      {isDesktop && (
+      {/* Controls drawer (desktop only) */}
+      {enableGalaxy && (
         <GalaxyControls
           open={openPanel}
           onClose={() => setOpenPanel(false)}
@@ -217,6 +169,18 @@ export default function CosmosSection() {
           onReset={() => setState(DEFAULTS)}
         />
       )}
+
+      {/* a tiny CSS fallback so mobile still has a soft backdrop */}
+      <style jsx>{`
+        .galaxy-fallback {
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(60% 50% at 50% 30%, rgba(66, 153, 225, 0.10), transparent 60%),
+            radial-gradient(50% 40% at 70% 70%, rgba(110, 231, 183, 0.08), transparent 60%);
+          pointer-events: none;
+        }
+      `}</style>
     </section>
   );
 }
