@@ -122,12 +122,8 @@ main{flex:1 0 auto}
 }
 
 .header-rail{
-  display:grid; grid-template-columns:42px 1fr auto;
+  display:grid; grid-template-columns:42px 1fr;
   align-items:center; justify-items:center; height:64px; gap:12px;
-}
-@media (max-width:767px){
-  .header-rail{ grid-template-columns:40px 1fr; }
-  .invest-btn{ display:none; }
 }
 
 /* hamburger */
@@ -724,7 +720,7 @@ main{flex:1 0 auto}
 .db-section .container{ position:relative }
 
 /* One Graph rail */
-.db-rail{ margin:18px auto 0; max-width:920px; position:relative; overflow:hidden }
+.db-rail{ margin:18px auto 0; max-width:920px; position:relative; padding-top:24px }
 .db-aurora{ position:relative; z-index:0 }
 .db-aurora .nebula-svg{ display:block; width:100% }
 

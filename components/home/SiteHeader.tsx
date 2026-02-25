@@ -159,10 +159,6 @@ export default function SiteHeader() {
             <span className="brand-name">Hemp’in</span>
           </a>
 
-          {/* Right: investor CTA */}
-          <a href="https://investor.hempin.org" className="invest-btn" target="_blank" rel="noopener noreferrer">
-            Back the build
-          </a>
         </div>
       </div>
 
