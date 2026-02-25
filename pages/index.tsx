@@ -8,7 +8,6 @@ import ToolsSection from '@/components/home/ToolsSection';
 import RoadmapSection from '@/components/home/RoadmapSection';
 import CTASection from '@/components/home/CTASection';
 import Footer from '@/components/home/Footer';
-import EmailCTA from '@/components/EmailCTA';
 import NebulaDivider from '@/components/dividers/NebulaDivider';
 
 export default function Home() {
@@ -27,8 +26,7 @@ export default function Home() {
       <div className="page app-shell">
         <SiteHeader />
 
-        {/* pad bottom so sticky CTA doesn't overlap content on mobile */}
-        <main className="pb-24 md:pb-0">
+        <main>
           <Hero />
 
           <NebulaDivider label="cosmos" />
@@ -52,12 +50,6 @@ export default function Home() {
         <Footer />
       </div>
 
-      {/* Sticky bottom CTA (mobile only) */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/80 backdrop-blur md:hidden">
-        <div className="mx-auto max-w-screen-sm px-4 py-3">
-          <EmailCTA role="LIFE" />
-        </div>
-      </div>
     </>
   );
 }
